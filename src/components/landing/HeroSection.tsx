@@ -23,7 +23,7 @@ export const HeroSection = () => {
   };
 
   return (
-    <section className="min-h-screen gradient-hero flex flex-col items-center justify-center relative px-6 overflow-hidden">
+    <section className="min-h-screen gradient-hero flex flex-col items-center justify-center relative px-6 pt-32 pb-20 overflow-hidden">
       {/* Animated grid background */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute inset-0" style={{

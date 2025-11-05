@@ -1,6 +1,7 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { Header } from '@/components/landing/Header';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { FeaturesShowcase } from '@/components/landing/FeaturesShowcase';
@@ -20,6 +21,7 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Header />
       <HeroSection />
       <HowItWorks />
       <FeaturesShowcase />

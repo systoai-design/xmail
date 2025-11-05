@@ -40,10 +40,10 @@ export const TechnologySection = () => {
   ];
 
   return (
-    <section ref={sectionRef} className="bg-background py-32 px-6">
+    <section ref={sectionRef} className="bg-background py-24 px-6">
       <div className="max-w-6xl mx-auto">
         <h2
-          className={`text-7xl md:text-8xl font-black text-center mb-20 fade-in-up ${
+          className={`text-7xl md:text-8xl font-black text-center mb-16 fade-in-up ${
             isVisible ? 'visible' : ''
           }`}
         >

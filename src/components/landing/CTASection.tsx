@@ -24,7 +24,7 @@ export const CTASection = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative bg-background py-32 px-6 overflow-hidden">
+    <section ref={sectionRef} className="relative bg-background py-24 px-6 overflow-hidden">
       {/* Massive gradient background */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 gradient-hero" />

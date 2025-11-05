@@ -2,9 +2,9 @@ import { Lock } from 'lucide-react';
 
 export const Footer = () => {
   return (
-    <footer className="bg-background py-16 px-6 border-t border-border">
+    <footer className="bg-background py-12 px-6 border-t border-border">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col items-center space-y-8">
+        <div className="flex flex-col items-center space-y-6">
           {/* Logo/Brand */}
           <h3 className="text-4xl font-black gradient-primary bg-clip-text text-transparent">
             x402Mail

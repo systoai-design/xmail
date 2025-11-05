@@ -46,10 +46,10 @@ export const FeaturesShowcase = () => {
   ];
 
   return (
-    <section ref={sectionRef} className="min-h-screen gradient-section py-32 px-6 relative overflow-hidden">
+    <section ref={sectionRef} className="min-h-screen gradient-section py-24 px-6 relative overflow-hidden">
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Title */}
-        <div className={`text-center mb-20 fade-in-up ${isVisible ? 'visible' : ''}`}>
+        <div className={`text-center mb-16 fade-in-up ${isVisible ? 'visible' : ''}`}>
           <span className="text-lg uppercase tracking-[0.3em] text-secondary font-bold mb-4 block">Features</span>
           <h2 className="text-6xl md:text-7xl font-black max-w-4xl mx-auto">
             Privacy meets

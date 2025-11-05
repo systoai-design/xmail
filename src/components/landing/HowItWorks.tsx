@@ -59,7 +59,7 @@ export const HowItWorks = () => {
     <section
       id="how-it-works"
       ref={sectionRef}
-      className="min-h-screen bg-background py-32 px-6 relative overflow-hidden"
+      className="min-h-screen bg-background py-24 px-6 relative overflow-hidden"
     >
       {/* Animated background */}
       <div className="absolute inset-0 opacity-20">
@@ -70,7 +70,7 @@ export const HowItWorks = () => {
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Section header */}
-        <div className={`text-center mb-24 fade-in-up ${isVisible ? 'visible' : ''}`}>
+        <div className={`text-center mb-16 fade-in-up ${isVisible ? 'visible' : ''}`}>
           <div className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-6">
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-sm uppercase tracking-wider font-bold">The Process</span>
