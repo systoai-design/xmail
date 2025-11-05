@@ -41,8 +41,11 @@ All colors MUST be HSL.
     /* Custom design tokens */
     --gradient-primary: linear-gradient(135deg, hsl(267 100% 65%), hsl(187 100% 43%));
     --gradient-card: linear-gradient(180deg, hsl(0 0% 10%), hsl(0 0% 7%));
-    --gradient-hero: linear-gradient(180deg, hsl(267 100% 20%), hsl(0 0% 4%));
+    --gradient-hero: radial-gradient(ellipse at top, hsl(267 100% 25%) 0%, hsl(0 0% 4%) 50%);
     --gradient-section: linear-gradient(180deg, hsl(0 0% 4%), hsl(267 100% 15%), hsl(0 0% 4%));
+    --gradient-mesh: radial-gradient(at 40% 20%, hsl(267 100% 35%) 0px, transparent 50%),
+                     radial-gradient(at 80% 0%, hsl(187 100% 35%) 0px, transparent 50%),
+                     radial-gradient(at 0% 50%, hsl(267 100% 25%) 0px, transparent 50%);
     --shadow-glow: 0 0 40px hsl(267 100% 65% / 0.3);
     --shadow-glow-cyan: 0 0 40px hsl(187 100% 43% / 0.3);
     --shadow-glow-strong: 0 0 60px hsl(267 100% 65% / 0.5);
@@ -80,6 +83,16 @@ All colors MUST be HSL.
 
   .gradient-hero {
     background: var(--gradient-hero);
+    position: relative;
+  }
+
+  .gradient-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gradient-mesh);
+    opacity: 0.4;
+    animation: mesh-move 20s ease-in-out infinite;
   }
 
   .gradient-section {
@@ -137,5 +150,29 @@ All colors MUST be HSL.
 
   .fade-in.visible {
     opacity: 1;
+  }
+
+  /* Mesh animation */
+  @keyframes mesh-move {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(30px, 30px); }
+  }
+
+  /* Text effects */
+  .text-outline {
+    -webkit-text-stroke: 2px currentColor;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .text-glitch {
+    position: relative;
+    animation: glitch 3s infinite;
+  }
+
+  @keyframes glitch {
+    0%, 90%, 100% { transform: translate(0); }
+    92% { transform: translate(-2px, 2px); }
+    94% { transform: translate(2px, -2px); }
+    96% { transform: translate(-2px, -2px); }
   }
 }

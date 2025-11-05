@@ -26,67 +26,55 @@ export const FeaturesShowcase = () => {
     {
       icon: Shield,
       title: 'End-to-End Encrypted',
-      description: 'Only your recipient can decrypt. Zero-knowledge encryption using Web Crypto API.',
-      gradient: 'from-primary/20 to-primary/5',
+      description: 'Military-grade encryption. Zero-knowledge architecture. Only your recipient\'s wallet can decrypt.',
     },
     {
       icon: User,
-      title: 'Wallet-Based Identity',
-      description: 'Your wallet is your address. No accounts, no passwords, no intermediaries.',
-      gradient: 'from-secondary/20 to-secondary/5',
+      title: 'Wallet = Identity',
+      description: 'No email addresses. No usernames. Your Solana wallet is all you need.',
     },
     {
       icon: Ban,
-      title: 'Spam-Free',
-      description: 'x402 micropayments prevent spam. Only serious messages reach your inbox.',
-      gradient: 'from-accent/20 to-accent/5',
+      title: 'Spam-Free Inbox',
+      description: 'Micropayments create a natural spam filter. Only serious messages get through.',
     },
     {
       icon: Database,
-      title: 'Decentralized',
-      description: 'Messages on Solana blockchain. No central server can read or censor your data.',
-      gradient: 'from-purple-500/20 to-purple-500/5',
+      title: 'Fully Decentralized',
+      description: 'Messages on blockchain. No servers. No company can read or censor your data.',
     },
   ];
 
   return (
-    <section ref={sectionRef} className="gradient-section py-32 px-6 relative">
-      <div className="max-w-7xl mx-auto">
-        <h2
-          className={`text-7xl md:text-8xl font-black text-center mb-8 fade-in-up ${
-            isVisible ? 'visible' : ''
-          }`}
-        >
-          Privacy meets
-          <br />
-          <span className="gradient-primary bg-clip-text text-transparent">
-            simplicity
-          </span>
-        </h2>
+    <section ref={sectionRef} className="min-h-screen gradient-section py-32 px-6 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto relative z-10">
+        {/* Title */}
+        <div className={`text-center mb-20 fade-in-up ${isVisible ? 'visible' : ''}`}>
+          <span className="text-lg uppercase tracking-[0.3em] text-secondary font-bold mb-4 block">Features</span>
+          <h2 className="text-6xl md:text-7xl font-black max-w-4xl mx-auto">
+            Privacy meets
+            <br />
+            <span className="gradient-primary bg-clip-text text-transparent">
+              simplicity
+            </span>
+          </h2>
+        </div>
 
-        <p
-          className={`text-2xl text-muted-foreground text-center mb-20 max-w-3xl mx-auto fade-in-up ${
-            isVisible ? 'visible' : ''
-          }`}
-          style={{ transitionDelay: '100ms' }}
-        >
-          Built for those who value privacy without compromising on user experience
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Features grid with staggered layout */}
+        <div className="grid md:grid-cols-2 gap-8">
           {features.map((feature, index) => (
             <div
               key={index}
-              className={`glass p-10 rounded-3xl hover:scale-105 transition-slow bg-gradient-to-br ${feature.gradient} fade-in-up ${
-                isVisible ? 'visible' : ''
-              }`}
-              style={{ transitionDelay: `${200 + index * 100}ms` }}
+              className={`fade-in-up ${isVisible ? 'visible' : ''} ${index % 2 === 1 ? 'md:mt-16' : ''}`}
+              style={{ transitionDelay: `${index * 100}ms` }}
             >
-              <feature.icon className="w-16 h-16 text-primary mb-6" />
-              <h3 className="text-3xl font-black mb-4">{feature.title}</h3>
-              <p className="text-lg text-muted-foreground leading-relaxed">
-                {feature.description}
-              </p>
+              <div className="glass-strong p-12 rounded-3xl hover:scale-105 transition-slow h-full group cursor-pointer border border-transparent hover:border-primary/30">
+                <feature.icon className="w-16 h-16 text-primary mb-6 group-hover:scale-110 transition-smooth" />
+                <h3 className="text-3xl font-black mb-4">{feature.title}</h3>
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  {feature.description}
+                </p>
+              </div>
             </div>
           ))}
         </div>

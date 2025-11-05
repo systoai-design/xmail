@@ -1,4 +1,4 @@
-import { Wallet, Lock, Zap } from 'lucide-react';
+import { Wallet, Lock, Zap, ArrowRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 export const HowItWorks = () => {
@@ -25,21 +25,27 @@ export const HowItWorks = () => {
   const steps = [
     {
       icon: Wallet,
-      title: 'Connect Wallet',
-      description: 'Your Solana wallet is your identity. No email, no passwords.',
-      color: 'text-primary',
+      number: '01',
+      title: 'Connect',
+      description: 'Your Solana wallet = your identity',
+      detail: 'No email, no passwords, no accounts',
+      color: 'primary',
     },
     {
       icon: Lock,
-      title: 'Compose Message',
-      description: 'Write your message. It\'s encrypted end-to-end using Web Crypto API.',
-      color: 'text-secondary',
+      number: '02',
+      title: 'Encrypt',
+      description: 'Write your private message',
+      detail: 'End-to-end encrypted with Web Crypto API',
+      color: 'secondary',
     },
     {
       icon: Zap,
-      title: 'Send via x402',
-      description: 'Micropayment confirms delivery. Gasless. Instant. Spam-free.',
-      color: 'text-accent',
+      number: '03',
+      title: 'Send',
+      description: 'Pay micro-fee to deliver',
+      detail: 'Gasless x402 payment prevents spam',
+      color: 'accent',
     },
   ];
 
@@ -47,40 +53,66 @@ export const HowItWorks = () => {
     <section
       id="how-it-works"
       ref={sectionRef}
-      className="min-h-screen bg-background py-24 px-6"
+      className="min-h-screen bg-background py-32 px-6 relative overflow-hidden"
     >
-      <div className="max-w-7xl mx-auto">
-        <h2
-          className={`text-7xl md:text-8xl font-black text-center mb-20 fade-in-up ${
-            isVisible ? 'visible' : ''
-          }`}
-        >
-          HOW IT WORKS
-        </h2>
+      {/* Background decoration */}
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl" />
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+      <div className="max-w-7xl mx-auto relative z-10">
+        {/* Section title */}
+        <div className={`mb-24 fade-in-up ${isVisible ? 'visible' : ''}`}>
+          <span className="text-lg uppercase tracking-[0.3em] text-primary font-bold mb-4 block">Process</span>
+          <h2 className="text-6xl md:text-7xl font-black">
+            How it
+            <br />
+            <span className="gradient-primary bg-clip-text text-transparent">works</span>
+          </h2>
+        </div>
+
+        {/* Steps with creative layout */}
+        <div className="space-y-12">
           {steps.map((step, index) => (
             <div
               key={index}
-              className={`glass-strong p-12 rounded-3xl hover:scale-105 transition-slow hover:shadow-glow-strong fade-in-up ${
-                isVisible ? 'visible' : ''
-              }`}
+              className={`fade-in-up ${isVisible ? 'visible' : ''}`}
               style={{ transitionDelay: `${index * 150}ms` }}
             >
-              <div className="flex flex-col items-center text-center space-y-6">
-                <div className={`w-20 h-20 rounded-full bg-background/50 flex items-center justify-center ${step.color}`}>
-                  <step.icon className="w-10 h-10" />
+              <div className="grid md:grid-cols-12 gap-8 items-center">
+                {/* Number */}
+                <div className="md:col-span-2">
+                  <div className={`text-8xl font-black text-${step.color} opacity-20`}>
+                    {step.number}
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  <h3 className="text-3xl font-black">{step.title}</h3>
-                  <p className="text-lg text-muted-foreground leading-relaxed">
-                    {step.description}
-                  </p>
+
+                {/* Icon & Title */}
+                <div className="md:col-span-4">
+                  <div className="flex items-center gap-6">
+                    <div className={`w-20 h-20 rounded-2xl bg-${step.color}/10 border border-${step.color}/30 flex items-center justify-center`}>
+                      <step.icon className={`w-10 h-10 text-${step.color}`} />
+                    </div>
+                    <h3 className="text-4xl font-black">{step.title}</h3>
+                  </div>
                 </div>
-                <div className={`text-6xl font-black ${step.color} opacity-20`}>
-                  {index + 1}
+
+                {/* Description */}
+                <div className="md:col-span-6">
+                  <div className="glass-strong p-8 rounded-2xl hover:scale-105 transition-slow">
+                    <p className="text-2xl font-bold mb-2">{step.description}</p>
+                    <p className="text-lg text-muted-foreground">{step.detail}</p>
+                  </div>
                 </div>
               </div>
+
+              {/* Arrow connector (except last) */}
+              {index < steps.length - 1 && (
+                <div className="flex justify-center my-8">
+                  <ArrowRight className="w-8 h-8 text-muted-foreground/30 rotate-90" />
+                </div>
+              )}
             </div>
           ))}
         </div>

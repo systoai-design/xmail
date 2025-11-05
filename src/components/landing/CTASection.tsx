@@ -1,6 +1,6 @@
 import { WalletButton } from '@/components/WalletButton';
-import { CurvedDivider } from './CurvedDivider';
 import { useEffect, useRef, useState } from 'react';
+import { ArrowRight } from 'lucide-react';
 
 export const CTASection = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -24,40 +24,56 @@ export const CTASection = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative bg-background">
-      <CurvedDivider color="hsl(267 100% 20%)" />
-      <div className="gradient-hero py-32 px-6">
-        <div className="max-w-5xl mx-auto text-center space-y-12">
-          <h2
-            className={`text-7xl md:text-8xl font-black leading-tight fade-in-up ${
-              isVisible ? 'visible' : ''
-            }`}
-          >
-            let's start sending
+    <section ref={sectionRef} className="relative bg-background py-32 px-6 overflow-hidden">
+      {/* Massive gradient background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 gradient-hero" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/20 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="max-w-5xl mx-auto text-center relative z-10">
+        <div className={`space-y-12 fade-in-up ${isVisible ? 'visible' : ''}`}>
+          {/* Headline */}
+          <h2 className="text-6xl md:text-8xl font-black leading-tight">
+            Ready to send
             <br />
             <span className="gradient-primary bg-clip-text text-transparent">
-              encrypted messages
+              encrypted messages?
             </span>
           </h2>
 
-          <p
-            className={`text-2xl text-muted-foreground max-w-2xl mx-auto fade-in-up ${
-              isVisible ? 'visible' : ''
-            }`}
-            style={{ transitionDelay: '100ms' }}
-          >
-            Join the future of private, decentralized communication
+          {/* Subtext */}
+          <p className="text-2xl text-muted-foreground max-w-2xl mx-auto">
+            Connect your wallet and start messaging with true privacy
           </p>
 
-          <div
-            className={`pt-6 fade-in-up ${isVisible ? 'visible' : ''}`}
-            style={{ transitionDelay: '200ms' }}
-          >
-            <WalletButton />
+          {/* CTA Button */}
+          <div className="pt-8">
+            <div className="inline-block relative group">
+              <div className="absolute -inset-6 bg-gradient-to-r from-primary via-secondary to-primary opacity-30 blur-3xl group-hover:opacity-50 transition-smooth rounded-full" />
+              <div className="relative">
+                <WalletButton />
+              </div>
+            </div>
+          </div>
+
+          {/* Additional info */}
+          <div className="pt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-accent" />
+              <span>No email required</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-secondary" />
+              <span>Gasless transactions</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-primary" />
+              <span>100% encrypted</span>
+            </div>
           </div>
         </div>
       </div>
-      <CurvedDivider color="hsl(267 100% 20%)" flip />
     </section>
   );
 };
