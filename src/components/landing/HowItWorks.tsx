@@ -1,4 +1,4 @@
-import { Wallet, Lock, Zap, ArrowRight } from 'lucide-react';
+import { Wallet, Lock, Zap, ArrowRight, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 export const HowItWorks = () => {
@@ -27,25 +27,31 @@ export const HowItWorks = () => {
       icon: Wallet,
       number: '01',
       title: 'Connect',
-      description: 'Your Solana wallet = your identity',
-      detail: 'No email, no passwords, no accounts',
+      subtitle: 'Your Wallet',
+      description: 'Your Solana wallet becomes your identity',
+      details: ['No email required', 'No passwords', 'No signup forms'],
       color: 'primary',
+      gradient: 'from-primary/20 to-primary/5',
     },
     {
       icon: Lock,
       number: '02',
-      title: 'Encrypt',
-      description: 'Write your private message',
-      detail: 'End-to-end encrypted with Web Crypto API',
+      title: 'Compose',
+      subtitle: 'Private Message',
+      description: 'Write and encrypt your message',
+      details: ['End-to-end encrypted', 'Web Crypto API', 'Zero-knowledge'],
       color: 'secondary',
+      gradient: 'from-secondary/20 to-secondary/5',
     },
     {
       icon: Zap,
       number: '03',
       title: 'Send',
-      description: 'Pay micro-fee to deliver',
-      detail: 'Gasless x402 payment prevents spam',
+      subtitle: 'via x402',
+      description: 'Deliver with micropayment',
+      details: ['Gasless transaction', '~$0.01 USDC', 'Spam prevention'],
       color: 'accent',
+      gradient: 'from-accent/20 to-accent/5',
     },
   ];
 
@@ -55,66 +61,79 @@ export const HowItWorks = () => {
       ref={sectionRef}
       className="min-h-screen bg-background py-32 px-6 relative overflow-hidden"
     >
-      {/* Background decoration */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl" />
+      {/* Animated background */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-0 left-0 w-full h-full" style={{
+          backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(267 100% 35%) 0px, transparent 50%), radial-gradient(circle at 80% 80%, hsl(187 100% 35%) 0px, transparent 50%)',
+        }} />
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Section title */}
-        <div className={`mb-24 fade-in-up ${isVisible ? 'visible' : ''}`}>
-          <span className="text-lg uppercase tracking-[0.3em] text-primary font-bold mb-4 block">Process</span>
-          <h2 className="text-6xl md:text-7xl font-black">
+        {/* Section header */}
+        <div className={`text-center mb-24 fade-in-up ${isVisible ? 'visible' : ''}`}>
+          <div className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-6">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="text-sm uppercase tracking-wider font-bold">The Process</span>
+          </div>
+          <h2 className="text-6xl md:text-8xl font-black mb-6">
             How it
             <br />
             <span className="gradient-primary bg-clip-text text-transparent">works</span>
           </h2>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Three simple steps to secure, encrypted messaging
+          </p>
         </div>
 
-        {/* Steps with creative layout */}
-        <div className="space-y-12">
+        {/* Steps */}
+        <div className="grid md:grid-cols-3 gap-8 mb-16">
           {steps.map((step, index) => (
             <div
               key={index}
               className={`fade-in-up ${isVisible ? 'visible' : ''}`}
               style={{ transitionDelay: `${index * 150}ms` }}
             >
-              <div className="grid md:grid-cols-12 gap-8 items-center">
-                {/* Number */}
-                <div className="md:col-span-2">
-                  <div className={`text-8xl font-black text-${step.color} opacity-20`}>
-                    {step.number}
-                  </div>
+              <div className={`relative glass-strong p-8 rounded-3xl hover-lift cursor-default h-full bg-gradient-to-br ${step.gradient} border border-white/5`}>
+                {/* Number badge */}
+                <div className="absolute -top-4 -right-4 w-16 h-16 rounded-2xl bg-background border-2 border-primary/30 flex items-center justify-center shadow-glow">
+                  <span className="text-2xl font-black text-primary">{step.number}</span>
                 </div>
 
-                {/* Icon & Title */}
-                <div className="md:col-span-4">
-                  <div className="flex items-center gap-6">
-                    <div className={`w-20 h-20 rounded-2xl bg-${step.color}/10 border border-${step.color}/30 flex items-center justify-center`}>
-                      <step.icon className={`w-10 h-10 text-${step.color}`} />
-                    </div>
-                    <h3 className="text-4xl font-black">{step.title}</h3>
-                  </div>
+                {/* Icon */}
+                <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${step.gradient} border border-${step.color}/30 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                  <step.icon className={`w-10 h-10 text-${step.color}`} />
                 </div>
 
-                {/* Description */}
-                <div className="md:col-span-6">
-                  <div className="glass-strong p-8 rounded-2xl hover:scale-105 transition-slow">
-                    <p className="text-2xl font-bold mb-2">{step.description}</p>
-                    <p className="text-lg text-muted-foreground">{step.detail}</p>
+                {/* Content */}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-4xl font-black mb-1">{step.title}</h3>
+                    <p className="text-lg text-muted-foreground font-semibold">{step.subtitle}</p>
                   </div>
+
+                  <p className="text-lg font-medium">{step.description}</p>
+
+                  <ul className="space-y-2">
+                    {step.details.map((detail, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <div className={`w-1.5 h-1.5 rounded-full bg-${step.color}`} />
+                        <span>{detail}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
-
-              {/* Arrow connector (except last) */}
-              {index < steps.length - 1 && (
-                <div className="flex justify-center my-8">
-                  <ArrowRight className="w-8 h-8 text-muted-foreground/30 rotate-90" />
-                </div>
-              )}
             </div>
           ))}
+        </div>
+
+        {/* Flow indicator */}
+        <div className={`flex items-center justify-center gap-4 fade-in-up ${isVisible ? 'visible' : ''}`} style={{ transitionDelay: '450ms' }}>
+          <div className="h-1 w-32 bg-gradient-to-r from-transparent via-primary to-transparent" />
+          <ArrowRight className="w-6 h-6 text-primary" />
+          <div className="h-1 w-32 bg-gradient-to-r from-transparent via-secondary to-transparent" />
+          <ArrowRight className="w-6 h-6 text-secondary" />
+          <div className="h-1 w-32 bg-gradient-to-r from-transparent via-accent to-transparent" />
         </div>
       </div>
     </section>
