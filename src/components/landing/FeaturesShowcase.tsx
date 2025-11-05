@@ -46,7 +46,7 @@ export const FeaturesShowcase = () => {
   ];
 
   return (
-    <section ref={sectionRef} className="min-h-screen gradient-section py-24 px-6 relative overflow-hidden">
+    <section ref={sectionRef} className="min-h-screen gradient-section py-16 sm:py-20 md:py-24 px-4 sm:px-6 relative overflow-hidden">
       {/* Enhanced background */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 opacity-20" style={{
@@ -56,11 +56,11 @@ export const FeaturesShowcase = () => {
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Enhanced Title */}
-        <div className={`text-center mb-20 fade-in-up ${isVisible ? 'visible' : ''}`}>
-          <span className="text-lg uppercase tracking-[0.3em] font-black mb-6 block bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent">
+        <div className={`text-center mb-12 sm:mb-16 md:mb-20 fade-in-up ${isVisible ? 'visible' : ''} px-4`}>
+          <span className="text-sm sm:text-lg uppercase tracking-[0.2em] sm:tracking-[0.3em] font-black mb-4 sm:mb-6 block bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent">
             Features
           </span>
-          <h2 className="text-6xl md:text-8xl font-black max-w-4xl mx-auto leading-tight">
+          <h2 className="text-4xl sm:text-6xl md:text-8xl font-black max-w-4xl mx-auto leading-tight">
             <span className="inline-block hover:scale-105 transition-transform cursor-default">
               Privacy meets
             </span>
@@ -72,26 +72,26 @@ export const FeaturesShowcase = () => {
         </div>
 
         {/* Enhanced Features grid with staggered layout */}
-        <div className="grid md:grid-cols-2 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 md:gap-10">
           {features.map((feature, index) => (
             <div
               key={index}
               className={`fade-in-up ${isVisible ? 'visible' : ''} ${index % 2 === 1 ? 'md:mt-16' : ''}`}
               style={{ transitionDelay: `${index * 100}ms` }}
             >
-              <div className="glass-glow p-12 rounded-[35px] hover-lift hover-glow h-full group cursor-pointer border-2 border-transparent hover:border-primary/40 relative">
+              <div className="glass-glow p-6 sm:p-10 md:p-12 rounded-[24px] sm:rounded-[35px] hover-lift hover-glow h-full group cursor-pointer border-2 border-transparent hover:border-primary/40 relative">
                 {/* Glow effect */}
-                <div className="absolute -inset-4 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-3xl rounded-[40px] -z-10" />
+                <div className="absolute -inset-4 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-3xl rounded-[28px] sm:rounded-[40px] -z-10" />
                 
                 {/* Icon container */}
-                <div className="w-20 h-20 rounded-[35px] glass-glow border-2 border-primary/30 flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-6 transition-all shadow-lg">
-                  <feature.icon className="w-10 h-10 text-primary" />
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-[20px] sm:rounded-[35px] glass-glow border-2 border-primary/30 flex items-center justify-center mb-6 sm:mb-8 group-hover:scale-110 group-hover:rotate-6 transition-all shadow-lg">
+                  <feature.icon className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
                 </div>
                 
-                <h3 className="text-3xl md:text-4xl font-black mb-6 group-hover:gradient-primary group-hover:bg-clip-text group-hover:text-transparent transition-all">
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-black mb-4 sm:mb-6 group-hover:gradient-primary group-hover:bg-clip-text group-hover:text-transparent transition-all">
                   {feature.title}
                 </h3>
-                <p className="text-lg md:text-xl text-muted-foreground leading-relaxed group-hover:text-foreground transition-colors">
+                <p className="text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed group-hover:text-foreground transition-colors">
                   {feature.description}
                 </p>
               </div>
