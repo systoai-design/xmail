@@ -1,5 +1,5 @@
 import { WalletButton } from '@/components/WalletButton';
-import { ChevronDown, Lock, Zap, Shield, Sparkles } from 'lucide-react';
+import { ChevronDown, Lock, Zap, Shield, Sparkles, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export const HeroSection = () => {
@@ -24,123 +24,157 @@ export const HeroSection = () => {
 
   return (
     <section className="min-h-screen gradient-hero flex flex-col items-center justify-center relative px-6 pt-32 pb-20 overflow-hidden">
-      {/* Animated grid background */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, hsl(267 100% 65% / 0.3) 0%, transparent 50%)`,
+      {/* Enhanced animated grid background */}
+      <div className="absolute inset-0">
+        {/* Mouse-reactive gradient */}
+        <div className="absolute inset-0 opacity-30" style={{
+          backgroundImage: `radial-gradient(circle 800px at ${mousePosition.x}px ${mousePosition.y}px, hsl(267 100% 65% / 0.4) 0%, transparent 50%)`,
           transition: 'background-image 0.3s ease-out'
         }} />
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'linear-gradient(to right, hsl(267 100% 65% / 0.1) 1px, transparent 1px), linear-gradient(to bottom, hsl(267 100% 65% / 0.1) 1px, transparent 1px)',
-          backgroundSize: '80px 80px'
+        
+        {/* Animated grid */}
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: 'linear-gradient(to right, hsl(267 100% 65% / 0.15) 1px, transparent 1px), linear-gradient(to bottom, hsl(267 100% 65% / 0.15) 1px, transparent 1px)',
+          backgroundSize: '80px 80px',
+          animation: 'mesh-move 20s ease-in-out infinite'
         }} />
+
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/50 to-background" />
       </div>
 
-      {/* Floating orbs with animation */}
-      <div className="absolute top-20 right-20 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-40 left-20 w-[500px] h-[500px] bg-secondary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-accent/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+      {/* Enhanced floating orbs */}
+      <div className="absolute top-20 right-20 w-96 h-96 bg-primary/30 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-40 left-20 w-[500px] h-[500px] bg-secondary/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-accent/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+      <div className="absolute top-40 left-1/3 w-80 h-80 bg-primary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }} />
       
-      {/* Floating particles */}
-      {[...Array(20)].map((_, i) => (
+      {/* Enhanced floating particles */}
+      {[...Array(30)].map((_, i) => (
         <div
           key={i}
-          className="absolute w-2 h-2 bg-primary/30 rounded-full animate-float"
+          className="absolute rounded-full animate-float"
           style={{
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
+            width: `${2 + Math.random() * 4}px`,
+            height: `${2 + Math.random() * 4}px`,
+            background: i % 3 === 0 ? 'hsl(267 100% 65% / 0.4)' : i % 3 === 1 ? 'hsl(187 100% 43% / 0.4)' : 'hsl(150 100% 50% / 0.4)',
             animationDelay: `${Math.random() * 5}s`,
-            animationDuration: `${5 + Math.random() * 10}s`
+            animationDuration: `${5 + Math.random() * 10}s`,
+            boxShadow: i % 5 === 0 ? '0 0 20px currentColor' : 'none'
           }}
         />
       ))}
 
       <div className={`max-w-7xl w-full text-center space-y-12 fade-in-up ${isVisible ? 'visible' : ''} relative z-10`}>
-        {/* Floating badge */}
-        <div className="inline-flex items-center gap-3 glass px-6 py-3 rounded-[35px] mb-8 animate-bounce-slow">
-          <Sparkles className="w-5 h-5 text-accent" />
-          <span className="text-sm font-bold tracking-wider uppercase">Solana x402 Protocol</span>
-          <Sparkles className="w-5 h-5 text-accent" />
+        {/* Enhanced floating badge with glow */}
+        <div className="inline-flex items-center gap-3 glass-glow px-8 py-4 rounded-[35px] mb-8 animate-bounce-slow hover:scale-105 transition-all cursor-default group">
+          <Star className="w-5 h-5 text-accent animate-pulse" />
+          <span className="text-sm font-black tracking-[0.2em] uppercase bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-gradient">
+            Solana x402 Protocol
+          </span>
+          <Sparkles className="w-5 h-5 text-primary animate-pulse" style={{ animationDelay: '0.5s' }} />
         </div>
         
-        {/* Main headline with staggered animation */}
+        {/* Enhanced main headline with better animations */}
         <div className="space-y-6">
           <h1 className="relative">
             <span className="block text-[min(15vw,8rem)] font-black leading-none tracking-tighter animate-slide-up">
-              <span className="inline-block hover:scale-110 transition-transform cursor-default">encrypted</span>
+              <span className="inline-block hover:scale-110 transition-bounce cursor-default relative">
+                encrypted
+                <div className="absolute -inset-4 bg-primary/10 blur-3xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </span>
             </span>
             <span className="block text-[min(18vw,11rem)] font-black leading-none tracking-tighter -mt-4 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              <span className="gradient-primary bg-clip-text text-transparent inline-block hover:scale-110 transition-transform cursor-default">messaging</span>
+              <span className="gradient-primary bg-clip-text text-transparent inline-block hover:scale-110 transition-bounce cursor-default animate-gradient relative">
+                messaging
+                <div className="absolute inset-0 blur-2xl bg-gradient-to-r from-primary to-secondary opacity-30 -z-10" />
+              </span>
             </span>
             <span className="block text-[min(10vw,5rem)] font-black leading-none tracking-tight text-muted-foreground mt-2 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-              <span className="inline-block hover:text-foreground transition-colors cursor-default">wallet to wallet</span>
+              <span className="inline-block hover:text-foreground transition-all cursor-default hover:scale-105">
+                wallet to wallet
+              </span>
             </span>
           </h1>
         </div>
 
-        {/* Feature highlights with icons */}
+        {/* Enhanced feature highlights with better styling */}
         <div className="flex flex-wrap items-center justify-center gap-4 max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: '0.3s' }}>
-          <div className="flex items-center gap-2 glass px-4 py-2 rounded-[35px] hover:scale-105 transition-transform cursor-default">
-            <Lock className="w-4 h-4 text-primary" />
-            <span className="text-sm font-semibold">End-to-End Encrypted</span>
+          <div className="flex items-center gap-3 glass-glow px-6 py-3 rounded-[35px] hover:scale-105 hover-glow transition-all cursor-default group">
+            <div className="p-2 rounded-full bg-primary/20 group-hover:bg-primary/30 transition-all">
+              <Lock className="w-4 h-4 text-primary" />
+            </div>
+            <span className="text-sm font-bold">End-to-End Encrypted</span>
           </div>
-          <div className="flex items-center gap-2 glass px-4 py-2 rounded-[35px] hover:scale-105 transition-transform cursor-default">
-            <Zap className="w-4 h-4 text-secondary" />
-            <span className="text-sm font-semibold">Gasless Payments</span>
+          <div className="flex items-center gap-3 glass-glow px-6 py-3 rounded-[35px] hover:scale-105 hover-glow transition-all cursor-default group">
+            <div className="p-2 rounded-full bg-secondary/20 group-hover:bg-secondary/30 transition-all">
+              <Zap className="w-4 h-4 text-secondary" />
+            </div>
+            <span className="text-sm font-bold">Gasless Payments</span>
           </div>
-          <div className="flex items-center gap-2 glass px-4 py-2 rounded-[35px] hover:scale-105 transition-transform cursor-default">
-            <Shield className="w-4 h-4 text-accent" />
-            <span className="text-sm font-semibold">Zero Knowledge</span>
+          <div className="flex items-center gap-3 glass-glow px-6 py-3 rounded-[35px] hover:scale-105 hover-glow transition-all cursor-default group">
+            <div className="p-2 rounded-full bg-accent/20 group-hover:bg-accent/30 transition-all">
+              <Shield className="w-4 h-4 text-accent" />
+            </div>
+            <span className="text-sm font-bold">Zero Knowledge</span>
           </div>
         </div>
 
-        {/* Tagline */}
+        {/* Enhanced tagline with better typography */}
         <div className="max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: '0.4s' }}>
           <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed">
-            Send encrypted messages with micropayments.
+            Send encrypted messages with <span className="text-secondary font-bold">micropayments</span>.
             <br />
-            <span className="text-foreground font-bold">Only your recipient can decrypt.</span>
+            <span className="text-foreground font-black text-2xl md:text-3xl gradient-primary bg-clip-text text-transparent">
+              Only your recipient can decrypt.
+            </span>
             <br />
-            No intermediaries. True privacy.
+            <span className="text-accent font-semibold">No intermediaries. True privacy.</span>
           </p>
         </div>
 
-        {/* CTA Button */}
+        {/* Enhanced CTA Button with better glow */}
         <div className="pt-8 animate-slide-up" style={{ animationDelay: '0.5s' }}>
           <div className="inline-block relative group">
-            <div className="absolute -inset-8 bg-gradient-to-r from-primary via-secondary to-accent opacity-30 blur-3xl group-hover:opacity-60 transition-all duration-500 rounded-full animate-pulse" />
-            <div className="relative transform group-hover:scale-105 transition-transform">
+            {/* Enhanced glow effect */}
+            <div className="absolute -inset-12 bg-gradient-to-r from-primary via-secondary to-accent opacity-40 blur-[60px] group-hover:opacity-70 transition-all duration-700 rounded-full animate-pulse-glow" />
+            <div className="absolute -inset-8 bg-gradient-to-r from-primary/50 via-secondary/50 to-accent/50 opacity-20 blur-2xl group-hover:opacity-40 transition-all duration-500 rounded-full" />
+            <div className="relative transform group-hover:scale-110 transition-bounce">
               <WalletButton />
             </div>
           </div>
         </div>
 
-        {/* Trust indicators */}
-        <div className="flex flex-wrap items-center justify-center gap-8 pt-8 text-sm text-muted-foreground animate-slide-up" style={{ animationDelay: '0.6s' }}>
-          <div className="flex items-center gap-2 hover:text-foreground transition-colors cursor-default">
-            <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-            <span>Military-grade encryption</span>
+        {/* Enhanced trust indicators */}
+        <div className="flex flex-wrap items-center justify-center gap-8 pt-8 animate-slide-up" style={{ animationDelay: '0.6s' }}>
+          <div className="flex items-center gap-3 glass px-4 py-2 rounded-[35px] hover:scale-105 transition-all cursor-default group">
+            <div className="w-3 h-3 rounded-full bg-accent animate-pulse group-hover:scale-125 transition-transform" />
+            <span className="text-sm font-semibold text-muted-foreground group-hover:text-foreground transition-colors">Military-grade encryption</span>
           </div>
-          <div className="flex items-center gap-2 hover:text-foreground transition-colors cursor-default">
-            <div className="w-2 h-2 rounded-full bg-secondary animate-pulse" style={{ animationDelay: '0.5s' }} />
-            <span>~$0.01 per message</span>
+          <div className="flex items-center gap-3 glass px-4 py-2 rounded-[35px] hover:scale-105 transition-all cursor-default group">
+            <div className="w-3 h-3 rounded-full bg-secondary animate-pulse group-hover:scale-125 transition-transform" style={{ animationDelay: '0.5s' }} />
+            <span className="text-sm font-semibold text-muted-foreground group-hover:text-foreground transition-colors">~$0.01 per message</span>
           </div>
-          <div className="flex items-center gap-2 hover:text-foreground transition-colors cursor-default">
-            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '1s' }} />
-            <span>No accounts needed</span>
+          <div className="flex items-center gap-3 glass px-4 py-2 rounded-[35px] hover:scale-105 transition-all cursor-default group">
+            <div className="w-3 h-3 rounded-full bg-primary animate-pulse group-hover:scale-125 transition-transform" style={{ animationDelay: '1s' }} />
+            <span className="text-sm font-semibold text-muted-foreground group-hover:text-foreground transition-colors">No accounts needed</span>
           </div>
         </div>
       </div>
 
-      {/* Scroll Indicator - Enhanced */}
+      {/* Enhanced Scroll Indicator */}
       <button
         onClick={scrollToNext}
         className="absolute bottom-12 z-50 group cursor-pointer"
         aria-label="Scroll to next section"
       >
         <div className="flex flex-col items-center gap-2 animate-bounce">
-          <span className="text-xs uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">Scroll</span>
-          <ChevronDown className="w-8 h-8 text-primary group-hover:scale-125 transition-transform" />
+          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground group-hover:text-primary transition-colors font-bold">Explore</span>
+          <div className="p-2 rounded-full glass-glow group-hover:scale-125 transition-all">
+            <ChevronDown className="w-6 h-6 text-primary" />
+          </div>
         </div>
       </button>
     </section>

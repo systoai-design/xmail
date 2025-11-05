@@ -1,4 +1,4 @@
-import { Wallet, Lock, Zap, ArrowRight, Sparkles } from 'lucide-react';
+import { Wallet, Lock, Zap, ArrowRight, Sparkles, Hexagon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 export const HowItWorks = () => {
@@ -78,6 +78,7 @@ export const HowItWorks = () => {
       details: ['No email required', 'No passwords', 'No signup forms'],
       color: 'primary',
       gradient: 'from-primary/20 to-primary/5',
+      glowColor: 'hsl(267 100% 65% / 0.4)',
     },
     {
       icon: Lock,
@@ -88,6 +89,7 @@ export const HowItWorks = () => {
       details: ['End-to-end encrypted', 'Web Crypto API', 'Zero-knowledge'],
       color: 'secondary',
       gradient: 'from-secondary/20 to-secondary/5',
+      glowColor: 'hsl(187 100% 43% / 0.4)',
     },
     {
       icon: Zap,
@@ -98,6 +100,7 @@ export const HowItWorks = () => {
       details: ['Gasless transaction', '~$0.01 USDC', 'Spam prevention'],
       color: 'accent',
       gradient: 'from-accent/20 to-accent/5',
+      glowColor: 'hsl(150 100% 50% / 0.4)',
     },
   ];
 
@@ -109,32 +112,42 @@ export const HowItWorks = () => {
       ref={sectionRef}
       className="min-h-screen bg-background py-24 px-6 relative overflow-hidden"
     >
-      {/* Animated background */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-0 left-0 w-full h-full" style={{
-          backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(267 100% 35%) 0px, transparent 50%), radial-gradient(circle at 80% 80%, hsl(187 100% 35%) 0px, transparent 50%)',
+      {/* Enhanced animated background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(267 100% 35%) 0px, transparent 50%), radial-gradient(circle at 80% 80%, hsl(187 100% 35%) 0px, transparent 50%), radial-gradient(circle at 50% 20%, hsl(150 100% 35%) 0px, transparent 50%)',
+        }} />
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: 'repeating-linear-gradient(45deg, hsl(267 100% 65% / 0.03) 0px, hsl(267 100% 65% / 0.03) 2px, transparent 2px, transparent 10px)',
         }} />
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Section header */}
-        <div className={`text-center mb-16 fade-in-up ${isVisible ? 'visible' : ''}`}>
-          <div className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-6">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm uppercase tracking-wider font-bold">The Process</span>
+        {/* Enhanced section header */}
+        <div className={`text-center mb-20 fade-in-up ${isVisible ? 'visible' : ''}`}>
+          <div className="inline-flex items-center gap-3 glass-glow px-6 py-3 rounded-full mb-8 hover:scale-105 transition-all cursor-default group">
+            <Hexagon className="w-5 h-5 text-primary animate-pulse" />
+            <span className="text-sm uppercase tracking-[0.3em] font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              The Process
+            </span>
+            <Sparkles className="w-5 h-5 text-secondary animate-pulse" style={{ animationDelay: '0.5s' }} />
           </div>
-          <h2 className="text-6xl md:text-8xl font-black mb-6">
-            How it
+          <h2 className="text-6xl md:text-8xl font-black mb-8 leading-tight">
+            <span className="inline-block hover:scale-105 transition-transform cursor-default">
+              How it
+            </span>
             <br />
-            <span className="gradient-primary bg-clip-text text-transparent">works</span>
+            <span className="gradient-primary bg-clip-text text-transparent inline-block hover:scale-105 transition-transform cursor-default animate-gradient">
+              works
+            </span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Three simple steps to secure, encrypted messaging
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto font-medium">
+            Three simple steps to <span className="text-foreground font-bold">secure, encrypted messaging</span>
           </p>
         </div>
 
-        {/* Steps */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
+        {/* Enhanced steps */}
+        <div className="grid md:grid-cols-3 gap-8 mb-20">
           {steps.map((step, index) => (
             <div
               key={index}
@@ -142,31 +155,37 @@ export const HowItWorks = () => {
               className={`fade-in-up ${isVisible ? 'visible' : ''}`}
               style={{ transitionDelay: `${index * 150}ms` }}
             >
-              <div className={`relative glass-strong p-8 rounded-[35px] hover-lift cursor-default h-full bg-gradient-to-br ${step.gradient} border border-white/5`}>
-                {/* Number badge */}
-                <div className="absolute -top-4 -right-4 w-16 h-16 rounded-[35px] bg-background border-2 border-primary/30 flex items-center justify-center shadow-glow">
-                  <span className="text-2xl font-black text-primary">{step.number}</span>
+              <div className={`relative glass-glow p-10 rounded-[35px] hover-lift hover-glow cursor-default h-full bg-gradient-to-br ${step.gradient} border-2 border-transparent hover:border-${step.color}/30 group`}>
+                {/* Enhanced glow effect */}
+                <div 
+                  className="absolute -inset-4 rounded-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-2xl -z-10"
+                  style={{ background: step.glowColor }}
+                />
+
+                {/* Enhanced number badge */}
+                <div className="absolute -top-6 -right-6 w-20 h-20 rounded-[35px] glass-glow border-2 border-primary/40 flex items-center justify-center shadow-glow-strong animate-pulse-glow group-hover:scale-110 transition-transform">
+                  <span className="text-3xl font-black gradient-primary bg-clip-text text-transparent">{step.number}</span>
                 </div>
 
-                {/* Icon */}
-                <div className={`w-20 h-20 rounded-[35px] bg-gradient-to-br ${step.gradient} border border-${step.color}/30 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                  <step.icon className={`w-10 h-10 text-${step.color}`} />
+                {/* Enhanced icon */}
+                <div className={`w-24 h-24 rounded-[35px] glass-glow bg-gradient-to-br ${step.gradient} border-2 border-${step.color}/40 flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-6 transition-all shadow-lg`}>
+                  <step.icon className={`w-12 h-12 text-${step.color}`} />
                 </div>
 
-                {/* Content */}
-                <div className="space-y-4">
+                {/* Enhanced content */}
+                <div className="space-y-6">
                   <div>
-                    <h3 className="text-4xl font-black mb-1">{step.title}</h3>
-                    <p className="text-lg text-muted-foreground font-semibold">{step.subtitle}</p>
+                    <h3 className="text-4xl md:text-5xl font-black mb-2 group-hover:text-${step.color} transition-colors">{step.title}</h3>
+                    <p className="text-xl text-muted-foreground font-bold">{step.subtitle}</p>
                   </div>
 
-                  <p className="text-lg font-medium">{step.description}</p>
+                  <p className="text-lg font-medium leading-relaxed">{step.description}</p>
 
-                  <ul className="space-y-2">
+                  <ul className="space-y-3">
                     {step.details.map((detail, i) => (
-                      <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <div className={`w-1.5 h-1.5 rounded-full bg-${step.color}`} />
-                        <span>{detail}</span>
+                      <li key={i} className="flex items-center gap-3 text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                        <div className={`w-2 h-2 rounded-full bg-${step.color} shadow-lg group-hover:scale-125 transition-transform`} />
+                        <span className="font-medium">{detail}</span>
                       </li>
                     ))}
                   </ul>
@@ -176,29 +195,31 @@ export const HowItWorks = () => {
           ))}
         </div>
 
-        {/* Progressive Flow indicator */}
-        <div className="flex items-center justify-center gap-4">
-          {/* Line 1 - appears with step 1 */}
+        {/* Enhanced progressive Flow indicator */}
+        <div className="flex items-center justify-center gap-6 flex-wrap">
+          {/* Line 1 */}
           <div 
-            className={`h-1 w-32 bg-gradient-to-r from-transparent via-primary to-transparent ${step1Visible ? 'animate-draw-line' : 'opacity-0'}`}
+            className={`h-1.5 w-40 bg-gradient-to-r from-transparent via-primary to-transparent rounded-full ${step1Visible ? 'animate-draw-line' : 'opacity-0'}`}
           />
-          {/* Arrow 1 - appears after step 1 */}
-          <ArrowRight 
-            className={`w-6 h-6 text-primary ${step1Visible ? 'animate-arrow-enter' : 'opacity-0'}`}
-            style={{ animationDelay: '0.4s' }}
-          />
-          {/* Line 2 - appears with step 2 */}
+          {/* Arrow 1 */}
+          <div className={`${step1Visible ? 'animate-arrow-enter' : 'opacity-0'}`} style={{ animationDelay: '0.4s' }}>
+            <div className="p-3 rounded-full glass-glow border-2 border-primary/30 hover:scale-110 transition-all cursor-default">
+              <ArrowRight className="w-6 h-6 text-primary" />
+            </div>
+          </div>
+          {/* Line 2 */}
           <div 
-            className={`h-1 w-32 bg-gradient-to-r from-transparent via-secondary to-transparent ${step2Visible ? 'animate-draw-line' : 'opacity-0'}`}
+            className={`h-1.5 w-40 bg-gradient-to-r from-transparent via-secondary to-transparent rounded-full ${step2Visible ? 'animate-draw-line' : 'opacity-0'}`}
           />
-          {/* Arrow 2 - appears after step 2 */}
-          <ArrowRight 
-            className={`w-6 h-6 text-secondary ${step2Visible ? 'animate-arrow-enter' : 'opacity-0'}`}
-            style={{ animationDelay: '0.4s' }}
-          />
-          {/* Line 3 - appears with step 3 */}
+          {/* Arrow 2 */}
+          <div className={`${step2Visible ? 'animate-arrow-enter' : 'opacity-0'}`} style={{ animationDelay: '0.4s' }}>
+            <div className="p-3 rounded-full glass-glow border-2 border-secondary/30 hover:scale-110 transition-all cursor-default">
+              <ArrowRight className="w-6 h-6 text-secondary" />
+            </div>
+          </div>
+          {/* Line 3 */}
           <div 
-            className={`h-1 w-32 bg-gradient-to-r from-transparent via-accent to-transparent ${step3Visible ? 'animate-draw-line' : 'opacity-0'}`}
+            className={`h-1.5 w-40 bg-gradient-to-r from-transparent via-accent to-transparent rounded-full ${step3Visible ? 'animate-draw-line' : 'opacity-0'}`}
           />
         </div>
       </div>

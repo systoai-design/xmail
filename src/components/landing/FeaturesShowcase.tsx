@@ -47,31 +47,51 @@ export const FeaturesShowcase = () => {
 
   return (
     <section ref={sectionRef} className="min-h-screen gradient-section py-24 px-6 relative overflow-hidden">
+      {/* Enhanced background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: 'radial-gradient(circle at 80% 20%, hsl(267 100% 35%) 0px, transparent 50%), radial-gradient(circle at 20% 80%, hsl(187 100% 35%) 0px, transparent 50%)',
+        }} />
+      </div>
+
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Title */}
-        <div className={`text-center mb-16 fade-in-up ${isVisible ? 'visible' : ''}`}>
-          <span className="text-lg uppercase tracking-[0.3em] text-secondary font-bold mb-4 block">Features</span>
-          <h2 className="text-6xl md:text-7xl font-black max-w-4xl mx-auto">
-            Privacy meets
+        {/* Enhanced Title */}
+        <div className={`text-center mb-20 fade-in-up ${isVisible ? 'visible' : ''}`}>
+          <span className="text-lg uppercase tracking-[0.3em] font-black mb-6 block bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent">
+            Features
+          </span>
+          <h2 className="text-6xl md:text-8xl font-black max-w-4xl mx-auto leading-tight">
+            <span className="inline-block hover:scale-105 transition-transform cursor-default">
+              Privacy meets
+            </span>
             <br />
-            <span className="gradient-primary bg-clip-text text-transparent">
+            <span className="gradient-primary bg-clip-text text-transparent inline-block hover:scale-105 transition-transform cursor-default animate-gradient">
               simplicity
             </span>
           </h2>
         </div>
 
-        {/* Features grid with staggered layout */}
-        <div className="grid md:grid-cols-2 gap-8">
+        {/* Enhanced Features grid with staggered layout */}
+        <div className="grid md:grid-cols-2 gap-10">
           {features.map((feature, index) => (
             <div
               key={index}
               className={`fade-in-up ${isVisible ? 'visible' : ''} ${index % 2 === 1 ? 'md:mt-16' : ''}`}
               style={{ transitionDelay: `${index * 100}ms` }}
             >
-              <div className="glass-strong p-12 rounded-[35px] hover:scale-105 transition-slow h-full group cursor-pointer border border-transparent hover:border-primary/30">
-                <feature.icon className="w-16 h-16 text-primary mb-6 group-hover:scale-110 transition-smooth" />
-                <h3 className="text-3xl font-black mb-4">{feature.title}</h3>
-                <p className="text-lg text-muted-foreground leading-relaxed">
+              <div className="glass-glow p-12 rounded-[35px] hover-lift hover-glow h-full group cursor-pointer border-2 border-transparent hover:border-primary/40 relative">
+                {/* Glow effect */}
+                <div className="absolute -inset-4 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-3xl rounded-[40px] -z-10" />
+                
+                {/* Icon container */}
+                <div className="w-20 h-20 rounded-[35px] glass-glow border-2 border-primary/30 flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-6 transition-all shadow-lg">
+                  <feature.icon className="w-10 h-10 text-primary" />
+                </div>
+                
+                <h3 className="text-3xl md:text-4xl font-black mb-6 group-hover:gradient-primary group-hover:bg-clip-text group-hover:text-transparent transition-all">
+                  {feature.title}
+                </h3>
+                <p className="text-lg md:text-xl text-muted-foreground leading-relaxed group-hover:text-foreground transition-colors">
                   {feature.description}
                 </p>
               </div>
