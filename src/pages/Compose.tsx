@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Lock, Loader2, DollarSign } from 'lucide-react';
+import { ArrowLeft, Lock, Loader2, DollarSign, Shield } from 'lucide-react';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { encryptMessage, importPublicKey } from '@/lib/encryption';
 import { PublicKey } from '@solana/web3.js';
 import { useEncryptionKeys } from '@/hooks/useEncryptionKeys';
+import { isAdmin } from '@/lib/userRoles';
 
 const Compose = () => {
   const { publicKey, signMessage } = useWallet();
@@ -21,6 +23,14 @@ const Compose = () => {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
+
+  // Check admin status on mount
+  useEffect(() => {
+    if (publicKey) {
+      isAdmin(publicKey.toBase58()).then(setUserIsAdmin);
+    }
+  }, [publicKey]);
 
   const handleSend = async () => {
     if (!publicKey || !signMessage) {
@@ -88,8 +98,8 @@ const Compose = () => {
       const signature = await signMessage(message);
       const signatureBase64 = btoa(String.fromCharCode(...signature));
 
-      // For MVP: Mock payment (in production, this would trigger x402 flow)
-      const mockPaymentTx = 'mock_' + Math.random().toString(36).substring(7);
+      // Admin users bypass payment requirement
+      const mockPaymentTx = userIsAdmin ? 'admin_exempt_' + Math.random().toString(36).substring(7) : 'mock_' + Math.random().toString(36).substring(7);
 
       // Store encrypted email
       const { error } = await supabase
@@ -190,23 +200,34 @@ const Compose = () => {
             />
           </div>
 
-          {/* Payment Preview */}
-          <div className="glass p-6 rounded-xl border-2 border-primary/30">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <DollarSign className="w-8 h-8 text-secondary" />
-                <div>
-                  <div className="text-lg font-bold">Payment Required</div>
-                  <div className="text-sm text-muted-foreground">
-                    x402 Protocol • Gasless Transaction
-                  </div>
+          {/* Admin Badge or Payment Preview */}
+          {userIsAdmin ? (
+            <div className="glass p-6 rounded-xl border-2 border-accent/30">
+              <div className="flex items-center justify-center gap-3">
+                <Shield className="w-8 h-8 text-accent" />
+                <div className="text-xl font-bold text-accent">
+                  Admin Access - No Payment Required
                 </div>
               </div>
-              <div className="text-3xl font-black text-secondary">
-                $0.01 USDC
+            </div>
+          ) : (
+            <div className="glass p-6 rounded-xl border-2 border-primary/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <DollarSign className="w-8 h-8 text-secondary" />
+                  <div>
+                    <div className="text-lg font-bold">Payment Required</div>
+                    <div className="text-sm text-muted-foreground">
+                      x402 Protocol • Gasless Transaction
+                    </div>
+                  </div>
+                </div>
+                <div className="text-3xl font-black text-secondary">
+                  $0.01 USDC
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           <Button
             onClick={handleSend}

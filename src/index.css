@@ -41,9 +41,17 @@ All colors MUST be HSL.
     /* Custom design tokens */
     --gradient-primary: linear-gradient(135deg, hsl(267 100% 65%), hsl(187 100% 43%));
     --gradient-card: linear-gradient(180deg, hsl(0 0% 10%), hsl(0 0% 7%));
+    --gradient-hero: linear-gradient(180deg, hsl(267 100% 20%), hsl(0 0% 4%));
+    --gradient-section: linear-gradient(180deg, hsl(0 0% 4%), hsl(267 100% 15%), hsl(0 0% 4%));
     --shadow-glow: 0 0 40px hsl(267 100% 65% / 0.3);
     --shadow-glow-cyan: 0 0 40px hsl(187 100% 43% / 0.3);
+    --shadow-glow-strong: 0 0 60px hsl(267 100% 65% / 0.5);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* CTA Color */
+    --cta: 30 100% 56%;
+    --cta-foreground: 0 0% 0%;
   }
 }
 
@@ -70,6 +78,14 @@ All colors MUST be HSL.
     background: var(--gradient-card);
   }
 
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .gradient-section {
+    background: var(--gradient-section);
+  }
+
   .shadow-glow {
     box-shadow: var(--shadow-glow);
   }
@@ -78,13 +94,48 @@ All colors MUST be HSL.
     box-shadow: var(--shadow-glow-cyan);
   }
 
+  .shadow-glow-strong {
+    box-shadow: var(--shadow-glow-strong);
+  }
+
   .transition-smooth {
     transition: var(--transition-smooth);
+  }
+
+  .transition-slow {
+    transition: var(--transition-slow);
   }
 
   .glass {
     background: rgba(26, 26, 26, 0.7);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-strong {
+    background: rgba(26, 26, 26, 0.9);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  /* Scroll animations */
+  .fade-in-up {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+  }
+
+  .fade-in-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .fade-in {
+    opacity: 0;
+    transition: opacity 0.8s ease-out;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
   }
 }
