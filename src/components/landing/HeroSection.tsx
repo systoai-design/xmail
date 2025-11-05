@@ -164,19 +164,6 @@ export const HeroSection = () => {
         </div>
       </div>
 
-      {/* Enhanced Scroll Indicator */}
-      <button
-        onClick={scrollToNext}
-        className="absolute bottom-12 z-50 group cursor-pointer"
-        aria-label="Scroll to next section"
-      >
-        <div className="flex flex-col items-center gap-2 animate-bounce">
-          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground group-hover:text-primary transition-colors font-bold">Explore</span>
-          <div className="p-2 rounded-full glass-glow group-hover:scale-125 transition-all">
-            <ChevronDown className="w-6 h-6 text-primary" />
-          </div>
-        </div>
-      </button>
     </section>
   );
 };
