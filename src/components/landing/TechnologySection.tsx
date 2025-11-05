@@ -47,7 +47,7 @@ export const TechnologySection = () => {
     <section ref={sectionRef} className="bg-background py-16 sm:py-20 md:py-24 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto">
         <h2
-          className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-center mb-10 sm:mb-12 md:mb-16 fade-in-up ${
+          className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-center mb-10 sm:mb-12 md:mb-16 fade-in-up gradient-primary bg-clip-text text-transparent ${
             isVisible ? 'visible' : ''
           }`}
         >
