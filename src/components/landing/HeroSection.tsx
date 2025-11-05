@@ -57,7 +57,7 @@ export const HeroSection = () => {
 
       <div className={`max-w-7xl w-full text-center space-y-12 fade-in-up ${isVisible ? 'visible' : ''} relative z-10`}>
         {/* Floating badge */}
-        <div className="inline-flex items-center gap-3 glass px-6 py-3 rounded-full mb-8 animate-bounce-slow">
+        <div className="inline-flex items-center gap-3 glass px-6 py-3 rounded-[35px] mb-8 animate-bounce-slow">
           <Sparkles className="w-5 h-5 text-accent" />
           <span className="text-sm font-bold tracking-wider uppercase">Solana x402 Protocol</span>
           <Sparkles className="w-5 h-5 text-accent" />
@@ -80,15 +80,15 @@ export const HeroSection = () => {
 
         {/* Feature highlights with icons */}
         <div className="flex flex-wrap items-center justify-center gap-4 max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: '0.3s' }}>
-          <div className="flex items-center gap-2 glass px-4 py-2 rounded-full hover:scale-105 transition-transform cursor-default">
+          <div className="flex items-center gap-2 glass px-4 py-2 rounded-[35px] hover:scale-105 transition-transform cursor-default">
             <Lock className="w-4 h-4 text-primary" />
             <span className="text-sm font-semibold">End-to-End Encrypted</span>
           </div>
-          <div className="flex items-center gap-2 glass px-4 py-2 rounded-full hover:scale-105 transition-transform cursor-default">
+          <div className="flex items-center gap-2 glass px-4 py-2 rounded-[35px] hover:scale-105 transition-transform cursor-default">
             <Zap className="w-4 h-4 text-secondary" />
             <span className="text-sm font-semibold">Gasless Payments</span>
           </div>
-          <div className="flex items-center gap-2 glass px-4 py-2 rounded-full hover:scale-105 transition-transform cursor-default">
+          <div className="flex items-center gap-2 glass px-4 py-2 rounded-[35px] hover:scale-105 transition-transform cursor-default">
             <Shield className="w-4 h-4 text-accent" />
             <span className="text-sm font-semibold">Zero Knowledge</span>
           </div>

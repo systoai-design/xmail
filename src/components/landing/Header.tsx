@@ -5,7 +5,7 @@ export const Header = () => {
   return (
     <header className="fixed top-4 left-0 right-0 z-50 px-6">
       <div className="max-w-7xl mx-auto">
-        <nav className="glass-strong rounded-full px-8 py-4 flex items-center justify-between">
+        <nav className="glass-ultra rounded-[35px] px-8 py-4 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2">
             <Lock className="w-5 h-5 text-primary" />

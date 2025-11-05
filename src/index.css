@@ -131,6 +131,12 @@ All colors MUST be HSL.
     border: 1px solid rgba(255, 255, 255, 0.15);
   }
 
+  .glass-ultra {
+    background: rgba(26, 26, 26, 0.35);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
   /* Scroll animations */
   .fade-in-up {
     opacity: 0;
@@ -206,6 +212,39 @@ All colors MUST be HSL.
   @keyframes mesh-move {
     0%, 100% { transform: translate(0, 0); }
     50% { transform: translate(30px, 30px); }
+  }
+
+  /* Progressive line drawing */
+  @keyframes draw-line {
+    from {
+      transform: scaleX(0);
+      opacity: 0;
+    }
+    to {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+  }
+
+  /* Arrow entrance */
+  @keyframes arrow-enter {
+    from {
+      transform: translateX(-20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-draw-line {
+    animation: draw-line 0.8s ease-out forwards;
+    transform-origin: left;
+  }
+
+  .animate-arrow-enter {
+    animation: arrow-enter 0.5s ease-out forwards;
   }
 
   /* Text effects */

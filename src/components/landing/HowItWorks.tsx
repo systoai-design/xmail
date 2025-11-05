@@ -3,7 +3,14 @@ import { useEffect, useRef, useState } from 'react';
 
 export const HowItWorks = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const step1Ref = useRef<HTMLDivElement>(null);
+  const step2Ref = useRef<HTMLDivElement>(null);
+  const step3Ref = useRef<HTMLDivElement>(null);
+  
   const [isVisible, setIsVisible] = useState(false);
+  const [step1Visible, setStep1Visible] = useState(false);
+  const [step2Visible, setStep2Visible] = useState(false);
+  const [step3Visible, setStep3Visible] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -20,6 +27,45 @@ export const HowItWorks = () => {
     }
 
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const observer1 = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setStep1Visible(true);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    const observer2 = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setStep2Visible(true);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    const observer3 = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setStep3Visible(true);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (step1Ref.current) observer1.observe(step1Ref.current);
+    if (step2Ref.current) observer2.observe(step2Ref.current);
+    if (step3Ref.current) observer3.observe(step3Ref.current);
+
+    return () => {
+      observer1.disconnect();
+      observer2.disconnect();
+      observer3.disconnect();
+    };
   }, []);
 
   const steps = [
@@ -54,6 +100,8 @@ export const HowItWorks = () => {
       gradient: 'from-accent/20 to-accent/5',
     },
   ];
+
+  const stepRefs = [step1Ref, step2Ref, step3Ref];
 
   return (
     <section
@@ -90,17 +138,18 @@ export const HowItWorks = () => {
           {steps.map((step, index) => (
             <div
               key={index}
+              ref={stepRefs[index]}
               className={`fade-in-up ${isVisible ? 'visible' : ''}`}
               style={{ transitionDelay: `${index * 150}ms` }}
             >
-              <div className={`relative glass-strong p-8 rounded-3xl hover-lift cursor-default h-full bg-gradient-to-br ${step.gradient} border border-white/5`}>
+              <div className={`relative glass-strong p-8 rounded-[35px] hover-lift cursor-default h-full bg-gradient-to-br ${step.gradient} border border-white/5`}>
                 {/* Number badge */}
-                <div className="absolute -top-4 -right-4 w-16 h-16 rounded-2xl bg-background border-2 border-primary/30 flex items-center justify-center shadow-glow">
+                <div className="absolute -top-4 -right-4 w-16 h-16 rounded-[35px] bg-background border-2 border-primary/30 flex items-center justify-center shadow-glow">
                   <span className="text-2xl font-black text-primary">{step.number}</span>
                 </div>
 
                 {/* Icon */}
-                <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${step.gradient} border border-${step.color}/30 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                <div className={`w-20 h-20 rounded-[35px] bg-gradient-to-br ${step.gradient} border border-${step.color}/30 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
                   <step.icon className={`w-10 h-10 text-${step.color}`} />
                 </div>
 
@@ -127,13 +176,30 @@ export const HowItWorks = () => {
           ))}
         </div>
 
-        {/* Flow indicator */}
-        <div className={`flex items-center justify-center gap-4 fade-in-up ${isVisible ? 'visible' : ''}`} style={{ transitionDelay: '450ms' }}>
-          <div className="h-1 w-32 bg-gradient-to-r from-transparent via-primary to-transparent" />
-          <ArrowRight className="w-6 h-6 text-primary" />
-          <div className="h-1 w-32 bg-gradient-to-r from-transparent via-secondary to-transparent" />
-          <ArrowRight className="w-6 h-6 text-secondary" />
-          <div className="h-1 w-32 bg-gradient-to-r from-transparent via-accent to-transparent" />
+        {/* Progressive Flow indicator */}
+        <div className="flex items-center justify-center gap-4">
+          {/* Line 1 - appears with step 1 */}
+          <div 
+            className={`h-1 w-32 bg-gradient-to-r from-transparent via-primary to-transparent ${step1Visible ? 'animate-draw-line' : 'opacity-0'}`}
+          />
+          {/* Arrow 1 - appears after step 1 */}
+          <ArrowRight 
+            className={`w-6 h-6 text-primary ${step1Visible ? 'animate-arrow-enter' : 'opacity-0'}`}
+            style={{ animationDelay: '0.4s' }}
+          />
+          {/* Line 2 - appears with step 2 */}
+          <div 
+            className={`h-1 w-32 bg-gradient-to-r from-transparent via-secondary to-transparent ${step2Visible ? 'animate-draw-line' : 'opacity-0'}`}
+          />
+          {/* Arrow 2 - appears after step 2 */}
+          <ArrowRight 
+            className={`w-6 h-6 text-secondary ${step2Visible ? 'animate-arrow-enter' : 'opacity-0'}`}
+            style={{ animationDelay: '0.4s' }}
+          />
+          {/* Line 3 - appears with step 3 */}
+          <div 
+            className={`h-1 w-32 bg-gradient-to-r from-transparent via-accent to-transparent ${step3Visible ? 'animate-draw-line' : 'opacity-0'}`}
+          />
         </div>
       </div>
     </section>

@@ -68,7 +68,7 @@ export const FeaturesShowcase = () => {
               className={`fade-in-up ${isVisible ? 'visible' : ''} ${index % 2 === 1 ? 'md:mt-16' : ''}`}
               style={{ transitionDelay: `${index * 100}ms` }}
             >
-              <div className="glass-strong p-12 rounded-3xl hover:scale-105 transition-slow h-full group cursor-pointer border border-transparent hover:border-primary/30">
+              <div className="glass-strong p-12 rounded-[35px] hover:scale-105 transition-slow h-full group cursor-pointer border border-transparent hover:border-primary/30">
                 <feature.icon className="w-16 h-16 text-primary mb-6 group-hover:scale-110 transition-smooth" />
                 <h3 className="text-3xl font-black mb-4">{feature.title}</h3>
                 <p className="text-lg text-muted-foreground leading-relaxed">
