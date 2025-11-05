@@ -7,7 +7,7 @@ export const Footer = () => {
         <div className="flex flex-col items-center space-y-4 sm:space-y-6">
           {/* Logo/Brand */}
           <h3 className="text-2xl sm:text-3xl md:text-4xl font-black gradient-primary bg-clip-text text-transparent">
-            x402Mail
+            xmail
           </h3>
 
           {/* Tagline */}
@@ -18,7 +18,7 @@ export const Footer = () => {
 
           {/* Copyright */}
           <p className="text-xs sm:text-sm text-muted-foreground text-center">
-            © {new Date().getFullYear()} x402Mail. Built with privacy in mind.
+            © {new Date().getFullYear()} xmail. Built with privacy in mind.
           </p>
         </div>
       </div>

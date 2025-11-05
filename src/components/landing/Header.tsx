@@ -10,7 +10,7 @@ export const Header = () => {
           <div className="flex items-center gap-1.5 sm:gap-2">
             <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             <span className="text-base sm:text-xl font-black gradient-primary bg-clip-text text-transparent">
-              x402Mail
+              xmail
             </span>
           </div>
 

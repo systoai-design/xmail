@@ -1,13 +1,19 @@
 import { WalletButton } from '@/components/WalletButton';
 import { ChevronDown, Lock, Zap, Shield, Sparkles, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useParallax } from '@/hooks/useParallax';
 
 export const HeroSection = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isMobile, setIsMobile] = useState(false);
+  const parallaxSlow = useParallax(0.2);
+  const parallaxMedium = useParallax(0.4);
+  const parallaxFast = useParallax(0.6);
 
   useEffect(() => {
     setIsVisible(true);
+    setIsMobile(window.innerWidth < 768);
     
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
@@ -27,16 +33,18 @@ export const HeroSection = () => {
       {/* Enhanced animated grid background */}
       <div className="absolute inset-0">
         {/* Mouse-reactive gradient */}
-        <div className="absolute inset-0 opacity-30" style={{
+        <div className="absolute inset-0 opacity-30 parallax-layer" style={{
           backgroundImage: `radial-gradient(circle 800px at ${mousePosition.x}px ${mousePosition.y}px, hsl(267 100% 65% / 0.4) 0%, transparent 50%)`,
-          transition: 'background-image 0.3s ease-out'
+          transition: 'background-image 0.3s ease-out',
+          transform: parallaxSlow.transform
         }} />
         
         {/* Animated grid */}
-        <div className="absolute inset-0 opacity-20" style={{
+        <div className="absolute inset-0 opacity-20 parallax-layer" style={{
           backgroundImage: 'linear-gradient(to right, hsl(267 100% 65% / 0.15) 1px, transparent 1px), linear-gradient(to bottom, hsl(267 100% 65% / 0.15) 1px, transparent 1px)',
           backgroundSize: '80px 80px',
-          animation: 'mesh-move 20s ease-in-out infinite'
+          animation: 'mesh-move 20s ease-in-out infinite',
+          transform: parallaxMedium.transform
         }} />
 
         {/* Gradient overlay */}
@@ -44,16 +52,16 @@ export const HeroSection = () => {
       </div>
 
       {/* Enhanced floating orbs - reduced on mobile */}
-      <div className="absolute top-20 right-10 sm:right-20 w-48 sm:w-96 h-48 sm:h-96 bg-primary/30 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-40 left-10 sm:left-20 w-64 sm:w-[500px] h-64 sm:h-[500px] bg-secondary/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      <div className="hidden sm:block absolute top-1/2 left-1/2 w-64 h-64 bg-accent/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-      <div className="hidden sm:block absolute top-40 left-1/3 w-80 h-80 bg-primary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }} />
+      <div className="absolute top-20 right-10 sm:right-20 w-48 sm:w-96 h-48 sm:h-96 bg-primary/30 rounded-full blur-3xl animate-pulse parallax-layer" style={{ transform: parallaxFast.transform }} />
+      <div className="absolute bottom-40 left-10 sm:left-20 w-64 sm:w-[500px] h-64 sm:h-[500px] bg-secondary/30 rounded-full blur-3xl animate-pulse parallax-layer" style={{ animationDelay: '1s', transform: parallaxMedium.transform }} />
+      <div className="hidden sm:block absolute top-1/2 left-1/2 w-64 h-64 bg-accent/20 rounded-full blur-3xl animate-pulse parallax-layer" style={{ animationDelay: '2s', transform: parallaxSlow.transform }} />
+      <div className="hidden sm:block absolute top-40 left-1/3 w-80 h-80 bg-primary/20 rounded-full blur-3xl animate-pulse parallax-layer" style={{ animationDelay: '1.5s', transform: parallaxMedium.transform }} />
       
       {/* Enhanced floating particles - fewer on mobile */}
-      {[...Array(30)].map((_, i) => i < 15 || window.innerWidth > 768 ? (
+      {[...Array(isMobile ? 10 : 30)].map((_, i) => (
         <div
           key={i}
-          className="absolute rounded-full animate-float"
+          className="absolute rounded-full animate-float parallax-layer"
           style={{
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
@@ -62,10 +70,11 @@ export const HeroSection = () => {
             background: i % 3 === 0 ? 'hsl(267 100% 65% / 0.4)' : i % 3 === 1 ? 'hsl(187 100% 43% / 0.4)' : 'hsl(150 100% 50% / 0.4)',
             animationDelay: `${Math.random() * 5}s`,
             animationDuration: `${5 + Math.random() * 10}s`,
-            boxShadow: i % 5 === 0 ? '0 0 20px currentColor' : 'none'
+            boxShadow: i % 5 === 0 ? '0 0 20px currentColor' : 'none',
+            transform: i % 2 === 0 ? parallaxFast.transform : parallaxMedium.transform
           }}
         />
-      ) : null)}
+      ))}
 
       <div className={`max-w-7xl w-full text-center space-y-6 sm:space-y-12 fade-in-up ${isVisible ? 'visible' : ''} relative z-10`}>
         {/* Enhanced floating badge with glow */}

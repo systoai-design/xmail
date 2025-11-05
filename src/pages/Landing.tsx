@@ -5,6 +5,7 @@ import { Header } from '@/components/landing/Header';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { FeaturesShowcase } from '@/components/landing/FeaturesShowcase';
+import { InteractiveDemo } from '@/components/landing/InteractiveDemo';
 import { TechnologySection } from '@/components/landing/TechnologySection';
 import { CTASection } from '@/components/landing/CTASection';
 import { Footer } from '@/components/landing/Footer';
@@ -25,6 +26,7 @@ const Landing = () => {
       <HeroSection />
       <HowItWorks />
       <FeaturesShowcase />
+      <InteractiveDemo />
       <TechnologySection />
       <CTASection />
       <Footer />

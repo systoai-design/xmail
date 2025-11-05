@@ -80,7 +80,7 @@ const Inbox = () => {
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h1 className="text-4xl font-black gradient-primary bg-clip-text text-transparent">
-              x402Mail
+              xmail
             </h1>
             {publicKey && (
               <div className="text-sm text-muted-foreground font-mono">

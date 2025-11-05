@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
+import { useParallax } from '@/hooks/useParallax';
 
 export const TechnologySection = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const parallax1 = useParallax(0.1);
+  const parallax2 = useParallax(0.15);
+  const parallax3 = useParallax(0.2);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -54,10 +58,13 @@ export const TechnologySection = () => {
           {technologies.map((tech, index) => (
             <div
               key={index}
-              className={`glass-strong p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl hover:shadow-glow transition-slow fade-in-up ${
+              className={`glass-strong p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl hover:shadow-glow transition-slow fade-in-up parallax-layer ${
                 isVisible ? 'visible' : ''
               }`}
-              style={{ transitionDelay: `${index * 150}ms` }}
+              style={{ 
+                transitionDelay: `${index * 150}ms`,
+                transform: index === 0 ? parallax1.transform : index === 1 ? parallax2.transform : parallax3.transform
+              }}
             >
               <h3 className={`text-3xl sm:text-4xl md:text-5xl font-black mb-2 sm:mb-3 ${tech.color}`}>
                 {tech.name}

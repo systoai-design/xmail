@@ -1,5 +1,6 @@
 import { Wallet, Lock, Zap, ArrowRight, Sparkles, Hexagon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useParallax } from '@/hooks/useParallax';
 
 export const HowItWorks = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -11,6 +12,9 @@ export const HowItWorks = () => {
   const [step1Visible, setStep1Visible] = useState(false);
   const [step2Visible, setStep2Visible] = useState(false);
   const [step3Visible, setStep3Visible] = useState(false);
+  
+  const parallaxSlow = useParallax(0.15);
+  const parallaxMedium = useParallax(0.25);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -114,11 +118,13 @@ export const HowItWorks = () => {
     >
       {/* Enhanced animated background */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 opacity-20" style={{
+        <div className="absolute inset-0 opacity-20 parallax-layer" style={{
           backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(267 100% 35%) 0px, transparent 50%), radial-gradient(circle at 80% 80%, hsl(187 100% 35%) 0px, transparent 50%), radial-gradient(circle at 50% 20%, hsl(150 100% 35%) 0px, transparent 50%)',
+          transform: parallaxSlow.transform,
         }} />
-        <div className="absolute inset-0 opacity-10" style={{
+        <div className="absolute inset-0 opacity-10 parallax-layer" style={{
           backgroundImage: 'repeating-linear-gradient(45deg, hsl(267 100% 65% / 0.03) 0px, hsl(267 100% 65% / 0.03) 2px, transparent 2px, transparent 10px)',
+          transform: parallaxMedium.transform,
         }} />
       </div>
 
