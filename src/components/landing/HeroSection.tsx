@@ -135,7 +135,7 @@ export const HeroSection = () => {
       {/* Scroll Indicator - Enhanced */}
       <button
         onClick={scrollToNext}
-        className="absolute bottom-12 z-10 group cursor-pointer"
+        className="absolute bottom-12 z-50 group cursor-pointer"
         aria-label="Scroll to next section"
       >
         <div className="flex flex-col items-center gap-2 animate-bounce">
