@@ -1,7 +1,15 @@
 import { WalletButton } from '@/components/WalletButton';
 import { ChevronDown } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export const HeroSection = () => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    // Trigger animation on mount
+    setIsVisible(true);
+  }, []);
+
   const scrollToNext = () => {
     const nextSection = document.getElementById('how-it-works');
     nextSection?.scrollIntoView({ behavior: 'smooth' });
@@ -9,7 +17,7 @@ export const HeroSection = () => {
 
   return (
     <section className="min-h-screen gradient-hero flex flex-col items-center justify-center relative px-6">
-      <div className="max-w-6xl w-full text-center space-y-8 fade-in-up">
+      <div className={`max-w-6xl w-full text-center space-y-8 fade-in-up ${isVisible ? 'visible' : ''}`}>
         <h1 className="text-8xl md:text-9xl font-black text-foreground leading-tight">
           encrypted messaging
           <br />
