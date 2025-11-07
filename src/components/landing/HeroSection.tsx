@@ -48,7 +48,7 @@ export const HeroSection = () => {
         }} />
 
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/50 to-background" />
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-primary/10 to-transparent" />
       </div>
 
       {/* Enhanced floating orbs - reduced on mobile */}

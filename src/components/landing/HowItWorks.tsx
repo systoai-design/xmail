@@ -114,7 +114,7 @@ export const HowItWorks = () => {
     <section
       id="how-it-works"
       ref={sectionRef}
-      className="min-h-screen bg-background py-16 sm:py-20 md:py-24 px-4 sm:px-6 relative overflow-hidden"
+      className="min-h-screen gradient-section py-16 sm:py-20 md:py-24 px-4 sm:px-6 relative overflow-hidden mt-[-1px]"
     >
       {/* Enhanced animated background */}
       <div className="absolute inset-0">
