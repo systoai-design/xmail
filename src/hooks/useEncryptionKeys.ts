@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { supabase } from '@/integrations/supabase/client';
 import { generateKeyPair, exportPublicKey, exportPrivateKey } from '@/lib/encryption';
+import { toast } from '@/hooks/use-toast';
 
 export const useEncryptionKeys = () => {
   const { publicKey, connected, signMessage } = useWallet();
@@ -48,7 +49,18 @@ export const useEncryptionKeys = () => {
 
       if (error) {
         console.error('Error storing public key:', error);
+        toast({
+          title: "Registration Failed",
+          description: "Failed to register your encryption key. Please try reconnecting your wallet.",
+          variant: "destructive",
+        });
+        return;
       }
+
+      toast({
+        title: "Keys Registered",
+        description: "Your encryption keys have been successfully registered.",
+      });
 
       setKeysReady(true);
     } catch (error) {
