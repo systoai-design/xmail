@@ -368,6 +368,373 @@ serve(async (req) => {
         );
       }
 
+      // === ATTACHMENT ACTIONS ===
+      
+      case 'upload_attachment': {
+        const { draftId, fileName, fileSize, mimeType, encryptedSymmetricKey, iv } = data;
+        
+        const encryptedFileName = `${verifiedWallet}/${crypto.randomUUID()}`;
+        
+        const { data: attachment, error } = await supabaseAdmin
+          .from('email_attachments')
+          .insert({
+            draft_id: draftId,
+            wallet_address: verifiedWallet,
+            file_name: fileName,
+            encrypted_file_name: encryptedFileName,
+            file_size_bytes: fileSize,
+            mime_type: mimeType,
+            encrypted_symmetric_key: encryptedSymmetricKey,
+            iv: iv
+          })
+          .select()
+          .single();
+          
+        if (error) throw error;
+        
+        return new Response(
+          JSON.stringify({ attachment, uploadPath: encryptedFileName }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'get_attachments': {
+        const { emailId, draftId } = data;
+        
+        const query = supabaseAdmin
+          .from('email_attachments')
+          .select('*');
+          
+        if (emailId) query.eq('email_id', emailId);
+        if (draftId) query.eq('draft_id', draftId);
+        
+        const { data: attachments, error } = await query;
+        
+        if (error) throw error;
+        
+        return new Response(
+          JSON.stringify({ attachments: attachments || [] }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'delete_attachment': {
+        const { attachmentId } = data;
+        
+        const { data: attachment, error: fetchError } = await supabaseAdmin
+          .from('email_attachments')
+          .select('*')
+          .eq('id', attachmentId)
+          .eq('wallet_address', verifiedWallet)
+          .single();
+          
+        if (fetchError || !attachment) throw new Error('Attachment not found');
+        
+        const { error: storageError } = await supabaseAdmin
+          .storage
+          .from('email-attachments')
+          .remove([attachment.encrypted_file_name]);
+          
+        if (storageError) console.error('Storage delete error:', storageError);
+        
+        const { error: deleteError } = await supabaseAdmin
+          .from('email_attachments')
+          .delete()
+          .eq('id', attachmentId);
+          
+        if (deleteError) throw deleteError;
+        
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'attach_to_email': {
+        const { draftId, emailId } = data;
+        
+        const { error } = await supabaseAdmin
+          .from('email_attachments')
+          .update({ email_id: emailId, draft_id: null })
+          .eq('draft_id', draftId);
+          
+        if (error) throw error;
+        
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // === LABEL ACTIONS ===
+
+      case 'create_label': {
+        const { name, color, icon } = data;
+        
+        const { data: label, error } = await supabaseAdmin
+          .from('email_labels')
+          .insert({
+            wallet_address: verifiedWallet,
+            name,
+            color: color || '#3b82f6',
+            icon: icon || 'tag'
+          })
+          .select()
+          .single();
+          
+        if (error) throw error;
+        
+        return new Response(
+          JSON.stringify({ label }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'get_labels': {
+        const { data: labels, error } = await supabaseAdmin
+          .from('email_labels')
+          .select('*')
+          .eq('wallet_address', verifiedWallet)
+          .order('name');
+          
+        if (error) throw error;
+        
+        return new Response(
+          JSON.stringify({ labels: labels || [] }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'assign_label': {
+        const { emailId, labelId } = data;
+        
+        const { error } = await supabaseAdmin
+          .from('email_label_assignments')
+          .insert({
+            email_id: emailId,
+            label_id: labelId,
+            wallet_address: verifiedWallet
+          });
+          
+        if (error) throw error;
+        
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'remove_label': {
+        const { emailId, labelId } = data;
+        
+        const { error } = await supabaseAdmin
+          .from('email_label_assignments')
+          .delete()
+          .eq('email_id', emailId)
+          .eq('label_id', labelId)
+          .eq('wallet_address', verifiedWallet);
+          
+        if (error) throw error;
+        
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'get_emails_by_label': {
+        const { labelId } = data;
+        
+        const { data: assignments, error: assignError } = await supabaseAdmin
+          .from('email_label_assignments')
+          .select('email_id')
+          .eq('label_id', labelId)
+          .eq('wallet_address', verifiedWallet);
+          
+        if (assignError) throw assignError;
+        
+        const emailIds = (assignments || []).map(a => a.email_id);
+        
+        const { data: emails, error: emailError } = await supabaseAdmin
+          .from('encrypted_emails')
+          .select('*')
+          .in('id', emailIds)
+          .order('timestamp', { ascending: false });
+          
+        if (emailError) throw emailError;
+        
+        return new Response(
+          JSON.stringify({ emails: emails || [] }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // === TEMPLATE ACTIONS ===
+
+      case 'create_template': {
+        const { name, description, encryptedSubject, encryptedBody, variables } = data;
+        
+        const { data: template, error } = await supabaseAdmin
+          .from('email_templates')
+          .insert({
+            wallet_address: verifiedWallet,
+            name,
+            description,
+            encrypted_subject: encryptedSubject,
+            encrypted_body: encryptedBody,
+            variables: variables || []
+          })
+          .select()
+          .single();
+          
+        if (error) throw error;
+        
+        return new Response(
+          JSON.stringify({ template }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'get_templates': {
+        const { data: templates, error } = await supabaseAdmin
+          .from('email_templates')
+          .select('*')
+          .eq('wallet_address', verifiedWallet)
+          .order('is_favorite', { ascending: false })
+          .order('use_count', { ascending: false });
+          
+        if (error) throw error;
+        
+        return new Response(
+          JSON.stringify({ templates: templates || [] }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'use_template': {
+        const { templateId } = data;
+        
+        const { error } = await supabaseAdmin
+          .from('email_templates')
+          .update({
+            use_count: supabaseAdmin.rpc('increment_use_count'),
+            last_used_at: new Date().toISOString()
+          })
+          .eq('id', templateId)
+          .eq('wallet_address', verifiedWallet);
+          
+        if (error) throw error;
+        
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'delete_template': {
+        const { templateId } = data;
+        
+        const { error } = await supabaseAdmin
+          .from('email_templates')
+          .delete()
+          .eq('id', templateId)
+          .eq('wallet_address', verifiedWallet);
+          
+        if (error) throw error;
+        
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // === SCHEDULED EMAIL ACTIONS ===
+
+      case 'schedule_email': {
+        const { toWallet, encryptedSubject, encryptedBody, scheduledFor, timezone, senderSignature } = data;
+        
+        if (new Date(scheduledFor) <= new Date()) {
+          throw new Error('Scheduled time must be in the future');
+        }
+        
+        const { data: scheduled, error } = await supabaseAdmin
+          .from('scheduled_emails')
+          .insert({
+            wallet_address: verifiedWallet,
+            to_wallet: toWallet,
+            encrypted_subject: encryptedSubject,
+            encrypted_body: encryptedBody,
+            scheduled_for: scheduledFor,
+            timezone: timezone || 'UTC',
+            sender_signature: senderSignature
+          })
+          .select()
+          .single();
+          
+        if (error) throw error;
+        
+        return new Response(
+          JSON.stringify({ scheduledEmail: scheduled }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'get_scheduled_emails': {
+        const { data: scheduledEmails, error } = await supabaseAdmin
+          .from('scheduled_emails')
+          .select('*')
+          .eq('wallet_address', verifiedWallet)
+          .in('status', ['pending', 'failed'])
+          .order('scheduled_for', { ascending: true });
+          
+        if (error) throw error;
+        
+        return new Response(
+          JSON.stringify({ scheduledEmails: scheduledEmails || [] }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'cancel_scheduled_email': {
+        const { scheduledId } = data;
+        
+        const { error } = await supabaseAdmin
+          .from('scheduled_emails')
+          .update({ status: 'cancelled' })
+          .eq('id', scheduledId)
+          .eq('wallet_address', verifiedWallet)
+          .eq('status', 'pending');
+          
+        if (error) throw error;
+        
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'reschedule_email': {
+        const { scheduledId, newScheduledFor } = data;
+        
+        if (new Date(newScheduledFor) <= new Date()) {
+          throw new Error('Scheduled time must be in the future');
+        }
+        
+        const { error } = await supabaseAdmin
+          .from('scheduled_emails')
+          .update({ scheduled_for: newScheduledFor })
+          .eq('id', scheduledId)
+          .eq('wallet_address', verifiedWallet)
+          .eq('status', 'pending');
+          
+        if (error) throw error;
+        
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       default:
         throw new Error('Unknown action');
     }

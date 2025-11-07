@@ -10,6 +10,7 @@ import Landing from "./pages/Landing";
 import Inbox from "./pages/Inbox";
 import Compose from "./pages/Compose";
 import EmailView from "./pages/EmailView";
+import Scheduled from "./pages/Scheduled";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,10 +26,11 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Landing />} />
-              <Route path="/inbox" element={<Inbox />} />
-              <Route path="/compose" element={<Compose />} />
-              <Route path="/email/:id" element={<EmailView />} />
-              <Route path="*" element={<NotFound />} />
+            <Route path="/inbox" element={<Inbox />} />
+            <Route path="/compose" element={<Compose />} />
+            <Route path="/email/:id" element={<EmailView />} />
+            <Route path="/scheduled" element={<Scheduled />} />
+            <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </TooltipProvider>

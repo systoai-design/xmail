@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      email_attachments: {
+        Row: {
+          created_at: string | null
+          draft_id: string | null
+          email_id: string | null
+          encrypted_file_name: string
+          encrypted_symmetric_key: string
+          file_name: string
+          file_size_bytes: number
+          id: string
+          iv: string
+          mime_type: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string | null
+          draft_id?: string | null
+          email_id?: string | null
+          encrypted_file_name: string
+          encrypted_symmetric_key: string
+          file_name: string
+          file_size_bytes: number
+          id?: string
+          iv: string
+          mime_type: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string | null
+          draft_id?: string | null
+          email_id?: string | null
+          encrypted_file_name?: string
+          encrypted_symmetric_key?: string
+          file_name?: string
+          file_size_bytes?: number
+          id?: string
+          iv?: string
+          mime_type?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_attachments_draft_id_fkey"
+            columns: ["draft_id"]
+            isOneToOne: false
+            referencedRelation: "email_drafts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_attachments_email_id_fkey"
+            columns: ["email_id"]
+            isOneToOne: false
+            referencedRelation: "encrypted_emails"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_drafts: {
         Row: {
           auto_saved: boolean | null
@@ -43,6 +100,120 @@ export type Database = {
           id?: string
           to_wallet?: string | null
           updated_at?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      email_label_assignments: {
+        Row: {
+          assigned_at: string | null
+          email_id: string | null
+          id: string
+          label_id: string | null
+          wallet_address: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          email_id?: string | null
+          id?: string
+          label_id?: string | null
+          wallet_address: string
+        }
+        Update: {
+          assigned_at?: string | null
+          email_id?: string | null
+          id?: string
+          label_id?: string | null
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_label_assignments_email_id_fkey"
+            columns: ["email_id"]
+            isOneToOne: false
+            referencedRelation: "encrypted_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_label_assignments_label_id_fkey"
+            columns: ["label_id"]
+            isOneToOne: false
+            referencedRelation: "email_labels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_labels: {
+        Row: {
+          color: string
+          created_at: string | null
+          icon: string | null
+          id: string
+          is_system: boolean | null
+          name: string
+          wallet_address: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_system?: boolean | null
+          name: string
+          wallet_address: string
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_system?: boolean | null
+          name?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          encrypted_body: string
+          encrypted_subject: string
+          id: string
+          is_favorite: boolean | null
+          last_used_at: string | null
+          name: string
+          updated_at: string | null
+          use_count: number | null
+          variables: Json | null
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          encrypted_body: string
+          encrypted_subject: string
+          id?: string
+          is_favorite?: boolean | null
+          last_used_at?: string | null
+          name: string
+          updated_at?: string | null
+          use_count?: number | null
+          variables?: Json | null
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          encrypted_body?: string
+          encrypted_subject?: string
+          id?: string
+          is_favorite?: boolean | null
+          last_used_at?: string | null
+          name?: string
+          updated_at?: string | null
+          use_count?: number | null
+          variables?: Json | null
           wallet_address?: string
         }
         Relationships: []
@@ -106,6 +277,51 @@ export type Database = {
           key_created_at?: string | null
           public_key?: string
           updated_at?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      scheduled_emails: {
+        Row: {
+          created_at: string | null
+          encrypted_body: string
+          encrypted_subject: string
+          error_message: string | null
+          id: string
+          scheduled_for: string
+          sender_signature: string
+          sent_at: string | null
+          status: string
+          timezone: string
+          to_wallet: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string | null
+          encrypted_body: string
+          encrypted_subject: string
+          error_message?: string | null
+          id?: string
+          scheduled_for: string
+          sender_signature: string
+          sent_at?: string | null
+          status?: string
+          timezone?: string
+          to_wallet: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string | null
+          encrypted_body?: string
+          encrypted_subject?: string
+          error_message?: string | null
+          id?: string
+          scheduled_for?: string
+          sender_signature?: string
+          sent_at?: string | null
+          status?: string
+          timezone?: string
+          to_wallet?: string
           wallet_address?: string
         }
         Relationships: []
