@@ -52,9 +52,11 @@ const Compose = () => {
       return;
     }
 
-    // Validate recipient address
+    // Trim and validate recipient address
+    const recipient = to.trim();
+    
     try {
-      new PublicKey(to);
+      new PublicKey(recipient);
     } catch {
       toast({
         title: 'Invalid wallet address',
@@ -68,17 +70,24 @@ const Compose = () => {
 
     try {
       // Check if we have recipient's public key
-      const { data: recipientKeyData } = await supabase
+      const { data: recipientKeyData, error: lookupError } = await supabase
         .from('encryption_keys')
         .select('public_key')
-        .eq('wallet_address', to)
-        .single();
+        .eq('wallet_address', recipient)
+        .maybeSingle();
 
-      let recipientPublicKey;
+      if (lookupError) {
+        console.error('Error looking up recipient:', lookupError);
+        toast({
+          title: 'Recipient lookup failed',
+          description: 'Could not verify recipient registration. Please try again.',
+          variant: 'destructive',
+        });
+        setSending(false);
+        return;
+      }
 
       if (!recipientKeyData) {
-        // For MVP, we'll generate a keypair for demo purposes
-        // In production, recipient must register their public key first
         toast({
           title: 'Recipient not registered',
           description: 'Recipient must connect their wallet first to receive encrypted emails',
@@ -86,9 +95,9 @@ const Compose = () => {
         });
         setSending(false);
         return;
-      } else {
-        recipientPublicKey = await importPublicKey(recipientKeyData.public_key);
       }
+
+      const recipientPublicKey = await importPublicKey(recipientKeyData.public_key);
 
       // Encrypt subject and body
       const encryptedSubject = await encryptMessage(subject, recipientPublicKey);
@@ -107,7 +116,7 @@ const Compose = () => {
         'send_email',
         {
           from_wallet: publicKey.toBase58(),
-          to_wallet: to,
+          to_wallet: recipient,
           encrypted_subject: encryptedSubject,
           encrypted_body: encryptedBody,
           sender_signature: signatureBase64,

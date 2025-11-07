@@ -21,50 +21,92 @@ export const useEncryptionKeys = () => {
     if (!publicKey || !signMessage) return;
 
     try {
-      // Check if we already have keys in session storage
-      const existingPrivateKey = sessionStorage.getItem('encryption_private_key');
+      const walletAddress = publicKey.toBase58();
       
-      if (existingPrivateKey) {
-        setKeysReady(true);
-        return;
-      }
-
-      // Generate new keypair
-      const keypair = await generateKeyPair();
-      const publicKeyBase64 = await exportPublicKey(keypair.publicKey);
-      const privateKeyBase64 = await exportPrivateKey(keypair.privateKey);
-
-      // Store private key in session storage (temporary)
-      sessionStorage.setItem('encryption_private_key', privateKeyBase64);
-
-      // Store public key in database
-      const { error } = await supabase
+      // Always check backend first to verify registration
+      const { data: existingBackendKey, error: lookupError } = await supabase
         .from('encryption_keys')
-        .upsert({
-          wallet_address: publicKey.toBase58(),
-          public_key: publicKeyBase64,
-        }, {
-          onConflict: 'wallet_address'
-        });
+        .select('public_key')
+        .eq('wallet_address', walletAddress)
+        .maybeSingle();
 
-      if (error) {
-        console.error('Error storing public key:', error);
+      if (lookupError) {
+        console.error('Error checking backend registration:', lookupError);
         toast({
-          title: "Registration Failed",
-          description: "Failed to register your encryption key. Please try reconnecting your wallet.",
+          title: "Registration Check Failed",
+          description: "Could not verify your encryption key status.",
           variant: "destructive",
         });
         return;
       }
 
-      toast({
-        title: "Keys Registered",
-        description: "Your encryption keys have been successfully registered.",
-      });
+      // Get keys from session storage
+      const sessionPrivateKey = sessionStorage.getItem('encryption_private_key');
+      const sessionPublicKey = sessionStorage.getItem('encryption_public_key');
+
+      // Case 1: No backend registration exists
+      if (!existingBackendKey) {
+        let publicKeyToStore: string;
+        let privateKeyToStore: string;
+
+        if (sessionPublicKey && sessionPrivateKey) {
+          // Reuse existing session keys
+          publicKeyToStore = sessionPublicKey;
+          privateKeyToStore = sessionPrivateKey;
+        } else {
+          // Generate new keypair
+          const keypair = await generateKeyPair();
+          publicKeyToStore = await exportPublicKey(keypair.publicKey);
+          privateKeyToStore = await exportPrivateKey(keypair.privateKey);
+        }
+
+        // Store both keys in session storage
+        sessionStorage.setItem('encryption_public_key', publicKeyToStore);
+        sessionStorage.setItem('encryption_private_key', privateKeyToStore);
+
+        // Upsert public key to backend
+        const { error: upsertError } = await supabase
+          .from('encryption_keys')
+          .upsert({
+            wallet_address: walletAddress,
+            public_key: publicKeyToStore,
+          }, {
+            onConflict: 'wallet_address'
+          });
+
+        if (upsertError) {
+          console.error('Error storing public key:', upsertError);
+          toast({
+            title: "Registration Failed",
+            description: "Failed to register your encryption key. Please try reconnecting your wallet.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        toast({
+          title: "Keys Registered",
+          description: "Your encryption keys have been successfully registered.",
+        });
+      } 
+      // Case 2: Backend has key, but session is missing private key
+      else if (!sessionPrivateKey) {
+        toast({
+          title: "Decryption Key Missing",
+          description: "You can send messages, but cannot decrypt past messages on this device.",
+          variant: "default",
+        });
+      }
+      // Case 3: Both backend and session have keys - all good!
 
       setKeysReady(true);
     } catch (error) {
       console.error('Error setting up encryption keys:', error);
+      toast({
+        title: "Setup Error",
+        description: "An unexpected error occurred during key setup.",
+        variant: "destructive",
+      });
     }
   };
 

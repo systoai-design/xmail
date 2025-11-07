@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { WalletContextProvider } from "./contexts/WalletContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { KeyRegistrar } from "./components/KeyRegistrar";
 import Landing from "./pages/Landing";
 import Inbox from "./pages/Inbox";
 import Compose from "./pages/Compose";
@@ -20,6 +21,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <KeyRegistrar />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Landing />} />
