@@ -89,7 +89,7 @@ serve(async (req) => {
           .from('encrypted_emails')
           .select('*')
           .eq('id', data.emailId)
-          .eq('to_wallet', walletPublicKey)
+          .or(`from_wallet.eq.${walletPublicKey},to_wallet.eq.${walletPublicKey}`)
           .single();
         
         if (fetchError) {
