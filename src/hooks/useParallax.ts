@@ -38,13 +38,11 @@ export const useParallax = (speed: number = 0.5) => {
   // Disable parallax on mobile
   if (isMobile) {
     return {
-      transform: 'translateY(0px)',
-      opacity: 1
+      transform: 'translateY(0px)'
     };
   }
 
   return {
-    transform: `translateY(${offset * speed}px)`,
-    opacity: Math.max(0, 1 - (offset * 0.0005))
+    transform: `translateY(${offset * speed}px)`
   };
 };
