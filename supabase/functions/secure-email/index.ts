@@ -246,6 +246,128 @@ serve(async (req) => {
         );
       }
 
+      case 'save_draft': {
+        const { draftId, to_wallet, encrypted_subject, encrypted_body } = data;
+        
+        if (draftId) {
+          // Update existing draft
+          const { error: updateError } = await supabaseAdmin
+            .from('email_drafts')
+            .update({
+              to_wallet,
+              encrypted_subject,
+              encrypted_body,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', draftId)
+            .eq('wallet_address', verifiedWallet);
+
+          if (updateError) {
+            console.error('Draft update error:', updateError);
+            throw updateError;
+          }
+
+          console.log(`Draft ${draftId} updated`);
+          return new Response(
+            JSON.stringify({ success: true, draftId }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } else {
+          // Create new draft
+          const { data: newDraft, error: insertError } = await supabaseAdmin
+            .from('email_drafts')
+            .insert({
+              wallet_address: verifiedWallet,
+              to_wallet,
+              encrypted_subject,
+              encrypted_body,
+            })
+            .select()
+            .single();
+
+          if (insertError || !newDraft) {
+            console.error('Draft insert error:', insertError);
+            throw insertError;
+          }
+
+          console.log('Draft created');
+          return new Response(
+            JSON.stringify({ success: true, draftId: newDraft.id }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
+      case 'get_drafts': {
+        const { data: drafts, error } = await supabaseAdmin
+          .from('email_drafts')
+          .select('*')
+          .eq('wallet_address', verifiedWallet)
+          .order('updated_at', { ascending: false });
+
+        if (error) {
+          console.error('Get drafts error:', error);
+          throw error;
+        }
+
+        console.log(`Fetched ${drafts?.length || 0} drafts`);
+        return new Response(
+          JSON.stringify({ drafts: drafts || [] }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'get_draft': {
+        const { draftId } = data;
+
+        if (!draftId) {
+          throw new Error('Draft ID required');
+        }
+
+        const { data: draft, error } = await supabaseAdmin
+          .from('email_drafts')
+          .select('*')
+          .eq('id', draftId)
+          .eq('wallet_address', verifiedWallet)
+          .maybeSingle();
+
+        if (error || !draft) {
+          console.error('Get draft error:', error);
+          throw new Error('Draft not found');
+        }
+
+        console.log('Draft fetched');
+        return new Response(
+          JSON.stringify({ draft }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'delete_draft': {
+        const { draftId } = data;
+
+        if (!draftId) {
+          throw new Error('Draft ID required');
+        }
+
+        const { error: deleteError } = await supabaseAdmin
+          .from('email_drafts')
+          .delete()
+          .eq('id', draftId)
+          .eq('wallet_address', verifiedWallet);
+
+        if (deleteError) {
+          console.error('Delete draft error:', deleteError);
+          throw deleteError;
+        }
+
+        console.log('Draft deleted');
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       default:
         throw new Error('Unknown action');
     }

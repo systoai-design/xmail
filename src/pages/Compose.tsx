@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Lock, Loader2, DollarSign, Shield, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Lock, Loader2, DollarSign, Shield, CheckCircle, XCircle, AlertCircle, Save, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { encryptMessage, importPublicKey } from '@/lib/encryption';
@@ -19,13 +19,20 @@ const Compose = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { keysReady } = useEncryptionKeys();
+  const [searchParams] = useSearchParams();
+  const draftIdFromUrl = searchParams.get('draft');
+  
   const [to, setTo] = useState('');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [validationStatus, setValidationStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid' | 'not-registered'>('idle');
   const [validationMessage, setValidationMessage] = useState('');
   const [userIsAdmin, setUserIsAdmin] = useState(false);
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(draftIdFromUrl);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const autoSaveTimerRef = useRef<NodeJS.Timeout>();
 
   // Check admin status on mount
   useEffect(() => {
@@ -33,6 +40,195 @@ const Compose = () => {
       isAdmin(publicKey.toBase58()).then(setUserIsAdmin);
     }
   }, [publicKey]);
+
+  // Load draft if ID is in URL
+  useEffect(() => {
+    const loadDraft = async () => {
+      if (!draftIdFromUrl || !publicKey || !signMessage || !keysReady) return;
+
+      const privateKeyBase64 = sessionStorage.getItem('encryption_private_key');
+      if (!privateKeyBase64) {
+        toast({
+          title: 'Cannot load draft',
+          description: 'Private key not found',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      try {
+        const response = await callSecureEndpoint(
+          'get_draft',
+          { draftId: draftIdFromUrl },
+          publicKey,
+          signMessage
+        );
+
+        if (response.draft) {
+          const { to_wallet, encrypted_subject, encrypted_body } = response.draft;
+          setTo(to_wallet || '');
+          
+          // Import private key for decryption
+          const privateKeyBytes = Uint8Array.from(atob(privateKeyBase64), c => c.charCodeAt(0));
+          const privateKey = await window.crypto.subtle.importKey(
+            'pkcs8',
+            privateKeyBytes,
+            { name: 'RSA-OAEP', hash: 'SHA-256' },
+            false,
+            ['decrypt']
+          );
+          
+          // Decrypt subject and body
+          if (encrypted_subject) {
+            const decryptedSubject = await window.crypto.subtle.decrypt(
+              { name: 'RSA-OAEP' },
+              privateKey,
+              Uint8Array.from(atob(encrypted_subject), c => c.charCodeAt(0))
+            );
+            setSubject(new TextDecoder().decode(decryptedSubject));
+          }
+          
+          if (encrypted_body) {
+            const decryptedBody = await window.crypto.subtle.decrypt(
+              { name: 'RSA-OAEP' },
+              privateKey,
+              Uint8Array.from(atob(encrypted_body), c => c.charCodeAt(0))
+            );
+            setBody(new TextDecoder().decode(decryptedBody));
+          }
+          
+          setCurrentDraftId(draftIdFromUrl);
+          toast({
+            title: 'Draft loaded',
+            description: 'Continue editing your message',
+          });
+        }
+      } catch (error) {
+        console.error('Error loading draft:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load draft',
+          variant: 'destructive',
+        });
+      }
+    };
+
+    loadDraft();
+  }, [draftIdFromUrl, publicKey, signMessage, keysReady, toast]);
+
+  // Auto-save draft every 10 seconds
+  const saveDraft = useCallback(async (showToast = false) => {
+    if (!publicKey || !signMessage || !keysReady) return;
+    if (!to && !subject && !body) return; // Don't save empty drafts
+
+    setSaving(true);
+    try {
+      // Get our own public key for encryption
+      const { data: ownKeyData } = await supabase
+        .from('encryption_keys')
+        .select('public_key')
+        .eq('wallet_address', publicKey.toBase58())
+        .single();
+
+      if (!ownKeyData) return;
+
+      const ownPublicKey = await importPublicKey(ownKeyData.public_key);
+
+      // Encrypt the draft with our own key
+      const encryptedSubject = subject ? await encryptMessage(subject, ownPublicKey) : '';
+      const encryptedBody = body ? await encryptMessage(body, ownPublicKey) : '';
+
+      const response = await callSecureEndpoint(
+        'save_draft',
+        {
+          draftId: currentDraftId,
+          to_wallet: to || null,
+          encrypted_subject: encryptedSubject,
+          encrypted_body: encryptedBody,
+        },
+        publicKey,
+        signMessage
+      );
+
+      if (response.draftId && !currentDraftId) {
+        setCurrentDraftId(response.draftId);
+        // Update URL without navigation
+        window.history.replaceState({}, '', `/compose?draft=${response.draftId}`);
+      }
+
+      setLastSaved(new Date());
+      if (showToast) {
+        toast({
+          title: 'Draft saved',
+          description: 'Your message has been saved',
+        });
+      }
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      if (showToast) {
+        toast({
+          title: 'Error',
+          description: 'Failed to save draft',
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setSaving(false);
+    }
+  }, [publicKey, signMessage, keysReady, to, subject, body, currentDraftId, toast]);
+
+  // Auto-save timer
+  useEffect(() => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(() => {
+      saveDraft(false);
+    }, 10000); // 10 seconds
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [to, subject, body, saveDraft]);
+
+  // Save on unmount
+  useEffect(() => {
+    return () => {
+      if ((to || subject || body) && publicKey && signMessage) {
+        saveDraft(false);
+      }
+    };
+  }, [to, subject, body, publicKey, signMessage, saveDraft]);
+
+  const deleteDraft = async () => {
+    if (!currentDraftId || !publicKey || !signMessage) return;
+
+    try {
+      await callSecureEndpoint(
+        'delete_draft',
+        { draftId: currentDraftId },
+        publicKey,
+        signMessage
+      );
+
+      toast({
+        title: 'Draft deleted',
+        description: 'Your draft has been removed',
+      });
+
+      navigate('/inbox?tab=drafts');
+    } catch (error) {
+      console.error('Error deleting draft:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete draft',
+        variant: 'destructive',
+      });
+    }
+  };
 
   // Live recipient validation with debounce
   useEffect(() => {
@@ -175,6 +371,20 @@ const Compose = () => {
         signMessage
       );
 
+      // Delete draft after successful send
+      if (currentDraftId) {
+        try {
+          await callSecureEndpoint(
+            'delete_draft',
+            { draftId: currentDraftId },
+            publicKey,
+            signMessage
+          );
+        } catch (error) {
+          console.error('Error deleting draft after send:', error);
+        }
+      }
+
       toast({
         title: 'Email sent!',
         description: 'Your encrypted email has been delivered',
@@ -197,9 +407,9 @@ const Compose = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="glass border-b border-border">
-        <div className="container mx-auto px-6 py-4">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <Button
-            onClick={() => navigate('/inbox')}
+            onClick={() => navigate('/inbox?tab=drafts')}
             variant="ghost"
             size="lg"
             className="font-bold"
@@ -207,13 +417,43 @@ const Compose = () => {
             <ArrowLeft className="w-5 h-5 mr-2" />
             Back to Inbox
           </Button>
+          <div className="flex items-center gap-3">
+            {lastSaved && (
+              <span className="text-sm text-muted-foreground">
+                {saving ? 'Saving...' : `Saved ${lastSaved.toLocaleTimeString()}`}
+              </span>
+            )}
+            {currentDraftId && (
+              <>
+                <Button
+                  onClick={() => saveDraft(true)}
+                  variant="outline"
+                  size="sm"
+                  disabled={saving}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Draft
+                </Button>
+                <Button
+                  onClick={deleteDraft}
+                  variant="destructive"
+                  size="sm"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Draft
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8 max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-6xl font-black mb-2">New Encrypted Message</h1>
+          <h1 className="text-6xl font-black mb-2">
+            {currentDraftId ? 'Edit Draft' : 'New Encrypted Message'}
+          </h1>
           <p className="text-xl text-muted-foreground flex items-center gap-2">
             <Lock className="w-5 h-5" />
             Only the recipient can decrypt this message

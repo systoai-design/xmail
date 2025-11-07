@@ -93,12 +93,6 @@ export const HeroSection = () => {
               <span className="gradient-primary bg-clip-text text-transparent inline-block hover:scale-110 transition-bounce cursor-default animate-gradient relative group">
                 messaging
                 <div className="absolute inset-0 blur-2xl bg-gradient-to-r from-primary to-secondary opacity-30 -z-10" />
-                {/* Hover reveal overlay */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
-                  <span className="text-[0.3em] font-black tracking-[0.2em] uppercase glass-glow px-4 sm:px-8 py-2 sm:py-4 rounded-[20px] backdrop-blur-xl whitespace-nowrap">
-                    encrypted MESSAGE
-                  </span>
-                </div>
               </span>
             </span>
             <span className="block text-[8vw] sm:text-[7vw] md:text-[5rem] font-black leading-none tracking-tight text-muted-foreground mt-1 sm:mt-2 animate-slide-up" style={{ animationDelay: '0.2s' }}>

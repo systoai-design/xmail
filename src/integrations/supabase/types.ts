@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      email_drafts: {
+        Row: {
+          auto_saved: boolean | null
+          created_at: string | null
+          encrypted_body: string | null
+          encrypted_subject: string | null
+          id: string
+          to_wallet: string | null
+          updated_at: string | null
+          wallet_address: string
+        }
+        Insert: {
+          auto_saved?: boolean | null
+          created_at?: string | null
+          encrypted_body?: string | null
+          encrypted_subject?: string | null
+          id?: string
+          to_wallet?: string | null
+          updated_at?: string | null
+          wallet_address: string
+        }
+        Update: {
+          auto_saved?: boolean | null
+          created_at?: string | null
+          encrypted_body?: string | null
+          encrypted_subject?: string | null
+          id?: string
+          to_wallet?: string | null
+          updated_at?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       encrypted_emails: {
         Row: {
           created_at: string
