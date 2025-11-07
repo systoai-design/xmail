@@ -1,6 +1,7 @@
 import { WalletButton } from '@/components/WalletButton';
 import { ChevronDown, Lock, Zap, Shield, Sparkles, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 export const HeroSection = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -89,9 +90,15 @@ export const HeroSection = () => {
               </span>
             </span>
             <span className="block text-[15vw] sm:text-[14vw] md:text-[11rem] font-black leading-none tracking-tighter -mt-2 sm:-mt-4 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              <span className="gradient-primary bg-clip-text text-transparent inline-block hover:scale-110 transition-bounce cursor-default animate-gradient relative">
+              <span className="gradient-primary bg-clip-text text-transparent inline-block hover:scale-110 transition-bounce cursor-default animate-gradient relative group">
                 messaging
                 <div className="absolute inset-0 blur-2xl bg-gradient-to-r from-primary to-secondary opacity-30 -z-10" />
+                {/* Hover reveal overlay */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+                  <span className="text-[0.3em] font-black tracking-[0.2em] uppercase glass-glow px-4 sm:px-8 py-2 sm:py-4 rounded-[20px] backdrop-blur-xl whitespace-nowrap">
+                    encrypted MESSAGE
+                  </span>
+                </div>
               </span>
             </span>
             <span className="block text-[8vw] sm:text-[7vw] md:text-[5rem] font-black leading-none tracking-tight text-muted-foreground mt-1 sm:mt-2 animate-slide-up" style={{ animationDelay: '0.2s' }}>
@@ -103,26 +110,51 @@ export const HeroSection = () => {
         </div>
 
         {/* Enhanced feature highlights with better styling */}
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: '0.3s' }}>
-          <div className="flex items-center gap-2 sm:gap-3 glass-glow px-3 py-1.5 sm:px-6 sm:py-3 rounded-[20px] sm:rounded-[35px] hover:scale-105 hover-glow transition-all cursor-default group">
-            <div className="p-1 sm:p-2 rounded-full bg-primary/20 group-hover:bg-primary/30 transition-all">
-              <Lock className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
-            </div>
-            <span className="text-xs sm:text-sm font-bold">End-to-End Encrypted</span>
+        <TooltipProvider>
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: '0.3s' }}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2 sm:gap-3 glass-glow px-3 py-1.5 sm:px-6 sm:py-3 rounded-[20px] sm:rounded-[35px] hover:scale-105 hover-glow transition-all cursor-default group">
+                  <div className="p-1 sm:p-2 rounded-full bg-primary/20 group-hover:bg-primary/30 transition-all">
+                    <Lock className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
+                  </div>
+                  <span className="text-xs sm:text-sm font-bold">End-to-End Encrypted</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="font-semibold">Only you and recipient can read</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2 sm:gap-3 glass-glow px-3 py-1.5 sm:px-6 sm:py-3 rounded-[20px] sm:rounded-[35px] hover:scale-105 hover-glow transition-all cursor-default group">
+                  <div className="p-1 sm:p-2 rounded-full bg-secondary/20 group-hover:bg-secondary/30 transition-all">
+                    <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-secondary" />
+                  </div>
+                  <span className="text-xs sm:text-sm font-bold">Gasless Payments</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="font-semibold">No transaction fees for you</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2 sm:gap-3 glass-glow px-3 py-1.5 sm:px-6 sm:py-3 rounded-[20px] sm:rounded-[35px] hover:scale-105 hover-glow transition-all cursor-default group">
+                  <div className="p-1 sm:p-2 rounded-full bg-accent/20 group-hover:bg-accent/30 transition-all">
+                    <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-accent" />
+                  </div>
+                  <span className="text-xs sm:text-sm font-bold">Zero Knowledge</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="font-semibold">We never see your messages</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 glass-glow px-3 py-1.5 sm:px-6 sm:py-3 rounded-[20px] sm:rounded-[35px] hover:scale-105 hover-glow transition-all cursor-default group">
-            <div className="p-1 sm:p-2 rounded-full bg-secondary/20 group-hover:bg-secondary/30 transition-all">
-              <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-secondary" />
-            </div>
-            <span className="text-xs sm:text-sm font-bold">Gasless Payments</span>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3 glass-glow px-3 py-1.5 sm:px-6 sm:py-3 rounded-[20px] sm:rounded-[35px] hover:scale-105 hover-glow transition-all cursor-default group">
-            <div className="p-1 sm:p-2 rounded-full bg-accent/20 group-hover:bg-accent/30 transition-all">
-              <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-accent" />
-            </div>
-            <span className="text-xs sm:text-sm font-bold">Zero Knowledge</span>
-          </div>
-        </div>
+        </TooltipProvider>
 
         {/* Enhanced tagline with better typography */}
         <div className="max-w-3xl mx-auto animate-slide-up px-4" style={{ animationDelay: '0.4s' }}>
