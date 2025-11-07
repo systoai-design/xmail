@@ -1,11 +1,11 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Mail, Lock, Plus, LogOut, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useEncryptionKeys } from '@/hooks/useEncryptionKeys';
+import { callSecureEndpoint } from '@/lib/secureApi';
 
 interface EncryptedEmail {
   id: string;
@@ -18,7 +18,7 @@ interface EncryptedEmail {
 }
 
 const Inbox = () => {
-  const { connected, publicKey, disconnect } = useWallet();
+  const { connected, publicKey, disconnect, signMessage } = useWallet();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { keysReady } = useEncryptionKeys();
@@ -36,17 +36,16 @@ const Inbox = () => {
   }, [connected, navigate, publicKey, keysReady]);
 
   const loadEmails = async () => {
-    if (!publicKey) return;
+    if (!publicKey || !signMessage) return;
 
     try {
-      const { data, error } = await supabase
-        .from('encrypted_emails')
-        .select('*')
-        .eq('to_wallet', publicKey.toBase58())
-        .order('timestamp', { ascending: false });
-
-      if (error) throw error;
-      setEmails(data || []);
+      const response = await callSecureEndpoint(
+        'get_inbox',
+        {},
+        publicKey,
+        signMessage
+      );
+      setEmails(response.emails || []);
     } catch (error) {
       console.error('Error loading emails:', error);
       toast({

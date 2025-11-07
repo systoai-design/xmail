@@ -13,6 +13,7 @@ import { encryptMessage, importPublicKey } from '@/lib/encryption';
 import { PublicKey } from '@solana/web3.js';
 import { useEncryptionKeys } from '@/hooks/useEncryptionKeys';
 import { isAdmin } from '@/lib/userRoles';
+import { callSecureEndpoint } from '@/lib/secureApi';
 
 const Compose = () => {
   const { publicKey, signMessage } = useWallet();
@@ -101,19 +102,20 @@ const Compose = () => {
       // Admin users bypass payment requirement
       const mockPaymentTx = userIsAdmin ? 'admin_exempt_' + Math.random().toString(36).substring(7) : 'mock_' + Math.random().toString(36).substring(7);
 
-      // Store encrypted email
-      const { error } = await supabase
-        .from('encrypted_emails')
-        .insert({
+      // Store encrypted email using secure endpoint
+      await callSecureEndpoint(
+        'send_email',
+        {
           from_wallet: publicKey.toBase58(),
           to_wallet: to,
           encrypted_subject: encryptedSubject,
           encrypted_body: encryptedBody,
           sender_signature: signatureBase64,
           payment_tx_signature: mockPaymentTx,
-        });
-
-      if (error) throw error;
+        },
+        publicKey,
+        signMessage
+      );
 
       toast({
         title: 'Email sent!',
@@ -218,7 +220,7 @@ const Compose = () => {
                   <div>
                     <div className="text-lg font-bold">Payment Required</div>
                     <div className="text-sm text-muted-foreground">
-                      x402 Protocol • Gasless Transaction
+                      xmail Protocol • Gasless Transaction
                     </div>
                   </div>
                 </div>

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Lock, Shield, ExternalLink, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { decryptMessage, importPrivateKey } from '@/lib/encryption';
+import { callSecureEndpoint } from '@/lib/secureApi';
 
 interface EmailData {
   id: string;
@@ -34,16 +34,27 @@ const EmailView = () => {
   }, [id]);
 
   const loadEmail = async () => {
-    if (!id || !publicKey) return;
+    if (!id || !publicKey || !signMessage) return;
 
     try {
-      const { data, error } = await supabase
-        .from('encrypted_emails')
-        .select('*')
-        .eq('id', id)
-        .single();
+      const response = await callSecureEndpoint(
+        'get_email',
+        { emailId: id },
+        publicKey,
+        signMessage
+      );
 
-      if (error) throw error;
+      const data = response.email;
+
+      if (!data) {
+        toast({
+          title: 'Email not found',
+          description: 'This email does not exist or you do not have access',
+          variant: 'destructive',
+        });
+        navigate('/inbox');
+        return;
+      }
       
       if (data.to_wallet !== publicKey.toBase58()) {
         toast({
@@ -58,10 +69,12 @@ const EmailView = () => {
       setEmail(data);
       
       // Mark as read
-      await supabase
-        .from('encrypted_emails')
-        .update({ read: true })
-        .eq('id', id);
+      await callSecureEndpoint(
+        'mark_read',
+        { emailId: id },
+        publicKey,
+        signMessage
+      );
 
       // Auto-decrypt
       await handleDecrypt(data);

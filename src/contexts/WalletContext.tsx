@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo, useState, useEffect } from 'react';
-import { ConnectionProvider, WalletProvider as SolanaWalletProvider } from '@solana/wallet-adapter-react';
+import { ConnectionProvider, WalletProvider as SolanaWalletProvider, useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
@@ -18,6 +18,22 @@ const WalletContext = createContext<WalletContextType>({
 
 export const useWalletContext = () => useContext(WalletContext);
 
+// Helper component to sync wallet state
+const WalletStateSync: React.FC<{
+  children: React.ReactNode;
+  setWalletAddress: (addr: string | null) => void;
+  setConnected: (conn: boolean) => void;
+}> = ({ children, setWalletAddress, setConnected }) => {
+  const { publicKey, connected: walletConnected } = useSolanaWallet();
+
+  useEffect(() => {
+    setConnected(walletConnected);
+    setWalletAddress(publicKey ? publicKey.toBase58() : null);
+  }, [publicKey, walletConnected, setWalletAddress, setConnected]);
+
+  return <>{children}</>;
+};
+
 export const WalletContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const network = WalletAdapterNetwork.Devnet;
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
@@ -34,11 +50,22 @@ export const WalletContextProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <ConnectionProvider endpoint={endpoint}>
-      <SolanaWalletProvider wallets={wallets} autoConnect>
+      <SolanaWalletProvider 
+        wallets={wallets} 
+        autoConnect
+        onError={(error) => {
+          console.error('Wallet error:', error);
+        }}
+      >
         <WalletModalProvider>
-          <WalletContext.Provider value={{ connected, walletAddress }}>
-            {children}
-          </WalletContext.Provider>
+          <WalletStateSync 
+            setWalletAddress={setWalletAddress}
+            setConnected={setConnected}
+          >
+            <WalletContext.Provider value={{ connected, walletAddress }}>
+              {children}
+            </WalletContext.Provider>
+          </WalletStateSync>
         </WalletModalProvider>
       </SolanaWalletProvider>
     </ConnectionProvider>
