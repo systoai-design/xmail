@@ -1,11 +1,9 @@
 import { Shield, User, Ban, Database } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { useParallax } from '@/hooks/useParallax';
 
 export const FeaturesShowcase = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const parallaxBg = useParallax(0.2);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -51,9 +49,8 @@ export const FeaturesShowcase = () => {
     <section ref={sectionRef} className="min-h-screen gradient-section py-16 sm:py-20 md:py-24 px-4 sm:px-6 relative overflow-hidden">
       {/* Enhanced background */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 opacity-20 parallax-layer" style={{
-          backgroundImage: 'radial-gradient(circle at 80% 20%, hsl(267 100% 35%) 0px, transparent 50%), radial-gradient(circle at 20% 80%, hsl(187 100% 35%) 0px, transparent 50%)',
-          transform: parallaxBg.transform,
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: 'radial-gradient(circle at 80% 20%, hsl(267 100% 35%) 0px, transparent 50%), radial-gradient(circle at 20% 80%, hsl(187 100% 35%) 0px, transparent 50%)'
         }} />
       </div>
 

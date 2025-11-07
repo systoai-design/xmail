@@ -1,12 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParallax } from '@/hooks/useParallax';
 
 export const TechnologySection = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const parallax1 = useParallax(0.1);
-  const parallax2 = useParallax(0.15);
-  const parallax3 = useParallax(0.2);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -44,7 +40,7 @@ export const TechnologySection = () => {
   ];
 
   return (
-    <section ref={sectionRef} className="bg-background py-16 sm:py-20 md:py-24 px-4 sm:px-6">
+    <section ref={sectionRef} className="gradient-section py-16 sm:py-20 md:py-24 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto">
         <h2
           className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-center mb-10 sm:mb-12 md:mb-16 fade-in-up gradient-primary bg-clip-text text-transparent ${
@@ -58,12 +54,11 @@ export const TechnologySection = () => {
           {technologies.map((tech, index) => (
             <div
               key={index}
-              className={`glass-strong p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl hover:shadow-glow transition-slow fade-in-up parallax-layer ${
+              className={`glass-strong p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl hover:shadow-glow transition-slow fade-in-up ${
                 isVisible ? 'visible' : ''
               }`}
               style={{ 
-                transitionDelay: `${index * 150}ms`,
-                transform: index === 0 ? parallax1.transform : index === 1 ? parallax2.transform : parallax3.transform
+                transitionDelay: `${index * 150}ms`
               }}
             >
               <h3 className={`text-3xl sm:text-4xl md:text-5xl font-black mb-2 sm:mb-3 ${tech.color}`}>

@@ -406,10 +406,9 @@ All colors MUST be HSL.
     animation: progress-fill 1.5s ease-out forwards;
   }
 
-  /* Parallax utilities */
+  /* Parallax utilities - disabled to prevent background flashing */
   .parallax-layer {
-    will-change: transform;
-    transition: transform 0.1s ease-out;
+    transition: none;
   }
 
   html {
