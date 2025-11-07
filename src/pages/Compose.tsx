@@ -543,24 +543,63 @@ const Compose = () => {
             </div>
           )}
 
-          <Button
-            onClick={handleSend}
-            disabled={sending || validationStatus === 'invalid' || validationStatus === 'not-registered'}
-            size="lg"
-            className="w-full h-16 text-2xl font-black shadow-glow"
-          >
-            {sending ? (
-              <>
-                <Loader2 className="w-6 h-6 mr-3 animate-spin" />
-                Encrypting & Sending...
-              </>
-            ) : (
-              <>
-                <Lock className="w-6 h-6 mr-3" />
-                Encrypt & Send
-              </>
+          {/* Auto-save status */}
+          {lastSaved && (
+            <div className="text-center text-sm text-muted-foreground">
+              {saving ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Saving draft...
+                </span>
+              ) : (
+                <span>Auto-saved at {lastSaved.toLocaleTimeString()}</span>
+              )}
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex gap-3">
+            <Button
+              onClick={() => saveDraft(true)}
+              variant="outline"
+              size="lg"
+              disabled={saving || (!to && !subject && !body)}
+              className="flex-1 h-16 text-xl font-bold"
+            >
+              <Save className="w-5 h-5 mr-2" />
+              {saving ? 'Saving...' : 'Save Draft'}
+            </Button>
+            
+            {currentDraftId && (
+              <Button
+                onClick={deleteDraft}
+                variant="destructive"
+                size="lg"
+                className="h-16 px-6"
+              >
+                <Trash2 className="w-5 h-5" />
+              </Button>
             )}
-          </Button>
+            
+            <Button
+              onClick={handleSend}
+              disabled={sending || validationStatus === 'invalid' || validationStatus === 'not-registered'}
+              size="lg"
+              className="flex-1 h-16 text-xl font-black shadow-glow"
+            >
+              {sending ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Encrypting & Sending...
+                </>
+              ) : (
+                <>
+                  <Lock className="w-5 h-5 mr-2" />
+                  Encrypt & Send
+                </>
+              )}
+            </Button>
+          </div>
 
           <p className="text-center text-sm text-muted-foreground">
             Your message will be encrypted end-to-end. Only the recipient's wallet can decrypt it.
