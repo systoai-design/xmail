@@ -123,6 +123,56 @@ serve(async (req) => {
         );
       }
 
+      case 'get_sent': {
+        const { data: emails, error: fetchError } = await supabaseAdmin
+          .from('encrypted_emails')
+          .select('*')
+          .eq('from_wallet', walletPublicKey)
+          .order('timestamp', { ascending: false });
+        
+        if (fetchError) {
+          console.error('Fetch sent error:', fetchError);
+          throw fetchError;
+        }
+        
+        console.log(`Fetched ${emails?.length || 0} sent emails`);
+        return new Response(
+          JSON.stringify({ emails }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'delete_email': {
+        // First verify the user owns this email (either sent or received)
+        const { data: email, error: verifyError } = await supabaseAdmin
+          .from('encrypted_emails')
+          .select('*')
+          .eq('id', data.emailId)
+          .or(`from_wallet.eq.${walletPublicKey},to_wallet.eq.${walletPublicKey}`)
+          .single();
+        
+        if (verifyError || !email) {
+          console.error('Verify error:', verifyError);
+          throw new Error('Email not found or access denied');
+        }
+        
+        const { error: deleteError } = await supabaseAdmin
+          .from('encrypted_emails')
+          .delete()
+          .eq('id', data.emailId);
+        
+        if (deleteError) {
+          console.error('Delete error:', deleteError);
+          throw deleteError;
+        }
+        
+        console.log('Email deleted successfully');
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       default:
         throw new Error('Unknown action');
     }

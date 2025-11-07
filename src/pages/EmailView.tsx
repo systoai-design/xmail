@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Lock, Shield, ExternalLink, Loader2 } from 'lucide-react';
+import { ArrowLeft, Lock, Shield, ExternalLink, Loader2, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { decryptMessage, importPrivateKey } from '@/lib/encryption';
 import { callSecureEndpoint } from '@/lib/secureApi';
+import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 
 interface EmailData {
   id: string;
@@ -28,6 +29,8 @@ const EmailView = () => {
   const [decryptedBody, setDecryptedBody] = useState('');
   const [loading, setLoading] = useState(true);
   const [decrypting, setDecrypting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadEmail();
@@ -128,6 +131,37 @@ const EmailView = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!publicKey || !signMessage || !id) return;
+
+    setDeleting(true);
+    try {
+      await callSecureEndpoint(
+        'delete_email',
+        { emailId: id },
+        publicKey,
+        signMessage
+      );
+      
+      toast({
+        title: 'Email deleted',
+        description: 'The email has been permanently deleted',
+      });
+      
+      navigate('/inbox');
+    } catch (error) {
+      console.error('Error deleting email:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete email',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
+
   const formatDate = (timestamp: string) => {
     return new Date(timestamp).toLocaleString('en-US', {
       month: 'long',
@@ -161,7 +195,7 @@ const EmailView = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="glass border-b border-border">
-        <div className="container mx-auto px-6 py-4">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <Button
             onClick={() => navigate('/inbox')}
             variant="ghost"
@@ -170,6 +204,20 @@ const EmailView = () => {
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             Back to Inbox
+          </Button>
+          
+          <Button
+            onClick={() => setShowDeleteDialog(true)}
+            variant="destructive"
+            size="lg"
+            disabled={deleting}
+          >
+            {deleting ? (
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+            ) : (
+              <Trash2 className="w-5 h-5 mr-2" />
+            )}
+            Delete
           </Button>
         </div>
       </header>
@@ -246,6 +294,15 @@ const EmailView = () => {
           </div>
         )}
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDeleteDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={handleDelete}
+        title="Delete Email?"
+        description="This will permanently delete this email. This action cannot be undone."
+      />
     </div>
   );
 };
