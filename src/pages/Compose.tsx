@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Lock, Loader2, DollarSign, Shield, CheckCircle, XCircle, AlertCircle, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, Lock, Loader2, DollarSign, Shield, CheckCircle, XCircle, AlertCircle, Save, Trash2, Paperclip } from 'lucide-react';
+import { AttachmentUpload } from '@/components/AttachmentUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { encryptMessage, importPublicKey } from '@/lib/encryption';
@@ -512,6 +513,25 @@ const Compose = () => {
               placeholder="Write your encrypted message..."
               className="min-h-[300px] text-lg"
             />
+          </div>
+
+          {/* File Attachments */}
+          <div className="space-y-2">
+            <Label className="text-xl font-bold flex items-center gap-2">
+              <Paperclip className="w-5 h-5" />
+              Attachments
+            </Label>
+            {currentDraftId ? (
+              <AttachmentUpload
+                draftId={currentDraftId}
+                walletPublicKey={publicKey}
+                signMessage={signMessage}
+              />
+            ) : (
+              <div className="text-sm text-muted-foreground p-4 border border-dashed border-border rounded-lg">
+                💡 Save your draft first to attach files
+              </div>
+            )}
           </div>
 
           {/* Admin Badge or Payment Preview */}
