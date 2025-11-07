@@ -345,7 +345,7 @@ const Inbox = () => {
   const renderEmailCard = (email: EncryptedEmail, isSent: boolean) => (
     <div
       key={email.id}
-      className="glass p-6 rounded-xl hover:scale-[1.02] transition-smooth flex items-center gap-4"
+      className="glass p-4 md:p-6 rounded-xl hover:scale-[1.02] transition-smooth flex items-center gap-3 md:gap-4"
     >
       <Checkbox
         checked={selectedEmails.has(email.id)}
@@ -362,39 +362,39 @@ const Inbox = () => {
       />
       <div
         onClick={() => navigate(`/email/${email.id}`)}
-        className="flex-1 cursor-pointer"
+        className="flex-1 cursor-pointer min-w-0"
       >
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-full ${isSent ? 'bg-secondary/20' : 'bg-primary/20'} flex items-center justify-center`}>
-              {isSent ? <Send className="w-6 h-6 text-secondary" /> : <Mail className="w-6 h-6 text-primary" />}
+        <div className="flex items-start justify-between mb-2 md:mb-3 gap-2">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+            <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full ${isSent ? 'bg-secondary/20' : 'bg-primary/20'} flex items-center justify-center flex-shrink-0`}>
+              {isSent ? <Send className="w-4 h-4 md:w-6 md:h-6 text-secondary" /> : <Mail className="w-4 h-4 md:w-6 md:h-6 text-primary" />}
             </div>
-            <div>
-              <div className="font-mono text-sm text-muted-foreground">
-                {isSent ? 'To:' : 'From:'} {(isSent ? email.to_wallet : email.from_wallet).slice(0, 8)}...{(isSent ? email.to_wallet : email.from_wallet).slice(-8)}
+            <div className="min-w-0 flex-1">
+              <div className="font-mono text-xs md:text-sm text-muted-foreground truncate">
+                {isSent ? 'To:' : 'From:'} {(isSent ? email.to_wallet : email.from_wallet).slice(0, 6)}...{(isSent ? email.to_wallet : email.from_wallet).slice(-6)}
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-xs md:text-sm text-muted-foreground">
                 {formatDate(email.timestamp)}
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
             {!isSent && !email.read && (
-              <Badge variant="default" className="bg-accent">New</Badge>
+              <Badge variant="default" className="bg-accent text-xs">New</Badge>
             )}
             {email.payment_tx_signature && (
-              <div className="text-xs bg-accent/20 text-accent px-3 py-1 rounded-full font-bold">
-                ✓ Paid
+              <div className="text-xs bg-accent/20 text-accent px-2 py-1 rounded-full font-bold">
+                ✓
               </div>
             )}
-            <Lock className="w-5 h-5 text-primary" />
+            <Lock className="w-4 h-4 md:w-5 md:h-5 text-primary" />
           </div>
         </div>
-        <div className="text-2xl font-bold mb-2 flex items-center gap-2">
-          <Lock className="w-5 h-5" />
+        <div className="text-lg md:text-2xl font-bold mb-1 md:mb-2 flex items-center gap-2">
+          <Lock className="w-4 h-4 md:w-5 md:h-5" />
           Encrypted Message
         </div>
-        <p className="text-muted-foreground">
+        <p className="text-sm md:text-base text-muted-foreground">
           Click to {isSent ? 'view sent message' : 'decrypt and read'}
         </p>
       </div>
@@ -404,7 +404,7 @@ const Inbox = () => {
   const renderDraftCard = (draft: Draft) => (
     <div
       key={draft.id}
-      className="glass p-6 rounded-xl hover:scale-[1.02] transition-smooth flex items-center gap-4"
+      className="glass p-4 md:p-6 rounded-xl hover:scale-[1.02] transition-smooth flex items-center gap-3 md:gap-4"
     >
       <Checkbox
         checked={selectedEmails.has(draft.id)}
@@ -421,29 +421,29 @@ const Inbox = () => {
       />
       <div
         onClick={() => navigate(`/compose?draft=${draft.id}`)}
-        className="flex-1 cursor-pointer"
+        className="flex-1 cursor-pointer min-w-0"
       >
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-muted/20 flex items-center justify-center">
-              <FileEdit className="w-6 h-6 text-muted-foreground" />
+        <div className="flex items-start justify-between mb-2 md:mb-3 gap-2">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-muted/20 flex items-center justify-center flex-shrink-0">
+              <FileEdit className="w-4 h-4 md:w-6 md:h-6 text-muted-foreground" />
             </div>
-            <div>
-              <div className="font-mono text-sm text-muted-foreground">
-                {draft.to_wallet ? `To: ${draft.to_wallet.slice(0, 8)}...${draft.to_wallet.slice(-8)}` : 'No recipient'}
+            <div className="min-w-0 flex-1">
+              <div className="font-mono text-xs md:text-sm text-muted-foreground truncate">
+                {draft.to_wallet ? `To: ${draft.to_wallet.slice(0, 6)}...${draft.to_wallet.slice(-6)}` : 'No recipient'}
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-xs md:text-sm text-muted-foreground">
                 Updated {formatDate(draft.updated_at)}
               </div>
             </div>
           </div>
-          <Badge variant="outline">Draft</Badge>
+          <Badge variant="outline" className="text-xs flex-shrink-0">Draft</Badge>
         </div>
-        <div className="text-2xl font-bold mb-2 flex items-center gap-2">
-          <FileEdit className="w-5 h-5" />
+        <div className="text-lg md:text-2xl font-bold mb-1 md:mb-2 flex items-center gap-2">
+          <FileEdit className="w-4 h-4 md:w-5 md:h-5" />
           Draft Message
         </div>
-        <p className="text-muted-foreground">
+        <p className="text-sm md:text-base text-muted-foreground">
           Click to continue editing
         </p>
       </div>
@@ -454,59 +454,59 @@ const Inbox = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="glass border-b border-border sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="container mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 md:gap-4 min-w-0">
             <Logo size="medium" />
             {publicKey && (
-              <div className="text-sm text-muted-foreground font-mono">
-                {publicKey.toBase58().slice(0, 6)}...{publicKey.toBase58().slice(-6)}
+              <div className="text-xs md:text-sm text-muted-foreground font-mono truncate">
+                {publicKey.toBase58().slice(0, 4)}...{publicKey.toBase58().slice(-4)}
               </div>
             )}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
             <KeyManagement />
             <Button
               onClick={() => navigate('/compose')}
-              size="lg"
-              className="font-bold text-lg shadow-glow"
+              size="default"
+              className="font-bold shadow-glow"
             >
-              <Plus className="w-5 h-5 mr-2" />
-              New Email
+              <Plus className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">New Email</span>
             </Button>
             <Button
               onClick={handleDisconnect}
               variant="outline"
-              size="lg"
+              size="default"
             >
-              <LogOut className="w-5 h-5 mr-2" />
-              Disconnect
+              <LogOut className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Disconnect</span>
             </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-4 md:px-6 py-6 md:py-8">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'inbox' | 'sent' | 'drafts')} className="w-full">
-          <div className="mb-8">
-            <h2 className="text-5xl font-black mb-4">Messages</h2>
-            <TabsList className="grid w-full max-w-2xl grid-cols-3">
-              <TabsTrigger value="inbox" className="flex items-center gap-2">
+          <div className="mb-6 md:mb-8">
+            <h2 className="text-3xl md:text-5xl font-black mb-4">Messages</h2>
+            <TabsList className="grid w-full md:max-w-2xl grid-cols-3">
+              <TabsTrigger value="inbox" className="flex items-center gap-2 text-xs md:text-sm">
                 <InboxIcon className="w-4 h-4" />
-                Inbox
+                <span className="hidden sm:inline">Inbox</span>
                 {unreadCount > 0 && (
-                  <Badge variant="default" className="ml-1 bg-accent">
+                  <Badge variant="default" className="ml-1 bg-accent text-xs">
                     {unreadCount}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="sent" className="flex items-center gap-2">
+              <TabsTrigger value="sent" className="flex items-center gap-2 text-xs md:text-sm">
                 <Send className="w-4 h-4" />
-                Sent ({sentEmails.length})
+                <span className="hidden sm:inline">Sent</span> ({sentEmails.length})
               </TabsTrigger>
-              <TabsTrigger value="drafts" className="flex items-center gap-2">
+              <TabsTrigger value="drafts" className="flex items-center gap-2 text-xs md:text-sm">
                 <FileEdit className="w-4 h-4" />
-                Drafts ({drafts.length})
+                <span className="hidden sm:inline">Drafts</span> ({drafts.length})
               </TabsTrigger>
             </TabsList>
           </div>
@@ -585,26 +585,26 @@ const Inbox = () => {
                 <Loader2 className="w-12 h-12 animate-spin text-primary" />
               </div>
             ) : filteredInboxEmails.length === 0 && emails.length === 0 ? (
-              <div className="text-center py-20">
-                <Mail className="w-24 h-24 text-muted-foreground mx-auto mb-6" />
-                <h3 className="text-3xl font-bold mb-2">No messages yet</h3>
-                <p className="text-xl text-muted-foreground mb-8">
+              <div className="text-center py-12 md:py-20">
+                <Mail className="w-16 h-16 md:w-24 md:h-24 text-muted-foreground mx-auto mb-4 md:mb-6" />
+                <h3 className="text-2xl md:text-3xl font-bold mb-2">No messages yet</h3>
+                <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8">
                   Send your first encrypted email to get started
                 </p>
                 <Button
                   onClick={() => navigate('/compose')}
                   size="lg"
-                  className="font-bold text-lg shadow-glow"
+                  className="font-bold shadow-glow"
                 >
                   <Plus className="w-5 h-5 mr-2" />
                   Compose Email
                 </Button>
               </div>
             ) : filteredInboxEmails.length === 0 ? (
-              <div className="text-center py-20">
-                <Filter className="w-24 h-24 text-muted-foreground mx-auto mb-6" />
-                <h3 className="text-3xl font-bold mb-2">No messages match your filters</h3>
-                <p className="text-xl text-muted-foreground mb-8">
+              <div className="text-center py-12 md:py-20">
+                <Filter className="w-16 h-16 md:w-24 md:h-24 text-muted-foreground mx-auto mb-4 md:mb-6" />
+                <h3 className="text-2xl md:text-3xl font-bold mb-2">No messages match your filters</h3>
+                <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8">
                   Try adjusting your search or filter criteria
                 </p>
                 <Button
@@ -631,26 +631,26 @@ const Inbox = () => {
                 <Loader2 className="w-12 h-12 animate-spin text-primary" />
               </div>
             ) : filteredSentEmails.length === 0 && sentEmails.length === 0 ? (
-              <div className="text-center py-20">
-                <Send className="w-24 h-24 text-muted-foreground mx-auto mb-6" />
-                <h3 className="text-3xl font-bold mb-2">No sent messages</h3>
-                <p className="text-xl text-muted-foreground mb-8">
+              <div className="text-center py-12 md:py-20">
+                <Send className="w-16 h-16 md:w-24 md:h-24 text-muted-foreground mx-auto mb-4 md:mb-6" />
+                <h3 className="text-2xl md:text-3xl font-bold mb-2">No sent messages</h3>
+                <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8">
                   Send your first encrypted email to see it here
                 </p>
                 <Button
                   onClick={() => navigate('/compose')}
                   size="lg"
-                  className="font-bold text-lg shadow-glow"
+                  className="font-bold shadow-glow"
                 >
                   <Plus className="w-5 h-5 mr-2" />
                   Compose Email
                 </Button>
               </div>
             ) : filteredSentEmails.length === 0 ? (
-              <div className="text-center py-20">
-                <Filter className="w-24 h-24 text-muted-foreground mx-auto mb-6" />
-                <h3 className="text-3xl font-bold mb-2">No messages match your search</h3>
-                <p className="text-xl text-muted-foreground mb-8">
+              <div className="text-center py-12 md:py-20">
+                <Filter className="w-16 h-16 md:w-24 md:h-24 text-muted-foreground mx-auto mb-4 md:mb-6" />
+                <h3 className="text-2xl md:text-3xl font-bold mb-2">No messages match your search</h3>
+                <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8">
                   Try adjusting your search criteria
                 </p>
                 <Button
@@ -674,26 +674,26 @@ const Inbox = () => {
                 <Loader2 className="w-12 h-12 animate-spin text-primary" />
               </div>
             ) : filteredDrafts.length === 0 && drafts.length === 0 ? (
-              <div className="text-center py-20">
-                <FileEdit className="w-24 h-24 text-muted-foreground mx-auto mb-6" />
-                <h3 className="text-3xl font-bold mb-2">No drafts</h3>
-                <p className="text-xl text-muted-foreground mb-8">
+              <div className="text-center py-12 md:py-20">
+                <FileEdit className="w-16 h-16 md:w-24 md:h-24 text-muted-foreground mx-auto mb-4 md:mb-6" />
+                <h3 className="text-2xl md:text-3xl font-bold mb-2">No drafts</h3>
+                <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8">
                   Start composing a message and it will be saved automatically
                 </p>
                 <Button
                   onClick={() => navigate('/compose')}
                   size="lg"
-                  className="font-bold text-lg shadow-glow"
+                  className="font-bold shadow-glow"
                 >
                   <Plus className="w-5 h-5 mr-2" />
                   Compose Email
                 </Button>
               </div>
             ) : filteredDrafts.length === 0 ? (
-              <div className="text-center py-20">
-                <Filter className="w-24 h-24 text-muted-foreground mx-auto mb-6" />
-                <h3 className="text-3xl font-bold mb-2">No drafts match your search</h3>
-                <p className="text-xl text-muted-foreground mb-8">
+              <div className="text-center py-12 md:py-20">
+                <Filter className="w-16 h-16 md:w-24 md:h-24 text-muted-foreground mx-auto mb-4 md:mb-6" />
+                <h3 className="text-2xl md:text-3xl font-bold mb-2">No drafts match your search</h3>
+                <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8">
                   Try adjusting your search criteria
                 </p>
                 <Button
@@ -715,24 +715,27 @@ const Inbox = () => {
 
       {/* Bulk Action Toolbar */}
       {selectedEmails.size > 0 && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 glass-glow p-6 rounded-2xl shadow-2xl border-2 border-primary/30 z-50">
-          <div className="flex items-center gap-6">
-            <div className="text-lg font-bold">
+        <div className="fixed bottom-4 md:bottom-8 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 glass-glow p-4 md:p-6 rounded-2xl shadow-2xl border-2 border-primary/30 z-50">
+          <div className="flex flex-col sm:flex-row items-center gap-3 md:gap-6">
+            <div className="text-sm md:text-lg font-bold text-center sm:text-left">
               {selectedEmails.size} {activeTab === 'drafts' ? 'draft' : 'email'}{selectedEmails.size === 1 ? '' : 's'} selected
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2 md:gap-3 w-full sm:w-auto">
               <Button
                 onClick={() => setShowBulkDeleteDialog(true)}
                 variant="destructive"
-                size="lg"
+                size="default"
+                className="flex-1 sm:flex-none"
               >
-                <Trash2 className="w-5 h-5 mr-2" />
-                Delete Selected
+                <Trash2 className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Delete Selected</span>
+                <span className="md:hidden">Delete</span>
               </Button>
               <Button
                 onClick={() => setSelectedEmails(new Set())}
                 variant="outline"
-                size="lg"
+                size="default"
+                className="flex-1 sm:flex-none"
               >
                 Cancel
               </Button>
