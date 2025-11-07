@@ -84,10 +84,22 @@ export const useEncryptionKeys = () => {
           return;
         }
 
-        toast({
-          title: "Keys Registered",
-          description: "Your encryption keys have been successfully registered.",
-        });
+        // Check if this is first-time registration
+        const isFirstTime = !sessionStorage.getItem('xmail_onboarded');
+        
+        if (isFirstTime) {
+          sessionStorage.setItem('xmail_onboarded', 'true');
+          toast({
+            title: "🎉 Welcome to xMail!",
+            description: "Your encryption keys are ready! You can now send and receive end-to-end encrypted messages. Remember to backup your keys for other devices.",
+            duration: 10000,
+          });
+        } else {
+          toast({
+            title: "Keys Registered",
+            description: "Your encryption keys have been successfully registered.",
+          });
+        }
       } 
       // Case 2: Backend has key, but session is missing private key
       else if (!sessionPrivateKey) {

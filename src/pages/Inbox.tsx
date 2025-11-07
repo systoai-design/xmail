@@ -13,6 +13,7 @@ import { callSecureEndpoint } from '@/lib/secureApi';
 import { supabase } from '@/integrations/supabase/client';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Logo } from '@/components/Logo';
+import { KeyManagement } from '@/components/KeyManagement';
 
 interface EncryptedEmail {
   id: string;
@@ -330,6 +331,7 @@ const Inbox = () => {
             )}
           </div>
           <div className="flex items-center gap-4">
+            <KeyManagement />
             <Button
               onClick={() => navigate('/compose')}
               size="lg"

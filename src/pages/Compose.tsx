@@ -1,12 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Lock, Loader2, DollarSign, Shield } from 'lucide-react';
-import { useEffect } from 'react';
+import { ArrowLeft, Lock, Loader2, DollarSign, Shield, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { encryptMessage, importPublicKey } from '@/lib/encryption';
@@ -25,6 +24,8 @@ const Compose = () => {
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
   const [userIsAdmin, setUserIsAdmin] = useState(false);
+  const [validationStatus, setValidationStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid' | 'not-registered'>('idle');
+  const [validationMessage, setValidationMessage] = useState('');
 
   // Check admin status on mount
   useEffect(() => {
@@ -32,6 +33,54 @@ const Compose = () => {
       isAdmin(publicKey.toBase58()).then(setUserIsAdmin);
     }
   }, [publicKey]);
+
+  // Live recipient validation with debounce
+  useEffect(() => {
+    const validateRecipient = async (address: string) => {
+      const trimmed = address.trim();
+      
+      if (!trimmed) {
+        setValidationStatus('idle');
+        setValidationMessage('');
+        return;
+      }
+      
+      setValidationStatus('checking');
+      
+      try {
+        new PublicKey(trimmed);
+        
+        const { data, error } = await supabase
+          .from('encryption_keys')
+          .select('public_key')
+          .eq('wallet_address', trimmed)
+          .maybeSingle();
+        
+        if (error) {
+          setValidationStatus('invalid');
+          setValidationMessage('Error checking recipient');
+          return;
+        }
+        
+        if (data) {
+          setValidationStatus('valid');
+          setValidationMessage('✓ Recipient is registered and ready to receive');
+        } else {
+          setValidationStatus('not-registered');
+          setValidationMessage('⚠ Recipient must connect their wallet first');
+        }
+      } catch {
+        setValidationStatus('invalid');
+        setValidationMessage('✗ Invalid Solana wallet address');
+      }
+    };
+
+    const timer = setTimeout(() => {
+      if (to) validateRecipient(to);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [to]);
 
   const handleSend = async () => {
     if (!publicKey || !signMessage) {
@@ -183,6 +232,20 @@ const Compose = () => {
               placeholder="Enter recipient's Solana wallet address"
               className="h-14 text-lg font-mono"
             />
+            {validationStatus !== 'idle' && (
+              <div className={`flex items-center gap-2 text-sm ${
+                validationStatus === 'valid' ? 'text-green-500' :
+                validationStatus === 'invalid' ? 'text-red-500' :
+                validationStatus === 'not-registered' ? 'text-yellow-500' :
+                'text-muted-foreground'
+              }`}>
+                {validationStatus === 'checking' && <Loader2 className="w-4 h-4 animate-spin" />}
+                {validationStatus === 'valid' && <CheckCircle className="w-4 h-4" />}
+                {validationStatus === 'invalid' && <XCircle className="w-4 h-4" />}
+                {validationStatus === 'not-registered' && <AlertCircle className="w-4 h-4" />}
+                <span>{validationMessage}</span>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -242,7 +305,7 @@ const Compose = () => {
 
           <Button
             onClick={handleSend}
-            disabled={sending}
+            disabled={sending || validationStatus === 'invalid' || validationStatus === 'not-registered'}
             size="lg"
             className="w-full h-16 text-2xl font-black shadow-glow"
           >
