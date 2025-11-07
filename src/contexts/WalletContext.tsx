@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState, useEffect } from 'react';
+import { createContext, useContext, useMemo, useState, useEffect, ReactNode } from 'react';
 import { ConnectionProvider, WalletProvider as SolanaWalletProvider, useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
@@ -19,11 +19,15 @@ const WalletContext = createContext<WalletContextType>({
 export const useWalletContext = () => useContext(WalletContext);
 
 // Helper component to sync wallet state
-const WalletStateSync: React.FC<{
-  children: React.ReactNode;
+const WalletStateSync = ({ 
+  children, 
+  setWalletAddress, 
+  setConnected 
+}: {
+  children: ReactNode;
   setWalletAddress: (addr: string | null) => void;
   setConnected: (conn: boolean) => void;
-}> = ({ children, setWalletAddress, setConnected }) => {
+}) => {
   const { publicKey, connected: walletConnected } = useSolanaWallet();
 
   useEffect(() => {
@@ -34,7 +38,7 @@ const WalletStateSync: React.FC<{
   return <>{children}</>;
 };
 
-export const WalletContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const WalletContextProvider = ({ children }: { children: ReactNode }) => {
   const network = WalletAdapterNetwork.Devnet;
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
