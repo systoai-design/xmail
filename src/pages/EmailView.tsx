@@ -192,15 +192,15 @@ const EmailView = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       {/* Header */}
-      <header className="glass border-b border-border">
+      <header className="glass border-b border-border/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <Button
             onClick={() => navigate('/inbox')}
             variant="ghost"
             size="lg"
-            className="font-bold"
+            className="font-bold hover:scale-105 transition-transform"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             Back to Inbox
@@ -211,6 +211,7 @@ const EmailView = () => {
             variant="destructive"
             size="lg"
             disabled={deleting}
+            className="hover:scale-105 transition-transform"
           >
             {deleting ? (
               <Loader2 className="w-5 h-5 mr-2 animate-spin" />
@@ -223,72 +224,81 @@ const EmailView = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8 max-w-4xl">
+      <main className="container mx-auto px-6 py-12 max-w-4xl">
         {/* Email Metadata */}
-        <div className="glass p-6 rounded-xl mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Shield className="w-8 h-8 text-accent" />
-              <div className="text-xl font-bold text-accent">
-                🔒 Verified & Encrypted
+        <div className="glass p-8 rounded-2xl mb-8 border-2 border-primary/20 bg-gradient-to-br from-background to-primary/5">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent/20 to-accent/40 flex items-center justify-center">
+                <Shield className="w-7 h-7 text-accent" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-accent flex items-center gap-2">
+                  🔒 Verified & Encrypted
+                </div>
+                <div className="text-sm text-muted-foreground">End-to-end encrypted message</div>
               </div>
             </div>
             {email.payment_tx_signature && (
-              <div className="flex items-center gap-2 text-sm text-secondary">
-                <div className="bg-secondary/20 px-4 py-2 rounded-full font-bold">
+              <div className="flex items-center gap-3">
+                <div className="bg-green-500/10 px-4 py-2 rounded-xl font-bold text-green-500 border border-green-500/20">
                   ✓ Payment Verified
                 </div>
-                {email.payment_tx_signature.startsWith('mock_') ? (
-                  <div className="text-xs text-muted-foreground">(Demo Mode)</div>
-                ) : (
+                {!email.payment_tx_signature.startsWith('mock_') && (
                   <a
                     href={`https://solscan.io/tx/${email.payment_tx_signature}?cluster=devnet`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:text-secondary/80"
+                    className="hover:text-secondary/80 transition-colors"
                   >
-                    <ExternalLink className="w-4 h-4" />
+                    <ExternalLink className="w-5 h-5" />
                   </a>
                 )}
               </div>
             )}
           </div>
-          <div className="space-y-2 text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <span className="font-bold">From:</span>
-              <span className="font-mono text-sm">
+          
+          <div className="space-y-3 text-base">
+            <div className="flex items-center gap-3">
+              <span className="font-bold text-foreground">From:</span>
+              <span className="font-mono bg-muted/50 px-3 py-1 rounded-lg">
                 {email.from_wallet.slice(0, 12)}...{email.from_wallet.slice(-12)}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold">Date:</span>
-              <span>{formatDate(email.timestamp)}</span>
+            <div className="flex items-center gap-3">
+              <span className="font-bold text-foreground">Date:</span>
+              <span className="text-muted-foreground">{formatDate(email.timestamp)}</span>
             </div>
           </div>
         </div>
 
         {/* Email Content */}
         {decrypting ? (
-          <div className="glass p-12 rounded-2xl flex flex-col items-center justify-center">
-            <Loader2 className="w-16 h-16 animate-spin text-primary mb-4" />
-            <p className="text-xl font-bold">Decrypting message...</p>
+          <div className="glass p-16 rounded-2xl flex flex-col items-center justify-center border border-border/50">
+            <Loader2 className="w-20 h-20 animate-spin text-primary mb-6" />
+            <p className="text-2xl font-bold">Decrypting message...</p>
+            <p className="text-muted-foreground mt-2">This will only take a moment</p>
           </div>
         ) : decryptedSubject && decryptedBody ? (
-          <div className="glass p-8 rounded-2xl space-y-6">
-            <div>
-              <h1 className="text-5xl font-black mb-2">{decryptedSubject}</h1>
+          <div className="glass p-10 rounded-2xl space-y-8 border border-border/50">
+            <div className="border-b border-border/50 pb-6">
+              <h1 className="text-5xl font-black leading-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                {decryptedSubject}
+              </h1>
             </div>
-            <div className="border-t border-border pt-6">
-              <div className="text-xl leading-relaxed whitespace-pre-wrap">
+            <div className="prose prose-lg max-w-none">
+              <div className="text-xl leading-relaxed whitespace-pre-wrap text-foreground/90">
                 {decryptedBody}
               </div>
             </div>
           </div>
         ) : (
-          <div className="glass p-12 rounded-2xl text-center">
-            <Lock className="w-16 h-16 text-primary mx-auto mb-4" />
-            <h3 className="text-3xl font-bold mb-2">Encrypted Message</h3>
-            <p className="text-muted-foreground">
+          <div className="glass p-16 rounded-2xl text-center border border-border/50">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+              <Lock className="w-10 h-10 text-primary" />
+            </div>
+            <h3 className="text-3xl font-bold mb-3">Encrypted Message</h3>
+            <p className="text-lg text-muted-foreground">
               Unable to decrypt. Please make sure you're using the correct wallet.
             </p>
           </div>

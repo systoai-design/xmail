@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Logo } from '@/components/Logo';
 import { KeyManagement } from '@/components/KeyManagement';
+import { KeyRotationBanner } from '@/components/KeyRotationBanner';
 
 interface EncryptedEmail {
   id: string;

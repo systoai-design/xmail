@@ -23,9 +23,9 @@ const Compose = () => {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
-  const [userIsAdmin, setUserIsAdmin] = useState(false);
   const [validationStatus, setValidationStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid' | 'not-registered'>('idle');
   const [validationMessage, setValidationMessage] = useState('');
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
 
   // Check admin status on mount
   useEffect(() => {

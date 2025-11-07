@@ -1,102 +1,123 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Key, Download, Upload, Copy, AlertTriangle } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Key, Download, Upload, Copy, AlertTriangle, Loader2, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { importPrivateKey } from '@/lib/encryption';
+import { importPrivateKey, decryptMessage } from '@/lib/encryption';
+import { encryptKeyWithPassword, decryptKeyWithPassword } from '@/lib/keyProtection';
+import { QRKeyTransfer } from '@/components/QRKeyTransfer';
 
 export const KeyManagement = () => {
+  const { publicKey } = useWallet();
   const { toast } = useToast();
+  const [open, setOpen] = useState(false);
   const [importKeyValue, setImportKeyValue] = useState('');
   const [importing, setImporting] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [exportPassword, setExportPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [importPassword, setImportPassword] = useState('');
+  const [importFile, setImportFile] = useState<File | null>(null);
 
   const handleExportCopy = () => {
     const privateKey = sessionStorage.getItem('encryption_private_key');
     if (!privateKey) {
-      toast({
-        title: 'No key found',
-        description: 'No encryption key available to export',
-        variant: 'destructive',
-      });
+      toast({ title: 'No key found', variant: 'destructive' });
       return;
     }
-
     navigator.clipboard.writeText(privateKey);
-    toast({
-      title: 'Copied!',
-      description: 'Private key copied to clipboard',
-    });
+    toast({ title: 'Copied to clipboard!' });
   };
 
-  const handleExportDownload = () => {
+  const handleExportDownload = async (withPassword: boolean = false) => {
     const privateKey = sessionStorage.getItem('encryption_private_key');
     if (!privateKey) {
-      toast({
-        title: 'No key found',
-        description: 'No encryption key available to export',
-        variant: 'destructive',
-      });
+      toast({ title: 'No key found', variant: 'destructive' });
       return;
     }
 
-    const blob = new Blob([privateKey], { type: 'text/plain' });
+    let exportData = privateKey;
+    let filename = `xmail-key-${Date.now()}.txt`;
+
+    if (withPassword) {
+      if (exportPassword.length < 8 || exportPassword !== confirmPassword) {
+        toast({ title: 'Invalid password', variant: 'destructive' });
+        return;
+      }
+      try {
+        exportData = await encryptKeyWithPassword(privateKey, exportPassword);
+        filename = `xmail-key-protected-${Date.now()}.txt`;
+      } catch {
+        toast({ title: 'Encryption failed', variant: 'destructive' });
+        return;
+      }
+    }
+
+    const blob = new Blob([exportData], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `xmail-private-key-${new Date().getTime()}.txt`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-
-    toast({
-      title: 'Downloaded!',
-      description: 'Private key saved to file',
-    });
+    toast({ title: withPassword ? '🔐 Protected key exported' : 'Key exported' });
+    setExportPassword('');
+    setConfirmPassword('');
   };
 
   const handleImport = async () => {
-    if (!importKeyValue.trim()) {
-      toast({
-        title: 'Empty key',
-        description: 'Please paste your private key',
-        variant: 'destructive',
-      });
+    let keyValue = importKeyValue.trim();
+    if (!keyValue && !importFile) {
+      toast({ title: 'No key provided', variant: 'destructive' });
       return;
     }
 
     setImporting(true);
-
     try {
-      // Validate key format by attempting to import it
-      await importPrivateKey(importKeyValue.trim());
-      
-      // Store in session storage
-      sessionStorage.setItem('encryption_private_key', importKeyValue.trim());
-      
-      toast({
-        title: 'Key imported!',
-        description: 'Your private key has been successfully restored',
-      });
-      
+      if (importFile) keyValue = await importFile.text();
+      if (keyValue.length > 500 && importPassword) {
+        keyValue = await decryptKeyWithPassword(keyValue, importPassword);
+      }
+
+      const privateKey = await importPrivateKey(keyValue);
+
+      if (publicKey) {
+        const { data: sentEmails } = await supabase
+          .from('encrypted_emails')
+          .select('encrypted_subject')
+          .eq('from_wallet', publicKey.toBase58())
+          .limit(1)
+          .maybeSingle();
+
+        if (sentEmails) {
+          try {
+            await decryptMessage(sentEmails.encrypted_subject, privateKey);
+            toast({ title: '✓ Key verified!' });
+          } catch {
+            toast({ title: '⚠️ Key may not match wallet', variant: 'destructive' });
+          }
+        }
+      }
+
+      sessionStorage.setItem('encryption_private_key', keyValue);
+      toast({ title: 'Key imported!' });
       setImportKeyValue('');
+      setImportPassword('');
+      setImportFile(null);
       setOpen(false);
-    } catch (error) {
-      console.error('Error importing key:', error);
-      toast({
-        title: 'Invalid key',
-        description: 'The provided key is not valid',
-        variant: 'destructive',
-      });
+    } catch {
+      toast({ title: 'Invalid key', variant: 'destructive' });
     } finally {
       setImporting(false);
     }
   };
-
-  const privateKey = sessionStorage.getItem('encryption_private_key');
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -109,93 +130,48 @@ export const KeyManagement = () => {
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">Encryption Key Management</DialogTitle>
-          <DialogDescription>
-            Export your private key for backup or import it on another device
-          </DialogDescription>
         </DialogHeader>
-
-        <Tabs defaultValue="export" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="export">
-              <Download className="w-4 h-4 mr-2" />
-              Export / Backup
-            </TabsTrigger>
-            <TabsTrigger value="import">
-              <Upload className="w-4 h-4 mr-2" />
-              Import / Restore
-            </TabsTrigger>
+        <Tabs defaultValue="export">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="export">Export</TabsTrigger>
+            <TabsTrigger value="import">Import</TabsTrigger>
+            <TabsTrigger value="qr">QR Transfer</TabsTrigger>
           </TabsList>
-
           <TabsContent value="export" className="space-y-4">
-            <div className="glass p-4 rounded-xl border-2 border-yellow-500/30 bg-yellow-500/5">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-yellow-500 mt-0.5" />
-                <div className="flex-1">
-                  <div className="font-bold text-yellow-500 mb-1">Security Warning</div>
-                  <div className="text-sm text-muted-foreground">
-                    Keep this key safe and private! Anyone with this key can decrypt your messages. Never share it or store it in insecure locations.
-                  </div>
-                </div>
+            <div className="glass-strong p-6 rounded-xl space-y-4">
+              <div className="flex items-start gap-3 text-sm text-yellow-500 bg-yellow-500/10 p-4 rounded-lg">
+                <AlertTriangle className="w-5 h-5 mt-0.5" />
+                <div>⚠️ Keep safe! Anyone with this key can decrypt your messages.</div>
+              </div>
+              <Textarea value={sessionStorage.getItem('encryption_private_key') || ''} readOnly className="font-mono text-sm h-32" />
+              <div className="space-y-3">
+                <Label>Password Protection (Optional)</Label>
+                <Input type="password" placeholder="Password (min 8 chars)" value={exportPassword} onChange={(e) => setExportPassword(e.target.value)} />
+                <Input type="password" placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <Button onClick={handleExportCopy} variant="outline"><Copy className="w-4 h-4 mr-2" />Copy</Button>
+                <Button onClick={() => handleExportDownload(false)} variant="secondary"><Download className="w-4 h-4 mr-2" />Download</Button>
+                <Button onClick={() => handleExportDownload(true)} disabled={!exportPassword || exportPassword !== confirmPassword}><Shield className="w-4 h-4 mr-2" />Protected</Button>
               </div>
             </div>
-
-            {privateKey ? (
-              <>
-                <Textarea
-                  value={privateKey}
-                  readOnly
-                  className="font-mono text-xs h-32"
-                  placeholder="Your private key will appear here"
-                />
-                <div className="flex gap-3">
-                  <Button onClick={handleExportCopy} className="flex-1">
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy to Clipboard
-                  </Button>
-                  <Button onClick={handleExportDownload} variant="secondary" className="flex-1">
-                    <Download className="w-4 h-4 mr-2" />
-                    Download as File
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                No private key found in this session
-              </div>
-            )}
           </TabsContent>
-
           <TabsContent value="import" className="space-y-4">
-            <div className="glass p-4 rounded-xl border-2 border-blue-500/30 bg-blue-500/5">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-blue-500 mt-0.5" />
-                <div className="flex-1">
-                  <div className="font-bold text-blue-500 mb-1">Import Key</div>
-                  <div className="text-sm text-muted-foreground">
-                    Paste your exported private key below to restore access to your encrypted messages on this device.
-                  </div>
-                </div>
-              </div>
+            <div className="glass-strong p-6 rounded-xl space-y-4">
+              <Textarea value={importKeyValue} onChange={(e) => setImportKeyValue(e.target.value)} placeholder="Paste key..." className="font-mono h-24" />
+              <div className="text-center text-sm text-muted-foreground">OR</div>
+              <Input type="file" accept=".txt" onChange={(e) => setImportFile(e.target.files?.[0] || null)} />
+              <Input type="password" placeholder="Password (if protected)" value={importPassword} onChange={(e) => setImportPassword(e.target.value)} />
+              <Button onClick={handleImport} disabled={importing} className="w-full">
+                {importing ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Importing...</> : <><Upload className="w-4 h-4 mr-2" />Restore Key</>}
+              </Button>
             </div>
-
-            <Textarea
-              value={importKeyValue}
-              onChange={(e) => setImportKeyValue(e.target.value)}
-              className="font-mono text-xs h-32"
-              placeholder="Paste your private key here..."
-            />
-            
-            <Button 
-              onClick={handleImport} 
-              disabled={importing || !importKeyValue.trim()}
-              className="w-full"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              {importing ? 'Importing...' : 'Restore Private Key'}
-            </Button>
+          </TabsContent>
+          <TabsContent value="qr" className="space-y-4">
+            <div className="glass-strong p-6 rounded-xl"><QRKeyTransfer /></div>
           </TabsContent>
         </Tabs>
       </DialogContent>
     </Dialog>
   );
-};
+}
