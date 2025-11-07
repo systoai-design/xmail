@@ -1,4 +1,5 @@
 import { Lock } from 'lucide-react';
+import { Logo } from '@/components/Logo';
 
 export const Footer = () => {
   return (
@@ -6,9 +7,7 @@ export const Footer = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col items-center space-y-4 sm:space-y-6">
           {/* Logo/Brand */}
-          <h3 className="text-2xl sm:text-3xl md:text-4xl font-black gradient-primary bg-clip-text text-transparent">
-            xmail
-          </h3>
+          <Logo size="large" />
 
           {/* Tagline */}
           <p className="text-sm sm:text-base md:text-lg text-muted-foreground flex items-center gap-2 text-center">

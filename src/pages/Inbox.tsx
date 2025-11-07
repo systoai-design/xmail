@@ -12,6 +12,7 @@ import { useEncryptionKeys } from '@/hooks/useEncryptionKeys';
 import { callSecureEndpoint } from '@/lib/secureApi';
 import { supabase } from '@/integrations/supabase/client';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { Logo } from '@/components/Logo';
 
 interface EncryptedEmail {
   id: string;
@@ -321,9 +322,7 @@ const Inbox = () => {
       <header className="glass border-b border-border sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h1 className="text-4xl font-black gradient-primary bg-clip-text text-transparent">
-              xmail
-            </h1>
+            <Logo size="medium" />
             {publicKey && (
               <div className="text-sm text-muted-foreground font-mono">
                 {publicKey.toBase58().slice(0, 6)}...{publicKey.toBase58().slice(-6)}

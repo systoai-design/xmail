@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Lock, Unlock, Mail, Zap, Shield, Check } from 'lucide-react';
+import { Logo } from '@/components/Logo';
 
 export const InteractiveDemo = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -99,10 +100,7 @@ export const InteractiveDemo = () => {
             <div className="glass-glow rounded-[24px] sm:rounded-[35px] p-4 sm:p-6 md:p-8 shadow-glow-strong">
               {/* Mockup Header */}
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
-                <div className="flex items-center gap-2">
-                  <Lock className="w-5 h-5 text-primary" />
-                  <span className="font-black text-lg gradient-primary bg-clip-text text-transparent">xmail</span>
-                </div>
+                <Logo size="small" />
                 <div className="text-xs text-muted-foreground font-mono">
                   9mP4...qW7s
                 </div>
