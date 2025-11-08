@@ -25,6 +25,7 @@ interface GmailSidebarProps {
   draftsCount: number;
   starredCount: number;
   onDisconnect: () => void;
+  onCompose: () => void;
 }
 
 export const GmailSidebar = ({ 
@@ -32,7 +33,8 @@ export const GmailSidebar = ({
   sentCount, 
   draftsCount,
   starredCount,
-  onDisconnect 
+  onDisconnect,
+  onCompose
 }: GmailSidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -105,7 +107,7 @@ export const GmailSidebar = ({
       <div className="p-3">
         <Button
           onClick={() => {
-            navigate('/compose');
+            onCompose();
             setMobileOpen(false);
           }}
           className="w-full font-bold shadow-glow justify-start gap-3"

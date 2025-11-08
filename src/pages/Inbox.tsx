@@ -13,6 +13,7 @@ import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { GmailSidebar } from '@/components/GmailSidebar';
 import { EmailRow } from '@/components/EmailRow';
 import { SectionHeader } from '@/components/SectionHeader';
+import { ComposeModal } from '@/components/ComposeModal';
 
 interface EncryptedEmail {
   id: string;
@@ -58,6 +59,10 @@ const Inbox = () => {
   const [importantExpanded, setImportantExpanded] = useState(true);
   const [starredExpanded, setStarredExpanded] = useState(true);
   const [allExpanded, setAllExpanded] = useState(true);
+
+  // Compose modal state
+  const [composeModalOpen, setComposeModalOpen] = useState(false);
+  const [composeDraftId, setComposeDraftId] = useState<string | null>(null);
 
   const activeTab = tabFromUrl as 'inbox' | 'sent' | 'drafts' | 'starred';
 
@@ -413,7 +418,10 @@ const Inbox = () => {
       <div
         key={draft.id}
         className="gmail-email-row"
-        onClick={() => navigate(`/compose?draft=${draft.id}`)}
+        onClick={() => {
+          setComposeDraftId(draft.id);
+          setComposeModalOpen(true);
+        }}
       >
         <div className="flex items-center gap-3 px-4 py-3">
           <Checkbox
@@ -456,6 +464,10 @@ const Inbox = () => {
         draftsCount={drafts.length}
         starredCount={starredCount}
         onDisconnect={handleDisconnect}
+        onCompose={() => {
+          setComposeDraftId(null);
+          setComposeModalOpen(true);
+        }}
       />
 
       {/* Main Content */}
@@ -589,6 +601,21 @@ const Inbox = () => {
         onConfirm={handleBulkDelete}
         title={`Delete ${selectedEmails.size} item${selectedEmails.size === 1 ? '' : 's'}?`}
         description={`This will permanently delete ${selectedEmails.size} item${selectedEmails.size === 1 ? '' : 's'}. This action cannot be undone.`}
+      />
+
+      {/* Compose Modal */}
+      <ComposeModal
+        isOpen={composeModalOpen}
+        onClose={() => {
+          setComposeModalOpen(false);
+          setComposeDraftId(null);
+        }}
+        draftId={composeDraftId}
+        onSent={() => {
+          loadEmails();
+          loadSentEmails();
+          loadDrafts();
+        }}
       />
     </div>
   );
