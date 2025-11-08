@@ -14,6 +14,7 @@ import { GmailSidebar } from '@/components/GmailSidebar';
 import { EmailRow } from '@/components/EmailRow';
 import { SectionHeader } from '@/components/SectionHeader';
 import { ComposeModal } from '@/components/ComposeModal';
+import { ComposeTabSwitcher, ComposeWindow } from '@/components/ComposeTabSwitcher';
 
 interface EncryptedEmail {
   id: string;
@@ -60,9 +61,9 @@ const Inbox = () => {
   const [starredExpanded, setStarredExpanded] = useState(true);
   const [allExpanded, setAllExpanded] = useState(true);
 
-  // Compose modal state
-  const [composeModalOpen, setComposeModalOpen] = useState(false);
-  const [composeDraftId, setComposeDraftId] = useState<string | null>(null);
+  // Multiple compose windows state
+  const [composeWindows, setComposeWindows] = useState<ComposeWindow[]>([]);
+  const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
 
   const activeTab = tabFromUrl as 'inbox' | 'sent' | 'drafts' | 'starred';
 
@@ -295,6 +296,49 @@ const Inbox = () => {
     loadDrafts();
   };
 
+  const handleCompose = () => {
+    const newWindow: ComposeWindow = {
+      id: Math.random().toString(36).substring(7),
+      draftId: null,
+      subject: '',
+      isMinimized: false,
+    };
+    setComposeWindows(prev => [...prev, newWindow]);
+    setActiveWindowId(newWindow.id);
+  };
+
+  const handleOpenDraft = (draftId: string) => {
+    const newWindow: ComposeWindow = {
+      id: Math.random().toString(36).substring(7),
+      draftId,
+      subject: '',
+      isMinimized: false,
+    };
+    setComposeWindows(prev => [...prev, newWindow]);
+    setActiveWindowId(newWindow.id);
+  };
+
+  const handleCloseWindow = (windowId: string) => {
+    setComposeWindows(prev => prev.filter(w => w.id !== windowId));
+    if (activeWindowId === windowId) {
+      const remaining = composeWindows.filter(w => w.id !== windowId);
+      setActiveWindowId(remaining.length > 0 ? remaining[0].id : null);
+    }
+  };
+
+  const handleWindowClick = (windowId: string) => {
+    setActiveWindowId(windowId);
+    setComposeWindows(prev =>
+      prev.map(w => (w.id === windowId ? { ...w, isMinimized: false } : w))
+    );
+  };
+
+  const handleSubjectChange = (windowId: string, subject: string) => {
+    setComposeWindows(prev =>
+      prev.map(w => (w.id === windowId ? { ...w, subject } : w))
+    );
+  };
+
   const unreadCount = useMemo(() => {
     return emails.filter(e => !e.read).length;
   }, [emails]);
@@ -418,10 +462,7 @@ const Inbox = () => {
       <div
         key={draft.id}
         className="gmail-email-row"
-        onClick={() => {
-          setComposeDraftId(draft.id);
-          setComposeModalOpen(true);
-        }}
+        onClick={() => handleOpenDraft(draft.id)}
       >
         <div className="flex items-center gap-3 px-4 py-3">
           <Checkbox
@@ -464,10 +505,7 @@ const Inbox = () => {
         draftsCount={drafts.length}
         starredCount={starredCount}
         onDisconnect={handleDisconnect}
-        onCompose={() => {
-          setComposeDraftId(null);
-          setComposeModalOpen(true);
-        }}
+        onCompose={handleCompose}
       />
 
       {/* Main Content */}
@@ -603,19 +641,29 @@ const Inbox = () => {
         description={`This will permanently delete ${selectedEmails.size} item${selectedEmails.size === 1 ? '' : 's'}. This action cannot be undone.`}
       />
 
-      {/* Compose Modal */}
-      <ComposeModal
-        isOpen={composeModalOpen}
-        onClose={() => {
-          setComposeModalOpen(false);
-          setComposeDraftId(null);
-        }}
-        draftId={composeDraftId}
-        onSent={() => {
-          loadEmails();
-          loadSentEmails();
-          loadDrafts();
-        }}
+      {/* Compose Windows */}
+      {composeWindows.map(window => (
+        <ComposeModal
+          key={window.id}
+          isOpen={!window.isMinimized}
+          onClose={() => handleCloseWindow(window.id)}
+          draftId={window.draftId}
+          onSent={() => {
+            handleCloseWindow(window.id);
+            loadEmails();
+            loadSentEmails();
+            loadDrafts();
+          }}
+          onSubjectChange={(subject) => handleSubjectChange(window.id, subject)}
+        />
+      ))}
+
+      {/* Tab Switcher */}
+      <ComposeTabSwitcher
+        windows={composeWindows}
+        activeWindowId={activeWindowId || ''}
+        onWindowClick={handleWindowClick}
+        onWindowClose={handleCloseWindow}
       />
     </div>
   );

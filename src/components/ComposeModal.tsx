@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { 
   X, 
@@ -16,9 +15,12 @@ import {
   XCircle, 
   AlertCircle, 
   Send,
-  Paperclip
+  Paperclip,
+  Upload
 } from 'lucide-react';
 import { AttachmentUpload } from '@/components/AttachmentUpload';
+import { ContactAutocomplete } from '@/components/ContactAutocomplete';
+import { RichTextEditor } from '@/components/RichTextEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { encryptMessage, importPublicKey } from '@/lib/encryption';
@@ -33,9 +35,10 @@ interface ComposeModalProps {
   onClose: () => void;
   draftId?: string | null;
   onSent?: () => void;
+  onSubjectChange?: (subject: string) => void;
 }
 
-export const ComposeModal = ({ isOpen, onClose, draftId, onSent }: ComposeModalProps) => {
+export const ComposeModal = ({ isOpen, onClose, draftId, onSent, onSubjectChange }: ComposeModalProps) => {
   const { publicKey, signMessage } = useWallet();
   const { toast } = useToast();
   const { keysReady } = useEncryptionKeys();
@@ -52,7 +55,9 @@ export const ComposeModal = ({ isOpen, onClose, draftId, onSent }: ComposeModalP
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const autoSaveTimerRef = useRef<NodeJS.Timeout>();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check admin status
   useEffect(() => {
@@ -129,6 +134,11 @@ export const ComposeModal = ({ isOpen, onClose, draftId, onSent }: ComposeModalP
 
     loadDraft();
   }, [draftId, publicKey, signMessage, keysReady, toast]);
+
+  // Notify parent of subject changes
+  useEffect(() => {
+    onSubjectChange?.(subject);
+  }, [subject, onSubjectChange]);
 
   // Auto-save draft
   const saveDraft = useCallback(async (showToast = false) => {
@@ -384,6 +394,42 @@ export const ComposeModal = ({ isOpen, onClose, draftId, onSent }: ComposeModalP
     onClose();
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0 && currentDraftId) {
+      // Trigger file upload through AttachmentUpload component
+      const input = fileInputRef.current;
+      if (input) {
+        const dataTransfer = new DataTransfer();
+        files.forEach(file => dataTransfer.items.add(file));
+        input.files = dataTransfer.files;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    } else if (files.length > 0 && !currentDraftId) {
+      toast({
+        title: 'Save draft first',
+        description: 'Please save this message as a draft before adding attachments',
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (!isOpen) return null;
 
   if (isMinimized) {
@@ -446,16 +492,27 @@ export const ComposeModal = ({ isOpen, onClose, draftId, onSent }: ComposeModalP
       </div>
 
       {/* Form */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* To field */}
+      <div 
+        className="flex-1 overflow-y-auto p-4 space-y-4"
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {isDragging && (
+          <div className="absolute inset-0 bg-primary/10 border-2 border-dashed border-primary rounded-lg flex items-center justify-center z-50">
+            <div className="text-center">
+              <Upload className="w-12 h-12 mx-auto mb-2 text-primary" />
+              <p className="text-lg font-semibold">Drop files to attach</p>
+            </div>
+          </div>
+        )}
+        {/* To field with autocomplete */}
         <div className="space-y-1">
           <Label htmlFor="to" className="text-sm font-semibold">To</Label>
-          <Input
-            id="to"
+          <ContactAutocomplete
             value={to}
-            onChange={(e) => setTo(e.target.value)}
-            placeholder="Recipient's wallet address"
-            className="font-mono text-sm"
+            onChange={setTo}
+            placeholder="Recipient's wallet address or search contacts"
           />
           {validationStatus !== 'idle' && (
             <div className={cn(
@@ -486,30 +543,37 @@ export const ComposeModal = ({ isOpen, onClose, draftId, onSent }: ComposeModalP
           />
         </div>
 
-        {/* Body */}
+        {/* Body with rich text editor */}
         <div className="space-y-1 flex-1">
           <Label htmlFor="body" className="text-sm font-semibold">Message</Label>
-          <Textarea
-            id="body"
+          <RichTextEditor
             value={body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={setBody}
             placeholder="Write your encrypted message..."
-            className="min-h-[200px] text-sm resize-none"
           />
         </div>
 
-        {/* Attachments */}
+        {/* Attachments with drag-and-drop */}
         <div className="space-y-1">
           <Label className="text-sm font-semibold flex items-center gap-2">
             <Paperclip className="w-4 h-4" />
             Attachments
+            <span className="text-xs text-muted-foreground font-normal">(Drag & drop files here)</span>
           </Label>
           {currentDraftId ? (
-            <AttachmentUpload
-              draftId={currentDraftId}
-              walletPublicKey={publicKey}
-              signMessage={signMessage}
-            />
+            <>
+              <AttachmentUpload
+                draftId={currentDraftId}
+                walletPublicKey={publicKey}
+                signMessage={signMessage}
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+              />
+            </>
           ) : (
             <div className="text-xs text-muted-foreground p-3 border border-dashed border-border rounded-lg">
               💡 Save draft first to attach files

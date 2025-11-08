@@ -482,4 +482,64 @@ All colors MUST be HSL.
     backdrop-filter: blur(16px) saturate(180%);
     -webkit-backdrop-filter: blur(16px) saturate(180%);
   }
+
+  /* Rich Text Editor Styling */
+  .rich-text-editor .ql-container {
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: inherit;
+    font-size: 0.875rem;
+    min-height: 200px;
+  }
+
+  .rich-text-editor .ql-toolbar {
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius) var(--radius) 0 0;
+    background: hsl(var(--muted) / 0.3);
+  }
+
+  .rich-text-editor .ql-editor {
+    min-height: 200px;
+    padding: 1rem;
+  }
+
+  .rich-text-editor .ql-editor.ql-blank::before {
+    color: hsl(var(--muted-foreground));
+    font-style: normal;
+  }
+
+  .rich-text-editor .ql-stroke {
+    stroke: hsl(var(--foreground) / 0.8);
+  }
+
+  .rich-text-editor .ql-fill {
+    fill: hsl(var(--foreground) / 0.8);
+  }
+
+  .rich-text-editor .ql-picker {
+    color: hsl(var(--foreground));
+  }
+
+  .rich-text-editor .ql-picker-options {
+    background: hsl(var(--background));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+  }
+
+  .rich-text-editor .ql-toolbar button:hover,
+  .rich-text-editor .ql-toolbar button.ql-active {
+    color: hsl(var(--primary));
+  }
+
+  .rich-text-editor .ql-toolbar button:hover .ql-stroke,
+  .rich-text-editor .ql-toolbar button.ql-active .ql-stroke {
+    stroke: hsl(var(--primary));
+  }
+
+  .rich-text-editor .ql-toolbar button:hover .ql-fill,
+  .rich-text-editor .ql-toolbar button.ql-active .ql-fill {
+    fill: hsl(var(--primary));
+  }
 }

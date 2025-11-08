@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { KeyManagement } from '@/components/KeyManagement';
+import { ContactBook } from '@/components/ContactBook';
 import { Logo } from '@/components/Logo';
 import { cn } from '@/lib/utils';
 
@@ -150,6 +151,13 @@ export const GmailSidebar = ({
             </button>
           );
         })}
+
+        {/* Contacts */}
+        {!collapsed && (
+          <div className="mt-2">
+            <ContactBook />
+          </div>
+        )}
       </nav>
 
       {/* Footer */}

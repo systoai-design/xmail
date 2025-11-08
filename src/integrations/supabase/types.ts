@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      contacts: {
+        Row: {
+          created_at: string
+          id: string
+          nickname: string
+          owner_wallet: string
+          updated_at: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nickname: string
+          owner_wallet: string
+          updated_at?: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nickname?: string
+          owner_wallet?: string
+          updated_at?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       email_attachments: {
         Row: {
           created_at: string | null
