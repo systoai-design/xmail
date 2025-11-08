@@ -90,8 +90,13 @@ export const HeroSection = () => {
               </span>
             </span>
             <span className="block text-[15vw] sm:text-[14vw] md:text-[11rem] font-black leading-none tracking-tighter -mt-2 sm:-mt-4 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              <span className="gradient-primary bg-clip-text text-transparent inline-block hover:scale-110 transition-bounce cursor-default animate-gradient relative group">
-                messaging
+              <span className="relative inline-block cursor-pointer overflow-hidden group">
+                <span className="gradient-primary bg-clip-text text-transparent inline-block transition-all duration-500 group-hover:-translate-y-full group-hover:opacity-0">
+                  messaging
+                </span>
+                <span className="gradient-primary bg-clip-text text-transparent absolute inset-0 translate-y-full opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+                  encryption
+                </span>
                 <div className="absolute inset-0 blur-2xl bg-gradient-to-r from-primary to-secondary opacity-30 -z-10" />
               </span>
             </span>
