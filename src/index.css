@@ -187,6 +187,30 @@ All colors MUST be HSL.
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
+  /* Gmail-style email interface */
+  .gmail-email-row {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .gmail-email-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .gmail-email-row-unread {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .gmail-section-header {
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .gmail-section-header:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
   /* Scroll animations */
   .fade-in-up {
     opacity: 0;

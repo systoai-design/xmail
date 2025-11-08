@@ -1,21 +1,18 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
-import { Mail, Lock, Plus, LogOut, Loader2, Search, Filter, Send, Inbox as InboxIcon, Trash2, FileEdit, X } from 'lucide-react';
+import { Search, Loader2, X, RefreshCw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useEncryptionKeys } from '@/hooks/useEncryptionKeys';
 import { callSecureEndpoint } from '@/lib/secureApi';
 import { supabase } from '@/integrations/supabase/client';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
-import { Logo } from '@/components/Logo';
-import { KeyManagement } from '@/components/KeyManagement';
-import { KeyRotationBanner } from '@/components/KeyRotationBanner';
+import { GmailSidebar } from '@/components/GmailSidebar';
+import { EmailRow } from '@/components/EmailRow';
+import { SectionHeader } from '@/components/SectionHeader';
 
 interface EncryptedEmail {
   id: string;
@@ -25,6 +22,7 @@ interface EncryptedEmail {
   encrypted_body: string;
   timestamp: string;
   read: boolean;
+  starred: boolean;
   payment_tx_signature: string | null;
 }
 
@@ -43,7 +41,7 @@ const Inbox = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { keysReady } = useEncryptionKeys();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab') || 'inbox';
   
   const [emails, setEmails] = useState<EncryptedEmail[]>([]);
@@ -51,18 +49,17 @@ const Inbox = () => {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [readFilter, setReadFilter] = useState<'all' | 'read' | 'unread'>('all');
-  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
-  const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'drafts'>(tabFromUrl as any);
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+  
+  // Section expansion states
+  const [importantExpanded, setImportantExpanded] = useState(true);
+  const [starredExpanded, setStarredExpanded] = useState(true);
+  const [allExpanded, setAllExpanded] = useState(true);
 
-  // Update URL when tab changes
-  useEffect(() => {
-    setSearchParams({ tab: activeTab });
-  }, [activeTab, setSearchParams]);
+  const activeTab = tabFromUrl as 'inbox' | 'sent' | 'drafts' | 'starred';
 
   // Request notification permission
   useEffect(() => {
@@ -172,11 +169,6 @@ const Inbox = () => {
       setSentEmails(response.emails || []);
     } catch (error) {
       console.error('Error loading sent emails:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load sent emails',
-        variant: 'destructive',
-      });
     }
   };
 
@@ -193,11 +185,6 @@ const Inbox = () => {
       setDrafts(response.drafts || []);
     } catch (error) {
       console.error('Error loading drafts:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load drafts',
-        variant: 'destructive',
-      });
     }
   };
 
@@ -206,13 +193,51 @@ const Inbox = () => {
     navigate('/');
   };
 
+  const toggleStar = async (emailId: string, currentStarred: boolean) => {
+    try {
+      // Optimistic update
+      setEmails(prev => 
+        prev.map(e => e.id === emailId ? { ...e, starred: !currentStarred } : e)
+      );
+      setSentEmails(prev => 
+        prev.map(e => e.id === emailId ? { ...e, starred: !currentStarred } : e)
+      );
+
+      const response = await supabase.functions.invoke('toggle-star', {
+        body: { emailId, starred: !currentStarred }
+      });
+
+      if (response.error) {
+        throw response.error;
+      }
+
+      toast({
+        title: !currentStarred ? 'Starred' : 'Unstarred',
+        description: !currentStarred ? 'Email added to starred' : 'Email removed from starred',
+      });
+    } catch (error) {
+      console.error('Error toggling star:', error);
+      // Revert on error
+      setEmails(prev => 
+        prev.map(e => e.id === emailId ? { ...e, starred: currentStarred } : e)
+      );
+      setSentEmails(prev => 
+        prev.map(e => e.id === emailId ? { ...e, starred: currentStarred } : e)
+      );
+      toast({
+        title: 'Error',
+        description: 'Failed to update star',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleBulkDelete = async () => {
     if (!publicKey || !signMessage) return;
 
     setDeleting(true);
     try {
       if (activeTab === 'drafts') {
-        // Delete drafts
         const deletePromises = Array.from(selectedEmails).map(draftId =>
           callSecureEndpoint(
             'delete_draft',
@@ -225,7 +250,6 @@ const Inbox = () => {
         await Promise.all(deletePromises);
         setDrafts(prev => prev.filter(d => !selectedEmails.has(d.id)));
       } else {
-        // Delete emails
         const deletePromises = Array.from(selectedEmails).map(emailId =>
           callSecureEndpoint(
             'delete_email',
@@ -243,14 +267,14 @@ const Inbox = () => {
       setSelectedEmails(new Set());
       
       toast({
-        title: `${activeTab === 'drafts' ? 'Drafts' : 'Emails'} deleted`,
-        description: `${selectedEmails.size} ${activeTab === 'drafts' ? 'draft' : 'email'}${selectedEmails.size === 1 ? '' : 's'} deleted successfully`,
+        title: 'Deleted',
+        description: `${selectedEmails.size} item${selectedEmails.size === 1 ? '' : 's'} deleted successfully`,
       });
     } catch (error) {
       console.error('Error deleting:', error);
       toast({
         title: 'Error',
-        description: `Failed to delete some ${activeTab === 'drafts' ? 'drafts' : 'emails'}`,
+        description: 'Failed to delete some items',
         variant: 'destructive',
       });
     } finally {
@@ -259,97 +283,115 @@ const Inbox = () => {
     }
   };
 
-  const formatDate = (timestamp: string) => {
-    return new Date(timestamp).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const handleRefresh = () => {
+    setLoading(true);
+    loadEmails();
+    loadSentEmails();
+    loadDrafts();
   };
 
   const unreadCount = useMemo(() => {
     return emails.filter(e => !e.read).length;
   }, [emails]);
 
-  const filteredInboxEmails = useMemo(() => {
+  const starredCount = useMemo(() => {
+    return emails.filter(e => e.starred).length;
+  }, [emails]);
+
+  // Filter and group emails
+  const { importantEmails, starredEmails, regularEmails } = useMemo(() => {
     let filtered = [...emails];
 
-    // Search by wallet address
+    // Search filter
     if (searchQuery.trim()) {
       filtered = filtered.filter(email => 
         email.from_wallet.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Filter by read/unread status
-    if (readFilter === 'read') {
-      filtered = filtered.filter(email => email.read);
-    } else if (readFilter === 'unread') {
-      filtered = filtered.filter(email => !email.read);
+    if (activeTab === 'starred') {
+      return {
+        importantEmails: [],
+        starredEmails: filtered.filter(e => e.starred),
+        regularEmails: []
+      };
     }
 
-    // Sort by date
-    filtered.sort((a, b) => {
-      const dateA = new Date(a.timestamp).getTime();
-      const dateB = new Date(b.timestamp).getTime();
-      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
-    });
+    if (activeTab === 'inbox') {
+      return {
+        importantEmails: filtered.filter(e => !e.read),
+        starredEmails: filtered.filter(e => e.starred && e.read),
+        regularEmails: filtered.filter(e => e.read && !e.starred)
+      };
+    }
 
-    return filtered;
-  }, [emails, searchQuery, readFilter, sortOrder]);
+    return { importantEmails: [], starredEmails: [], regularEmails: filtered };
+  }, [emails, searchQuery, activeTab]);
 
   const filteredSentEmails = useMemo(() => {
     let filtered = [...sentEmails];
 
-    // Search by recipient wallet address
     if (searchQuery.trim()) {
       filtered = filtered.filter(email => 
         email.to_wallet.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Sort by date
-    filtered.sort((a, b) => {
-      const dateA = new Date(a.timestamp).getTime();
-      const dateB = new Date(b.timestamp).getTime();
-      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
-    });
-
     return filtered;
-  }, [sentEmails, searchQuery, sortOrder]);
+  }, [sentEmails, searchQuery]);
 
   const filteredDrafts = useMemo(() => {
     let filtered = [...drafts];
 
-    // Search by recipient
     if (searchQuery.trim()) {
       filtered = filtered.filter(draft => 
         draft.to_wallet?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Sort by date
-    filtered.sort((a, b) => {
-      const dateA = new Date(a.updated_at).getTime();
-      const dateB = new Date(b.updated_at).getTime();
-      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
-    });
-
     return filtered;
-  }, [drafts, searchQuery, sortOrder]);
+  }, [drafts, searchQuery]);
 
-  const currentItems = activeTab === 'inbox' ? filteredInboxEmails : activeTab === 'sent' ? filteredSentEmails : filteredDrafts;
-  const totalItems = activeTab === 'inbox' ? emails.length : activeTab === 'sent' ? sentEmails.length : drafts.length;
+  const handleSelectAll = () => {
+    if (activeTab === 'inbox' || activeTab === 'starred') {
+      const allEmails = activeTab === 'starred' ? starredEmails : [...importantEmails, ...starredEmails, ...regularEmails];
+      if (selectedEmails.size === allEmails.length) {
+        setSelectedEmails(new Set());
+      } else {
+        setSelectedEmails(new Set(allEmails.map(e => e.id)));
+      }
+    } else if (activeTab === 'sent') {
+      if (selectedEmails.size === filteredSentEmails.length) {
+        setSelectedEmails(new Set());
+      } else {
+        setSelectedEmails(new Set(filteredSentEmails.map(e => e.id)));
+      }
+    } else if (activeTab === 'drafts') {
+      if (selectedEmails.size === filteredDrafts.length) {
+        setSelectedEmails(new Set());
+      } else {
+        setSelectedEmails(new Set(filteredDrafts.map(d => d.id)));
+      }
+    }
+  };
 
-  const renderEmailCard = (email: EncryptedEmail, isSent: boolean) => (
-    <div
-      key={email.id}
-      className="glass p-4 md:p-6 rounded-xl hover:scale-[1.02] transition-smooth flex items-center gap-3 md:gap-4"
-    >
-      <Checkbox
-        checked={selectedEmails.has(email.id)}
-        onCheckedChange={(checked) => {
+  const renderEmailList = (emailList: EncryptedEmail[], isSent: boolean = false) => {
+    if (emailList.length === 0) return null;
+
+    return emailList.map((email) => (
+      <EmailRow
+        key={email.id}
+        id={email.id}
+        sender={isSent ? email.to_wallet : email.from_wallet}
+        subject="Encrypted Message"
+        preview="Click to decrypt and read"
+        timestamp={email.timestamp}
+        read={email.read}
+        starred={email.starred}
+        encrypted={true}
+        paid={!!email.payment_tx_signature}
+        selected={selectedEmails.has(email.id)}
+        onSelect={(checked) => {
           const newSelection = new Set(selectedEmails);
           if (checked) {
             newSelection.add(email.id);
@@ -358,399 +400,195 @@ const Inbox = () => {
           }
           setSelectedEmails(newSelection);
         }}
-        onClick={(e) => e.stopPropagation()}
-      />
-      <div
+        onStarToggle={() => toggleStar(email.id, email.starred)}
         onClick={() => navigate(`/email/${email.id}`)}
-        className="flex-1 cursor-pointer min-w-0"
-      >
-        <div className="flex items-start justify-between mb-2 md:mb-3 gap-2">
-          <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
-            <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full ${isSent ? 'bg-secondary/20' : 'bg-primary/20'} flex items-center justify-center flex-shrink-0`}>
-              {isSent ? <Send className="w-4 h-4 md:w-6 md:h-6 text-secondary" /> : <Mail className="w-4 h-4 md:w-6 md:h-6 text-primary" />}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="font-mono text-xs md:text-sm text-muted-foreground truncate">
-                {isSent ? 'To:' : 'From:'} {(isSent ? email.to_wallet : email.from_wallet).slice(0, 6)}...{(isSent ? email.to_wallet : email.from_wallet).slice(-6)}
-              </div>
-              <div className="text-xs md:text-sm text-muted-foreground">
-                {formatDate(email.timestamp)}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-            {!isSent && !email.read && (
-              <Badge variant="default" className="bg-accent text-xs">New</Badge>
-            )}
-            {email.payment_tx_signature && (
-              <div className="text-xs bg-accent/20 text-accent px-2 py-1 rounded-full font-bold">
-                ✓
-              </div>
-            )}
-            <Lock className="w-4 h-4 md:w-5 md:h-5 text-primary" />
-          </div>
-        </div>
-        <div className="text-lg md:text-2xl font-bold mb-1 md:mb-2 flex items-center gap-2">
-          <Lock className="w-4 h-4 md:w-5 md:h-5" />
-          Encrypted Message
-        </div>
-        <p className="text-sm md:text-base text-muted-foreground">
-          Click to {isSent ? 'view sent message' : 'decrypt and read'}
-        </p>
-      </div>
-    </div>
-  );
-
-  const renderDraftCard = (draft: Draft) => (
-    <div
-      key={draft.id}
-      className="glass p-4 md:p-6 rounded-xl hover:scale-[1.02] transition-smooth flex items-center gap-3 md:gap-4"
-    >
-      <Checkbox
-        checked={selectedEmails.has(draft.id)}
-        onCheckedChange={(checked) => {
-          const newSelection = new Set(selectedEmails);
-          if (checked) {
-            newSelection.add(draft.id);
-          } else {
-            newSelection.delete(draft.id);
-          }
-          setSelectedEmails(newSelection);
-        }}
-        onClick={(e) => e.stopPropagation()}
       />
+    ));
+  };
+
+  const renderDraftList = () => {
+    if (filteredDrafts.length === 0) return null;
+
+    return filteredDrafts.map((draft) => (
       <div
+        key={draft.id}
+        className="gmail-email-row"
         onClick={() => navigate(`/compose?draft=${draft.id}`)}
-        className="flex-1 cursor-pointer min-w-0"
       >
-        <div className="flex items-start justify-between mb-2 md:mb-3 gap-2">
-          <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-muted/20 flex items-center justify-center flex-shrink-0">
-              <FileEdit className="w-4 h-4 md:w-6 md:h-6 text-muted-foreground" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="font-mono text-xs md:text-sm text-muted-foreground truncate">
-                {draft.to_wallet ? `To: ${draft.to_wallet.slice(0, 6)}...${draft.to_wallet.slice(-6)}` : 'No recipient'}
-              </div>
-              <div className="text-xs md:text-sm text-muted-foreground">
-                Updated {formatDate(draft.updated_at)}
-              </div>
-            </div>
+        <div className="flex items-center gap-3 px-4 py-3">
+          <Checkbox
+            checked={selectedEmails.has(draft.id)}
+            onCheckedChange={(checked) => {
+              const newSelection = new Set(selectedEmails);
+              if (checked) {
+                newSelection.add(draft.id);
+              } else {
+                newSelection.delete(draft.id);
+              }
+              setSelectedEmails(newSelection);
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <div className="w-48 flex-shrink-0 truncate text-sm text-muted-foreground">
+            {draft.to_wallet ? `${draft.to_wallet.slice(0, 8)}...${draft.to_wallet.slice(-8)}` : 'No recipient'}
           </div>
-          <Badge variant="outline" className="text-xs flex-shrink-0">Draft</Badge>
+          <div className="flex-1 min-w-0">
+            <span className="text-sm text-muted-foreground">Draft — Click to continue editing</span>
+          </div>
+          <div className="w-24 flex-shrink-0 text-right text-xs text-muted-foreground">
+            {new Date(draft.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </div>
         </div>
-        <div className="text-lg md:text-2xl font-bold mb-1 md:mb-2 flex items-center gap-2">
-          <FileEdit className="w-4 h-4 md:w-5 md:h-5" />
-          Draft Message
-        </div>
-        <p className="text-sm md:text-base text-muted-foreground">
-          Click to continue editing
-        </p>
       </div>
-    </div>
-  );
+    ));
+  };
+
+  const totalEmails = activeTab === 'inbox' ? emails.length : 
+                      activeTab === 'sent' ? sentEmails.length : 
+                      activeTab === 'drafts' ? drafts.length :
+                      starredEmails.length;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="glass border-b border-border sticky top-0 z-50">
-        <div className="container mx-auto px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 md:gap-4 min-w-0">
-            <Logo size="medium" />
-            {publicKey && (
-              <div className="text-xs md:text-sm text-muted-foreground font-mono truncate">
-                {publicKey.toBase58().slice(0, 4)}...{publicKey.toBase58().slice(-4)}
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
-            <KeyManagement />
-            <Button
-              onClick={() => navigate('/compose')}
-              size="default"
-              className="font-bold shadow-glow"
-            >
-              <Plus className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">New Email</span>
-            </Button>
-            <Button
-              onClick={handleDisconnect}
-              variant="outline"
-              size="default"
-            >
-              <LogOut className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">Disconnect</span>
-            </Button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background flex w-full">
+      <GmailSidebar
+        unreadCount={unreadCount}
+        sentCount={sentEmails.length}
+        draftsCount={drafts.length}
+        starredCount={starredCount}
+        onDisconnect={handleDisconnect}
+      />
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 md:px-6 py-6 md:py-8">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'inbox' | 'sent' | 'drafts')} className="w-full">
-          <div className="mb-6 md:mb-8">
-            <h2 className="text-3xl md:text-5xl font-black mb-4">Messages</h2>
-            <TabsList className="grid w-full md:max-w-2xl grid-cols-3">
-              <TabsTrigger value="inbox" className="flex items-center gap-2 text-xs md:text-sm">
-                <InboxIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">Inbox</span>
-                {unreadCount > 0 && (
-                  <Badge variant="default" className="ml-1 bg-accent text-xs">
-                    {unreadCount}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="sent" className="flex items-center gap-2 text-xs md:text-sm">
-                <Send className="w-4 h-4" />
-                <span className="hidden sm:inline">Sent</span> ({sentEmails.length})
-              </TabsTrigger>
-              <TabsTrigger value="drafts" className="flex items-center gap-2 text-xs md:text-sm">
-                <FileEdit className="w-4 h-4" />
-                <span className="hidden sm:inline">Drafts</span> ({drafts.length})
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          {/* Search and Filters */}
-          {totalItems > 0 && (
-            <div className="mb-6 glass p-4 rounded-xl">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Search */}
-                <div className="relative md:col-span-2">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder={`Search by ${activeTab === 'inbox' ? 'sender' : activeTab === 'sent' ? 'recipient' : 'recipient'} address...`}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-10"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Read Filter - only for inbox */}
-                {activeTab === 'inbox' ? (
-                  <div className="flex gap-2">
-                    <Button
-                      variant={readFilter === 'all' ? 'default' : 'outline'}
-                      onClick={() => setReadFilter('all')}
-                      className="flex-1"
-                    >
-                      All
-                    </Button>
-                    <Button
-                      variant={readFilter === 'unread' ? 'default' : 'outline'}
-                      onClick={() => setReadFilter('unread')}
-                      className="flex-1"
-                    >
-                      Unread
-                      {unreadCount > 0 && (
-                        <Badge variant="secondary" className="ml-2">
-                          {unreadCount}
-                        </Badge>
-                      )}
-                    </Button>
-                    <Button
-                      variant={readFilter === 'read' ? 'default' : 'outline'}
-                      onClick={() => setReadFilter('read')}
-                      className="flex-1"
-                    >
-                      Read
-                    </Button>
-                  </div>
-                ) : (
-                  <Select value={sortOrder} onValueChange={(value: any) => setSortOrder(value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sort by date" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="newest">Newest First</SelectItem>
-                      <SelectItem value="oldest">Oldest First</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
+      <main className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="border-b border-border bg-background sticky top-0 z-10">
+          <div className="px-4 md:px-6 py-3 flex items-center gap-4">
+            {/* Search Bar */}
+            <div className="flex-1 max-w-3xl relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                placeholder="Search emails..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-10 h-12 bg-muted/30"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
             </div>
+
+            {/* Refresh Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRefresh}
+              disabled={loading}
+            >
+              <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+        </header>
+
+        {/* Toolbar */}
+        <div className="border-b border-border px-4 py-2 flex items-center gap-3 bg-background">
+          <Checkbox
+            checked={selectedEmails.size > 0}
+            onCheckedChange={handleSelectAll}
+          />
+          {selectedEmails.size > 0 && (
+            <>
+              <span className="text-sm text-muted-foreground">
+                {selectedEmails.size} selected
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowBulkDeleteDialog(true)}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </Button>
+            </>
           )}
+        </div>
 
-          <TabsContent value="inbox">
-            {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-12 h-12 animate-spin text-primary" />
-              </div>
-            ) : filteredInboxEmails.length === 0 && emails.length === 0 ? (
-              <div className="text-center py-12 md:py-20">
-                <Mail className="w-16 h-16 md:w-24 md:h-24 text-muted-foreground mx-auto mb-4 md:mb-6" />
-                <h3 className="text-2xl md:text-3xl font-bold mb-2">No messages yet</h3>
-                <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8">
-                  Send your first encrypted email to get started
-                </p>
-                <Button
-                  onClick={() => navigate('/compose')}
-                  size="lg"
-                  className="font-bold shadow-glow"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Compose Email
-                </Button>
-              </div>
-            ) : filteredInboxEmails.length === 0 ? (
-              <div className="text-center py-12 md:py-20">
-                <Filter className="w-16 h-16 md:w-24 md:h-24 text-muted-foreground mx-auto mb-4 md:mb-6" />
-                <h3 className="text-2xl md:text-3xl font-bold mb-2">No messages match your filters</h3>
-                <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8">
-                  Try adjusting your search or filter criteria
-                </p>
-                <Button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setReadFilter('all');
-                  }}
-                  variant="outline"
-                  size="lg"
-                >
-                  Clear Filters
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredInboxEmails.map((email) => renderEmailCard(email, false))}
-              </div>
-            )}
-          </TabsContent>
+        {/* Email List */}
+        <div className="flex-1 overflow-y-auto">
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            </div>
+          ) : totalEmails === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-xl text-muted-foreground">
+                {activeTab === 'inbox' && 'No messages in inbox'}
+                {activeTab === 'sent' && 'No sent messages'}
+                {activeTab === 'drafts' && 'No drafts'}
+                {activeTab === 'starred' && 'No starred messages'}
+              </p>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'inbox' && (
+                <>
+                  {importantEmails.length > 0 && (
+                    <>
+                      <SectionHeader
+                        title="Important and unread"
+                        count={importantEmails.length}
+                        expanded={importantExpanded}
+                        onToggle={() => setImportantExpanded(!importantExpanded)}
+                      />
+                      {importantExpanded && renderEmailList(importantEmails)}
+                    </>
+                  )}
+                  
+                  {starredEmails.length > 0 && (
+                    <>
+                      <SectionHeader
+                        title="Starred"
+                        count={starredEmails.length}
+                        expanded={starredExpanded}
+                        onToggle={() => setStarredExpanded(!starredExpanded)}
+                      />
+                      {starredExpanded && renderEmailList(starredEmails)}
+                    </>
+                  )}
+                  
+                  {regularEmails.length > 0 && (
+                    <>
+                      <SectionHeader
+                        title="Everything else"
+                        count={regularEmails.length}
+                        expanded={allExpanded}
+                        onToggle={() => setAllExpanded(!allExpanded)}
+                      />
+                      {allExpanded && renderEmailList(regularEmails)}
+                    </>
+                  )}
+                </>
+              )}
 
-          <TabsContent value="sent">
-            {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-12 h-12 animate-spin text-primary" />
-              </div>
-            ) : filteredSentEmails.length === 0 && sentEmails.length === 0 ? (
-              <div className="text-center py-12 md:py-20">
-                <Send className="w-16 h-16 md:w-24 md:h-24 text-muted-foreground mx-auto mb-4 md:mb-6" />
-                <h3 className="text-2xl md:text-3xl font-bold mb-2">No sent messages</h3>
-                <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8">
-                  Send your first encrypted email to see it here
-                </p>
-                <Button
-                  onClick={() => navigate('/compose')}
-                  size="lg"
-                  className="font-bold shadow-glow"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Compose Email
-                </Button>
-              </div>
-            ) : filteredSentEmails.length === 0 ? (
-              <div className="text-center py-12 md:py-20">
-                <Filter className="w-16 h-16 md:w-24 md:h-24 text-muted-foreground mx-auto mb-4 md:mb-6" />
-                <h3 className="text-2xl md:text-3xl font-bold mb-2">No messages match your search</h3>
-                <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8">
-                  Try adjusting your search criteria
-                </p>
-                <Button
-                  onClick={() => setSearchQuery('')}
-                  variant="outline"
-                  size="lg"
-                >
-                  Clear Search
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredSentEmails.map((email) => renderEmailCard(email, true))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="drafts">
-            {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-12 h-12 animate-spin text-primary" />
-              </div>
-            ) : filteredDrafts.length === 0 && drafts.length === 0 ? (
-              <div className="text-center py-12 md:py-20">
-                <FileEdit className="w-16 h-16 md:w-24 md:h-24 text-muted-foreground mx-auto mb-4 md:mb-6" />
-                <h3 className="text-2xl md:text-3xl font-bold mb-2">No drafts</h3>
-                <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8">
-                  Start composing a message and it will be saved automatically
-                </p>
-                <Button
-                  onClick={() => navigate('/compose')}
-                  size="lg"
-                  className="font-bold shadow-glow"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Compose Email
-                </Button>
-              </div>
-            ) : filteredDrafts.length === 0 ? (
-              <div className="text-center py-12 md:py-20">
-                <Filter className="w-16 h-16 md:w-24 md:h-24 text-muted-foreground mx-auto mb-4 md:mb-6" />
-                <h3 className="text-2xl md:text-3xl font-bold mb-2">No drafts match your search</h3>
-                <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8">
-                  Try adjusting your search criteria
-                </p>
-                <Button
-                  onClick={() => setSearchQuery('')}
-                  variant="outline"
-                  size="lg"
-                >
-                  Clear Search
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredDrafts.map((draft) => renderDraftCard(draft))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+              {activeTab === 'starred' && renderEmailList(starredEmails)}
+              {activeTab === 'sent' && renderEmailList(filteredSentEmails, true)}
+              {activeTab === 'drafts' && renderDraftList()}
+            </>
+          )}
+        </div>
       </main>
 
-      {/* Bulk Action Toolbar */}
-      {selectedEmails.size > 0 && (
-        <div className="fixed bottom-4 md:bottom-8 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 glass-glow p-4 md:p-6 rounded-2xl shadow-2xl border-2 border-primary/30 z-50">
-          <div className="flex flex-col sm:flex-row items-center gap-3 md:gap-6">
-            <div className="text-sm md:text-lg font-bold text-center sm:text-left">
-              {selectedEmails.size} {activeTab === 'drafts' ? 'draft' : 'email'}{selectedEmails.size === 1 ? '' : 's'} selected
-            </div>
-            <div className="flex gap-2 md:gap-3 w-full sm:w-auto">
-              <Button
-                onClick={() => setShowBulkDeleteDialog(true)}
-                variant="destructive"
-                size="default"
-                className="flex-1 sm:flex-none"
-              >
-                <Trash2 className="w-4 h-4 md:mr-2" />
-                <span className="hidden md:inline">Delete Selected</span>
-                <span className="md:hidden">Delete</span>
-              </Button>
-              <Button
-                onClick={() => setSelectedEmails(new Set())}
-                variant="outline"
-                size="default"
-                className="flex-1 sm:flex-none"
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Bulk Delete Confirmation */}
+      {/* Delete Confirmation */}
       <ConfirmDeleteDialog
         open={showBulkDeleteDialog}
         onOpenChange={setShowBulkDeleteDialog}
         onConfirm={handleBulkDelete}
-        title={`Delete ${selectedEmails.size} ${activeTab === 'drafts' ? 'draft' : 'email'}${selectedEmails.size === 1 ? '' : 's'}?`}
-        description={`This will permanently delete ${selectedEmails.size} ${activeTab === 'drafts' ? 'draft' : 'email'}${selectedEmails.size === 1 ? '' : 's'}. This action cannot be undone.`}
+        title={`Delete ${selectedEmails.size} item${selectedEmails.size === 1 ? '' : 's'}?`}
+        description={`This will permanently delete ${selectedEmails.size} item${selectedEmails.size === 1 ? '' : 's'}. This action cannot be undone.`}
       />
     </div>
   );

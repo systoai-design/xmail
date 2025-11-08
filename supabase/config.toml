@@ -2,3 +2,6 @@ project_id = "vcximsuxjsmnnaikpqbe"
 
 [functions.secure-email]
 verify_jwt = false
+
+[functions.toggle-star]
+verify_jwt = false

@@ -228,6 +228,7 @@ export type Database = {
           payment_tx_signature: string | null
           read: boolean
           sender_signature: string
+          starred: boolean
           timestamp: string
           to_wallet: string
         }
@@ -240,6 +241,7 @@ export type Database = {
           payment_tx_signature?: string | null
           read?: boolean
           sender_signature: string
+          starred?: boolean
           timestamp?: string
           to_wallet: string
         }
@@ -252,6 +254,7 @@ export type Database = {
           payment_tx_signature?: string | null
           read?: boolean
           sender_signature?: string
+          starred?: boolean
           timestamp?: string
           to_wallet?: string
         }
