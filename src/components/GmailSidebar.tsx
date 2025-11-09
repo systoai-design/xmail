@@ -98,9 +98,17 @@ export const GmailSidebar = ({
             setCollapsed(!collapsed);
             setMobileOpen(false);
           }}
-          className="ml-auto"
+          className={cn("ml-auto", "md:block hidden")}
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setMobileOpen(false)}
+          className="md:hidden ml-auto"
+        >
+          <X className="w-4 h-4" />
         </Button>
       </div>
 
@@ -221,17 +229,7 @@ export const GmailSidebar = ({
             className="md:hidden fixed inset-0 bg-black/60 z-40"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="md:hidden fixed left-0 top-0 bottom-0 w-64 bg-background border-r border-border z-50 flex flex-col">
-            <div className="p-4 flex items-center justify-between border-b border-border">
-              <Logo size="small" />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setMobileOpen(false)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
+          <aside className="md:hidden fixed left-0 top-0 bottom-0 w-64 bg-background border-r border-border z-50">
             {sidebarContent}
           </aside>
         </>
