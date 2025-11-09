@@ -16,11 +16,13 @@ import {
   AlertCircle, 
   Send,
   Paperclip,
-  Upload
+  Upload,
+  Clock
 } from 'lucide-react';
 import { AttachmentUpload } from '@/components/AttachmentUpload';
 import { ContactAutocomplete } from '@/components/ContactAutocomplete';
 import { RichTextEditor } from '@/components/RichTextEditor';
+import { ScheduleSelector } from '@/components/ScheduleSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { encryptMessage, importPublicKey } from '@/lib/encryption';
@@ -56,6 +58,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, onSent, onSubjectChange
   const [isMinimized, setIsMinimized] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [showScheduleSelector, setShowScheduleSelector] = useState(false);
   const autoSaveTimerRef = useRef<NodeJS.Timeout>();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -387,6 +390,129 @@ export const ComposeModal = ({ isOpen, onClose, draftId, onSent, onSubjectChange
     }
   };
 
+  const handleSchedule = async (scheduledDate: Date) => {
+    if (!publicKey || !signMessage) {
+      toast({
+        title: 'Wallet not connected',
+        description: 'Please connect your wallet first',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!to || !subject || !body) {
+      toast({
+        title: 'Missing fields',
+        description: 'Please fill in all fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const recipient = to.trim();
+    
+    try {
+      new PublicKey(recipient);
+    } catch {
+      toast({
+        title: 'Invalid wallet address',
+        description: 'Please enter a valid Solana wallet address',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSending(true);
+
+    try {
+      const { data: recipientKeyData, error: lookupError } = await supabase
+        .from('encryption_keys')
+        .select('public_key')
+        .eq('wallet_address', recipient)
+        .maybeSingle();
+
+      if (lookupError) {
+        toast({
+          title: 'Recipient lookup failed',
+          description: 'Could not verify recipient registration',
+          variant: 'destructive',
+        });
+        setSending(false);
+        return;
+      }
+
+      if (!recipientKeyData) {
+        toast({
+          title: 'Recipient not registered',
+          description: 'Recipient must connect their wallet first',
+          variant: 'destructive',
+        });
+        setSending(false);
+        return;
+      }
+
+      const recipientPublicKey = await importPublicKey(recipientKeyData.public_key);
+      const encryptedSubject = await encryptMessage(subject, recipientPublicKey);
+      const encryptedBody = await encryptMessage(body, recipientPublicKey);
+
+      const message = new TextEncoder().encode(`${subject}${body}`);
+      const signature = await signMessage(message);
+      const signatureBase64 = btoa(String.fromCharCode(...signature));
+
+      await callSecureEndpoint(
+        'schedule_email',
+        {
+          to_wallet: recipient,
+          encrypted_subject: encryptedSubject,
+          encrypted_body: encryptedBody,
+          sender_signature: signatureBase64,
+          scheduled_for: scheduledDate.toISOString(),
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        },
+        publicKey,
+        signMessage
+      );
+
+      // Delete draft after successful scheduling
+      if (currentDraftId) {
+        try {
+          await callSecureEndpoint(
+            'delete_draft',
+            { draftId: currentDraftId },
+            publicKey,
+            signMessage
+          );
+        } catch (error) {
+          console.error('Error deleting draft:', error);
+        }
+      }
+
+      toast({
+        title: 'Email scheduled!',
+        description: `Your email will be sent on ${scheduledDate.toLocaleString()}`,
+      });
+
+      // Reset form
+      setTo('');
+      setSubject('');
+      setBody('');
+      setCurrentDraftId(null);
+      setShowScheduleSelector(false);
+      
+      onSent?.();
+      onClose();
+    } catch (error) {
+      console.error('Error scheduling email:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to schedule email',
+        variant: 'destructive',
+      });
+    } finally {
+      setSending(false);
+    }
+  };
+
   const handleClose = () => {
     if ((to || subject || body) && publicKey && signMessage) {
       saveDraft(false);
@@ -617,27 +743,47 @@ export const ComposeModal = ({ isOpen, onClose, draftId, onSent, onSubjectChange
 
       {/* Footer */}
       <div className="p-4 border-t border-border bg-muted/30">
-        <Button
-          onClick={handleSend}
-          disabled={sending || validationStatus === 'invalid' || validationStatus === 'not-registered'}
-          className="w-full font-bold shadow-glow"
-        >
-          {sending ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Sending...
-            </>
-          ) : (
-            <>
-              <Send className="w-4 h-4 mr-2" />
-              Send
-            </>
-          )}
-        </Button>
-        <p className="text-center text-xs text-muted-foreground mt-2">
-          <Lock className="w-3 h-3 inline mr-1" />
-          End-to-end encrypted
-        </p>
+        {showScheduleSelector ? (
+          <ScheduleSelector
+            onSchedule={handleSchedule}
+            onCancel={() => setShowScheduleSelector(false)}
+          />
+        ) : (
+          <>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleSend}
+                disabled={sending || validationStatus === 'invalid' || validationStatus === 'not-registered'}
+                className="flex-1 font-bold shadow-glow"
+              >
+                {sending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Send
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={() => setShowScheduleSelector(true)}
+                disabled={sending || validationStatus === 'invalid' || validationStatus === 'not-registered'}
+                variant="outline"
+                className="flex-1"
+              >
+                <Clock className="w-4 h-4 mr-2" />
+                Schedule
+              </Button>
+            </div>
+            <p className="text-center text-xs text-muted-foreground mt-2">
+              <Lock className="w-3 h-3 inline mr-1" />
+              End-to-end encrypted
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
