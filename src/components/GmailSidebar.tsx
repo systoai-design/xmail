@@ -161,20 +161,28 @@ export const GmailSidebar = ({
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-border p-3 space-y-2">
+      <div className="border-t border-border p-3 space-y-3">
         {!collapsed && publicKey && (
-          <div className="px-3 py-2 text-xs text-muted-foreground font-mono truncate">
-            {publicKey.toBase58().slice(0, 6)}...{publicKey.toBase58().slice(-6)}
+          <div className="px-2 py-2 bg-muted/30 rounded-lg">
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">
+              Wallet
+            </div>
+            <div className="text-xs font-mono text-foreground truncate">
+              {publicKey.toBase58().slice(0, 8)}...{publicKey.toBase58().slice(-8)}
+            </div>
           </div>
         )}
         
-        <div className={cn("flex gap-2", collapsed && "flex-col items-center")}>
-          <KeyManagement />
+        <div className={cn(
+          "flex gap-2",
+          collapsed ? "flex-col items-center" : "flex-col"
+        )}>
+          <KeyManagement compact={collapsed} />
           <Button
             onClick={onDisconnect}
             variant="outline"
-            size={collapsed ? "icon" : "default"}
-            className={cn(!collapsed && "flex-1")}
+            size="sm"
+            className="w-full"
           >
             <LogOut className="w-4 h-4" />
             {!collapsed && <span className="ml-2">Disconnect</span>}

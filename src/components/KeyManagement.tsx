@@ -13,7 +13,11 @@ import { importPrivateKey, decryptMessage } from '@/lib/encryption';
 import { encryptKeyWithPassword, decryptKeyWithPassword } from '@/lib/keyProtection';
 import { QRKeyTransfer } from '@/components/QRKeyTransfer';
 
-export const KeyManagement = () => {
+interface KeyManagementProps {
+  compact?: boolean;
+}
+
+export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
   const { publicKey } = useWallet();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -122,9 +126,9 @@ export const KeyManagement = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="lg">
-          <Key className="w-5 h-5 mr-2" />
-          Key Management
+        <Button variant="outline" size="sm" className="w-full">
+          <Key className="w-4 h-4" />
+          {!compact && <span className="ml-2">Key Management</span>}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
