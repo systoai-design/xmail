@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from '@/components/ui/button';
-import { X, Lock, Shield, ExternalLink, Loader2, Trash2, Key, Download } from 'lucide-react';
+import { X, Lock, Shield, ExternalLink, Loader2, Trash2, Key, Download, Archive } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { decryptMessage, importPrivateKey, decryptAESKey, decryptFile } from '@/lib/encryption';
 import { callSecureEndpoint } from '@/lib/secureApi';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { openKeyManagement, onKeyImported } from '@/lib/events';
 import { supabase } from '@/integrations/supabase/client';
+import JSZip from 'jszip';
 
 interface EmailData {
   id: string;
@@ -52,6 +53,7 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [decryptedImages, setDecryptedImages] = useState<Record<string, string>>({});
   const [downloadingAttachments, setDownloadingAttachments] = useState<Record<string, boolean>>({});
+  const [downloadingAll, setDownloadingAll] = useState(false);
 
   // Listen for key import events to auto-retry decryption
   useEffect(() => {
@@ -302,6 +304,81 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
     }
   };
 
+  const handleDownloadAllAttachments = async () => {
+    if (!publicKey || !signMessage || attachments.length === 0) return;
+
+    const privateKeyBase64 = sessionStorage.getItem('encryption_private_key');
+    if (!privateKeyBase64) {
+      toast({
+        title: 'Private key missing',
+        description: 'Please import your private key to download attachments',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setDownloadingAll(true);
+
+    try {
+      const privateKey = await importPrivateKey(privateKeyBase64);
+      const zip = new JSZip();
+
+      // Process all attachments
+      for (const attachment of attachments) {
+        try {
+          // Decrypt the AES key
+          const aesKey = await decryptAESKey(attachment.encrypted_symmetric_key, privateKey);
+          
+          // Download encrypted file from storage
+          const { data: fileData, error: downloadError } = await supabase.storage
+            .from('email-attachments')
+            .download(attachment.storage_path);
+          
+          if (downloadError || !fileData) {
+            console.error('Failed to download attachment:', attachment.file_name);
+            continue;
+          }
+          
+          // Decrypt file
+          const encryptedBuffer = await fileData.arrayBuffer();
+          const decryptedBuffer = await decryptFile(encryptedBuffer, aesKey, attachment.iv);
+          
+          // Add to zip
+          zip.file(attachment.file_name, decryptedBuffer);
+        } catch (error) {
+          console.error('Failed to process attachment:', attachment.file_name, error);
+        }
+      }
+
+      // Generate zip file
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      
+      // Trigger download
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `email-attachments-${Date.now()}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Download complete',
+        description: `Downloaded ${attachments.length} attachment${attachments.length > 1 ? 's' : ''} as zip file`,
+      });
+    } catch (error) {
+      console.error('Error downloading all attachments:', error);
+      toast({
+        title: 'Download failed',
+        description: 'Unable to download attachments',
+        variant: 'destructive',
+      });
+    } finally {
+      setDownloadingAll(false);
+    }
+  };
+
   const formatDate = (timestamp: string) => {
     return new Date(timestamp).toLocaleString('en-US', {
       month: 'long',
@@ -432,8 +509,26 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
             {/* All Attachments */}
             {attachments.length > 0 && (
               <div className="mt-8 space-y-4">
-                <div className="text-sm font-medium text-muted-foreground border-t border-border pt-4">
-                  Attachments ({attachments.length})
+                <div className="flex items-center justify-between border-t border-border pt-4">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Attachments ({attachments.length})
+                  </div>
+                  {attachments.length > 1 && (
+                    <Button
+                      onClick={handleDownloadAllAttachments}
+                      disabled={downloadingAll}
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                    >
+                      {downloadingAll ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Archive className="w-4 h-4" />
+                      )}
+                      Download All as ZIP
+                    </Button>
+                  )}
                 </div>
                 <div className="space-y-3">
                   {attachments.map(attachment => {
