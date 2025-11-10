@@ -327,9 +327,21 @@ export const ComposeModal = ({ isOpen, onClose, draftId, onSent, onSubjectChange
         return;
       }
 
+      // Encrypt for recipient
       const recipientPublicKey = await importPublicKey(recipientKeyData.public_key);
       const encryptedSubject = await encryptMessage(subject, recipientPublicKey);
       const encryptedBody = await encryptMessage(body, recipientPublicKey);
+
+      // Also encrypt for sender so they can read their sent emails
+      const { data: senderKeyData } = await supabase
+        .from('encryption_keys')
+        .select('public_key')
+        .eq('wallet_address', publicKey.toBase58())
+        .single();
+
+      const senderPublicKey = await importPublicKey(senderKeyData.public_key);
+      const senderEncryptedSubject = await encryptMessage(subject, senderPublicKey);
+      const senderEncryptedBody = await encryptMessage(body, senderPublicKey);
 
       const message = new TextEncoder().encode(`${subject}${body}`);
       const signature = await signMessage(message);
@@ -344,6 +356,8 @@ export const ComposeModal = ({ isOpen, onClose, draftId, onSent, onSubjectChange
           to_wallet: recipient,
           encrypted_subject: encryptedSubject,
           encrypted_body: encryptedBody,
+          sender_encrypted_subject: senderEncryptedSubject,
+          sender_encrypted_body: senderEncryptedBody,
           sender_signature: signatureBase64,
           payment_tx_signature: mockPaymentTx,
         },

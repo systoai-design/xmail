@@ -15,6 +15,8 @@ import { EmailRow } from '@/components/EmailRow';
 import { SectionHeader } from '@/components/SectionHeader';
 import { ComposeModal } from '@/components/ComposeModal';
 import { ComposeTabSwitcher, ComposeWindow } from '@/components/ComposeTabSwitcher';
+import { InlineEmailViewer } from '@/components/InlineEmailViewer';
+import { cn } from '@/lib/utils';
 
 interface EncryptedEmail {
   id: string;
@@ -64,6 +66,9 @@ const Inbox = () => {
   // Multiple compose windows state
   const [composeWindows, setComposeWindows] = useState<ComposeWindow[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
+
+  // Inline email viewer state
+  const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
 
   const activeTab = tabFromUrl as 'inbox' | 'sent' | 'drafts' | 'starred';
 
@@ -450,7 +455,7 @@ const Inbox = () => {
           setSelectedEmails(newSelection);
         }}
         onStarToggle={() => toggleStar(email.id, email.starred)}
-        onClick={() => navigate(`/email/${email.id}`)}
+        onClick={() => setSelectedEmailId(email.id)}
       />
     ));
   };
@@ -508,8 +513,11 @@ const Inbox = () => {
         onCompose={handleCompose}
       />
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0">
+      {/* Main Content - Email List */}
+      <main className={cn(
+        "flex-1 flex flex-col min-w-0",
+        selectedEmailId && "hidden md:flex md:max-w-xl lg:max-w-2xl"
+      )}>
         {/* Header */}
         <header className="border-b border-border bg-background sticky top-0 z-10">
           <div className="px-4 md:px-6 py-3 flex items-center gap-4">
@@ -631,6 +639,21 @@ const Inbox = () => {
           )}
         </div>
       </main>
+
+      {/* Inline Email Viewer */}
+      {selectedEmailId && (
+        <div className="flex-1 flex flex-col md:flex">
+          <InlineEmailViewer
+            emailId={selectedEmailId}
+            onClose={() => setSelectedEmailId(null)}
+            onDelete={() => {
+              setSelectedEmailId(null);
+              loadEmails();
+              loadSentEmails();
+            }}
+          />
+        </div>
+      )}
 
       {/* Delete Confirmation */}
       <ConfirmDeleteDialog

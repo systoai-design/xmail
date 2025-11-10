@@ -74,53 +74,62 @@ export const ContactAutocomplete = ({
   const selectedContact = contacts.find((c) => c.wallet_address === value);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <div className="relative">
-          <Input
-            value={inputValue}
-            onChange={handleInputChange}
-            onFocus={() => setOpen(true)}
-            placeholder={placeholder}
-            className={cn('font-mono text-sm', className)}
-          />
-          {selectedContact && (
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-              {selectedContact.nickname}
-            </div>
-          )}
+    <div className="relative">
+      <Input
+        value={inputValue}
+        onChange={handleInputChange}
+        onFocus={() => setOpen(true)}
+        onBlur={(e) => {
+          // Delay close to allow popover click
+          setTimeout(() => {
+            if (!document.activeElement?.closest('[role="dialog"]')) {
+              setOpen(false);
+            }
+          }, 200);
+        }}
+        placeholder={placeholder}
+        className={cn('font-mono text-sm', className)}
+      />
+      {selectedContact && (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs bg-primary/10 text-primary px-2 py-1 rounded pointer-events-none">
+          {selectedContact.nickname}
         </div>
-      </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0" align="start">
-        <Command>
-          <CommandInput placeholder="Search contacts..." />
-          <CommandList>
-            <CommandEmpty>No contacts found.</CommandEmpty>
-            <CommandGroup heading="Contacts">
-              {filteredContacts.map((contact) => (
-                <CommandItem
-                  key={contact.id}
-                  onSelect={() => handleSelect(contact)}
-                  className="cursor-pointer"
-                >
-                  <Check
-                    className={cn(
-                      'mr-2 h-4 w-4',
-                      value === contact.wallet_address ? 'opacity-100' : 'opacity-0'
-                    )}
-                  />
-                  <div className="flex-1">
-                    <div className="font-semibold">{contact.nickname}</div>
-                    <div className="text-xs text-muted-foreground font-mono truncate">
-                      {contact.wallet_address}
-                    </div>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+      )}
+      
+      {open && filteredContacts.length > 0 && (
+        <Popover open={true} onOpenChange={setOpen}>
+          <PopoverContent className="w-[400px] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Search contacts..." />
+              <CommandList>
+                <CommandEmpty>No contacts found.</CommandEmpty>
+                <CommandGroup heading="Contacts">
+                  {filteredContacts.map((contact) => (
+                    <CommandItem
+                      key={contact.id}
+                      onSelect={() => handleSelect(contact)}
+                      className="cursor-pointer"
+                    >
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          value === contact.wallet_address ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      <div className="flex-1">
+                        <div className="font-semibold">{contact.nickname}</div>
+                        <div className="text-xs text-muted-foreground font-mono truncate">
+                          {contact.wallet_address}
+                        </div>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      )}
+    </div>
   );
 };

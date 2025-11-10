@@ -122,16 +122,28 @@ serve(async (req) => {
           throw new Error('Sender wallet mismatch');
         }
         
+        // Insert email with both recipient and sender encrypted copies
+        const emailData = {
+          from_wallet: data.from_wallet,
+          to_wallet: data.to_wallet,
+          encrypted_subject: data.encrypted_subject,
+          encrypted_body: data.encrypted_body,
+          sender_encrypted_subject: data.sender_encrypted_subject,
+          sender_encrypted_body: data.sender_encrypted_body,
+          sender_signature: data.sender_signature,
+          payment_tx_signature: data.payment_tx_signature,
+        };
+        
         const { error: insertError } = await supabaseAdmin
           .from('encrypted_emails')
-          .insert(data);
+          .insert(emailData);
         
         if (insertError) {
           console.error('Insert error:', insertError);
           throw insertError;
         }
         
-        console.log('Email sent successfully');
+        console.log('Email sent successfully with sender copy');
         return new Response(
           JSON.stringify({ success: true }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

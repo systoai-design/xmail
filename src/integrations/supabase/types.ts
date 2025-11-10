@@ -254,6 +254,8 @@ export type Database = {
           id: string
           payment_tx_signature: string | null
           read: boolean
+          sender_encrypted_body: string | null
+          sender_encrypted_subject: string | null
           sender_signature: string
           starred: boolean
           timestamp: string
@@ -267,6 +269,8 @@ export type Database = {
           id?: string
           payment_tx_signature?: string | null
           read?: boolean
+          sender_encrypted_body?: string | null
+          sender_encrypted_subject?: string | null
           sender_signature: string
           starred?: boolean
           timestamp?: string
@@ -280,6 +284,8 @@ export type Database = {
           id?: string
           payment_tx_signature?: string | null
           read?: boolean
+          sender_encrypted_body?: string | null
+          sender_encrypted_subject?: string | null
           sender_signature?: string
           starred?: boolean
           timestamp?: string
