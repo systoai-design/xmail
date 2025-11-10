@@ -16,6 +16,7 @@ import { SectionHeader } from '@/components/SectionHeader';
 import { ComposeModal } from '@/components/ComposeModal';
 import { ComposeTabSwitcher, ComposeWindow } from '@/components/ComposeTabSwitcher';
 import { InlineEmailViewer } from '@/components/InlineEmailViewer';
+import { SocialLinks } from '@/components/SocialLinks';
 import { cn } from '@/lib/utils';
 import { openKeyManagement, onKeyImported } from '@/lib/events';
 
@@ -589,6 +590,9 @@ const Inbox = () => {
                 </button>
               )}
             </div>
+
+            {/* Social Links - Hidden on mobile to prevent crowding */}
+            <SocialLinks className="hidden sm:flex" />
 
             {/* Refresh Button */}
             <Button

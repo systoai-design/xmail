@@ -1,5 +1,6 @@
 import { WalletButton } from '@/components/WalletButton';
 import { Logo } from '@/components/Logo';
+import { SocialLinks } from '@/components/SocialLinks';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,8 @@ export const Header = () => {
 
           {/* Right side buttons */}
           <div className="flex items-center gap-2 sm:gap-3">
+            <SocialLinks />
+            <div className="h-6 w-px bg-border hidden sm:block" />
             {connected && (
               <Button
                 onClick={() => navigate('/inbox')}
