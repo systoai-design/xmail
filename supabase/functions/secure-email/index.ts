@@ -182,9 +182,20 @@ serve(async (req) => {
           throw fetchError;
         }
         
-        console.log('Email fetched successfully');
+        // Fetch attachments for this email
+        const { data: attachments, error: attachmentsError } = await supabaseAdmin
+          .from('email_attachments')
+          .select('*')
+          .eq('email_id', data.emailId)
+          .order('created_at', { ascending: true });
+        
+        if (attachmentsError) {
+          console.error('Attachments fetch error:', attachmentsError);
+        }
+        
+        console.log('Email fetched successfully with attachments');
         return new Response(
-          JSON.stringify({ email }),
+          JSON.stringify({ email, attachments: attachments || [] }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }

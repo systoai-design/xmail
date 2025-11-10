@@ -3,10 +3,11 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from '@/components/ui/button';
 import { X, Lock, Shield, ExternalLink, Loader2, Trash2, Key } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { decryptMessage, importPrivateKey } from '@/lib/encryption';
+import { decryptMessage, importPrivateKey, decryptAESKey, decryptFile } from '@/lib/encryption';
 import { callSecureEndpoint } from '@/lib/secureApi';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { openKeyManagement, onKeyImported } from '@/lib/events';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EmailData {
   id: string;
@@ -19,6 +20,16 @@ interface EmailData {
   timestamp: string;
   payment_tx_signature: string | null;
   sender_signature: string;
+}
+
+interface Attachment {
+  id: string;
+  file_name: string;
+  mime_type: string;
+  file_size_bytes: number;
+  storage_path: string;
+  encrypted_symmetric_key: string;
+  iv: string;
 }
 
 interface InlineEmailViewerProps {
@@ -38,6 +49,8 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [missingKey, setMissingKey] = useState(false);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [decryptedImages, setDecryptedImages] = useState<Record<string, string>>({});
 
   // Listen for key import events to auto-retry decryption
   useEffect(() => {
@@ -47,6 +60,13 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
       }
     });
   }, [email, missingKey]);
+
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(decryptedImages).forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [decryptedImages]);
 
   useEffect(() => {
     loadEmail();
@@ -76,6 +96,7 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
       }
 
       setEmail(data);
+      setAttachments(response.attachments || []);
 
       // Mark as read if user is recipient
       if (data.to_wallet === publicKey.toBase58()) {
@@ -136,6 +157,9 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
 
       setDecryptedSubject(subject);
       setDecryptedBody(body);
+
+      // Decrypt image attachments
+      await decryptImageAttachments(privateKey);
     } catch (error) {
       console.error('Error decrypting:', error);
       toast({
@@ -145,6 +169,42 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
       });
     } finally {
       setDecrypting(false);
+    }
+  };
+
+  const decryptImageAttachments = async (privateKey: CryptoKey) => {
+    const imageAttachments = attachments.filter(att => att.mime_type.startsWith('image/'));
+    
+    for (const attachment of imageAttachments) {
+      try {
+        // Decrypt the AES key
+        const aesKey = await decryptAESKey(attachment.encrypted_symmetric_key, privateKey);
+        
+        // Download encrypted file from storage
+        const { data: fileData, error: downloadError } = await supabase.storage
+          .from('email-attachments')
+          .download(attachment.storage_path);
+        
+        if (downloadError || !fileData) {
+          console.error('Failed to download attachment:', downloadError);
+          continue;
+        }
+        
+        // Decrypt file
+        const encryptedBuffer = await fileData.arrayBuffer();
+        const decryptedBuffer = await decryptFile(encryptedBuffer, aesKey, attachment.iv);
+        
+        // Convert to blob and create object URL
+        const blob = new Blob([decryptedBuffer], { type: attachment.mime_type });
+        const objectUrl = URL.createObjectURL(blob);
+        
+        setDecryptedImages(prev => ({
+          ...prev,
+          [attachment.id]: objectUrl
+        }));
+      } catch (error) {
+        console.error('Failed to decrypt attachment:', attachment.file_name, error);
+      }
     }
   };
 
@@ -306,6 +366,35 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
               className="prose-content text-base leading-relaxed"
               dangerouslySetInnerHTML={{ __html: decryptedBody }}
             />
+
+            {/* Image Attachments - Inline Previews */}
+            {attachments.filter(att => att.mime_type.startsWith('image/')).length > 0 && (
+              <div className="mt-8 space-y-4">
+                <div className="text-sm font-medium text-muted-foreground border-t border-border pt-4">
+                  Image Attachments ({attachments.filter(att => att.mime_type.startsWith('image/')).length})
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                  {attachments
+                    .filter(att => att.mime_type.startsWith('image/'))
+                    .map(attachment => (
+                      <div key={attachment.id} className="space-y-2">
+                        <div className="text-sm text-muted-foreground">{attachment.file_name}</div>
+                        {decryptedImages[attachment.id] ? (
+                          <img
+                            src={decryptedImages[attachment.id]}
+                            alt={attachment.file_name}
+                            className="rounded-lg border border-border max-w-full h-auto"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-40 bg-muted rounded-lg">
+                            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="p-12 text-center">
