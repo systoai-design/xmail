@@ -129,8 +129,8 @@ export const GmailSidebar = ({
           variant="outline"
           className={cn(
             "w-full font-semibold transition-all",
-            "bg-primary/10 hover:bg-primary/20 border-primary/30",
-            "text-primary hover:text-primary",
+            "bg-primary hover:bg-primary/90 border-primary",
+            "text-white hover:text-white",
             collapsed ? "justify-center" : "justify-start gap-3"
           )}
           size={collapsed ? "icon" : "lg"}

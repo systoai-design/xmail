@@ -2,6 +2,7 @@ import { WalletButton } from '@/components/WalletButton';
 import { ChevronDown, Lock, Zap, Shield, Sparkles, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { EncryptionAnimation } from '@/components/landing/EncryptionAnimation';
 
 export const HeroSection = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -31,13 +32,13 @@ export const HeroSection = () => {
       <div className="absolute inset-0">
         {/* Mouse-reactive gradient - reduced opacity */}
         <div className="absolute inset-0 opacity-15" style={{
-          backgroundImage: `radial-gradient(circle 800px at ${mousePosition.x}px ${mousePosition.y}px, hsl(267 100% 65% / 0.4) 0%, transparent 50%)`,
+          backgroundImage: `radial-gradient(circle 800px at ${mousePosition.x}px ${mousePosition.y}px, hsl(217 91% 60% / 0.4) 0%, transparent 50%)`,
           transition: 'background-image 0.3s ease-out'
         }} />
         
         {/* Animated grid - reduced opacity */}
         <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: 'linear-gradient(to right, hsl(267 100% 65% / 0.15) 1px, transparent 1px), linear-gradient(to bottom, hsl(267 100% 65% / 0.15) 1px, transparent 1px)',
+          backgroundImage: 'linear-gradient(to right, hsl(217 91% 60% / 0.15) 1px, transparent 1px), linear-gradient(to bottom, hsl(217 91% 60% / 0.15) 1px, transparent 1px)',
           backgroundSize: '80px 80px',
           animation: 'mesh-move 20s ease-in-out infinite'
         }} />
@@ -46,28 +47,8 @@ export const HeroSection = () => {
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-primary/10 to-transparent" />
       </div>
 
-      {/* Floating orbs - cleaner, reduced count and size */}
-      <div className="absolute top-20 right-10 sm:right-20 w-32 sm:w-64 h-32 sm:h-64 bg-primary/10 rounded-full blur-[100px] animate-pulse" />
-      <div className="absolute bottom-40 left-10 sm:left-20 w-40 sm:w-72 h-40 sm:h-72 bg-secondary/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
-      <div className="hidden lg:block absolute top-1/3 right-1/4 w-48 h-48 bg-accent/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
-      
-      {/* Floating particles - reduced count */}
-      {[...Array(isMobile ? 8 : 20)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute rounded-full animate-float"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            width: `${2 + Math.random() * 4}px`,
-            height: `${2 + Math.random() * 4}px`,
-            background: i % 3 === 0 ? 'hsl(267 100% 65% / 0.4)' : i % 3 === 1 ? 'hsl(187 100% 43% / 0.4)' : 'hsl(150 100% 50% / 0.4)',
-            animationDelay: `${Math.random() * 5}s`,
-            animationDuration: `${5 + Math.random() * 10}s`,
-            boxShadow: i % 5 === 0 ? '0 0 20px currentColor' : 'none'
-          }}
-        />
-      ))}
+      {/* Encryption Animation */}
+      <EncryptionAnimation />
 
       <div className={`max-w-7xl w-full text-center space-y-6 sm:space-y-8 md:space-y-10 fade-in-up ${isVisible ? 'visible' : ''} relative z-10 px-4 sm:px-6`}>
         {/* Refined floating badge */}
