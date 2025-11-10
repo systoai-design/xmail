@@ -26,17 +26,17 @@ export const HeroSection = () => {
   };
 
   return (
-    <section className="min-h-screen gradient-hero flex flex-col items-center justify-center relative px-4 sm:px-6 pt-24 sm:pt-32 pb-16 sm:pb-20 overflow-hidden">
+    <section className="min-h-screen gradient-hero flex flex-col items-center justify-center relative px-4 sm:px-6 pt-32 sm:pt-40 md:pt-44 pb-20 sm:pb-24 overflow-hidden">
       {/* Enhanced animated grid background */}
       <div className="absolute inset-0">
-        {/* Mouse-reactive gradient */}
-        <div className="absolute inset-0 opacity-30" style={{
+        {/* Mouse-reactive gradient - reduced opacity */}
+        <div className="absolute inset-0 opacity-15" style={{
           backgroundImage: `radial-gradient(circle 800px at ${mousePosition.x}px ${mousePosition.y}px, hsl(267 100% 65% / 0.4) 0%, transparent 50%)`,
           transition: 'background-image 0.3s ease-out'
         }} />
         
-        {/* Animated grid */}
-        <div className="absolute inset-0 opacity-20" style={{
+        {/* Animated grid - reduced opacity */}
+        <div className="absolute inset-0 opacity-10" style={{
           backgroundImage: 'linear-gradient(to right, hsl(267 100% 65% / 0.15) 1px, transparent 1px), linear-gradient(to bottom, hsl(267 100% 65% / 0.15) 1px, transparent 1px)',
           backgroundSize: '80px 80px',
           animation: 'mesh-move 20s ease-in-out infinite'
@@ -46,10 +46,10 @@ export const HeroSection = () => {
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-primary/10 to-transparent" />
       </div>
 
-      {/* Floating orbs - cleaner, reduced count */}
-      <div className="absolute top-20 right-10 sm:right-20 w-48 sm:w-80 h-48 sm:h-80 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-40 left-10 sm:left-20 w-64 sm:w-96 h-64 sm:h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      <div className="hidden lg:block absolute top-1/3 right-1/4 w-64 h-64 bg-accent/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+      {/* Floating orbs - cleaner, reduced count and size */}
+      <div className="absolute top-20 right-10 sm:right-20 w-32 sm:w-64 h-32 sm:h-64 bg-primary/10 rounded-full blur-[100px] animate-pulse" />
+      <div className="absolute bottom-40 left-10 sm:left-20 w-40 sm:w-72 h-40 sm:h-72 bg-secondary/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="hidden lg:block absolute top-1/3 right-1/4 w-48 h-48 bg-accent/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
       
       {/* Floating particles - reduced count */}
       {[...Array(isMobile ? 8 : 20)].map((_, i) => (
@@ -69,26 +69,26 @@ export const HeroSection = () => {
         />
       ))}
 
-      <div className={`max-w-7xl w-full text-center space-y-8 sm:space-y-12 fade-in-up ${isVisible ? 'visible' : ''} relative z-10`}>
+      <div className={`max-w-7xl w-full text-center space-y-6 sm:space-y-8 md:space-y-10 fade-in-up ${isVisible ? 'visible' : ''} relative z-10 px-4 sm:px-6`}>
         {/* Refined floating badge */}
-        <div className="inline-flex items-center gap-2 glass-card px-4 py-2 sm:px-6 sm:py-3 rounded-full hover:scale-105 transition-all cursor-default">
+        <div className="inline-flex items-center gap-2 glass-card px-5 py-2.5 sm:px-6 sm:py-3 rounded-full hover:scale-105 transition-all cursor-default mb-6 sm:mb-8">
           <span className="text-xs sm:text-sm font-bold tracking-wider uppercase bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
             Solana x402 Protocol
           </span>
         </div>
         
         {/* Main headline - refined sizing */}
-        <div className="space-y-2 sm:space-y-4">
+        <div className="space-y-3 sm:space-y-4 md:space-y-6">
           <h1 className="relative">
-            <span className="block text-[10vw] sm:text-[8vw] md:text-7xl lg:text-8xl font-extrabold leading-none tracking-tight animate-slide-up">
+            <span className="block text-[10vw] sm:text-[8vw] md:text-7xl lg:text-8xl font-extrabold leading-tight tracking-tight animate-slide-up">
               encrypted
             </span>
-            <span className="block text-[12vw] sm:text-[10vw] md:text-8xl lg:text-9xl font-black leading-none tracking-tight -mt-2 sm:-mt-3 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            <span className="block text-[12vw] sm:text-[10vw] md:text-8xl lg:text-9xl font-black leading-tight tracking-tight mt-1 sm:mt-2 animate-slide-up" style={{ animationDelay: '0.1s' }}>
               <span className="gradient-primary bg-clip-text text-transparent animate-gradient">
                 messaging
               </span>
             </span>
-            <span className="block text-[6vw] sm:text-[5vw] md:text-5xl lg:text-6xl font-extrabold leading-none tracking-tight text-muted-foreground mt-1 sm:mt-2 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            <span className="block text-[6vw] sm:text-[5vw] md:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight text-muted-foreground mt-4 sm:mt-6 md:mt-8 animate-slide-up" style={{ animationDelay: '0.2s' }}>
               wallet to wallet
             </span>
           </h1>
@@ -96,7 +96,7 @@ export const HeroSection = () => {
 
         {/* Feature badges - refined */}
         <TooltipProvider>
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: '0.3s' }}>
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 md:gap-5 max-w-3xl mx-auto animate-slide-up my-8 sm:my-10" style={{ animationDelay: '0.3s' }}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="flex items-center gap-2 glass-card px-3 py-2 sm:px-4 sm:py-2.5 rounded-full hover:scale-105 hover-glow-subtle transition-all cursor-default group">
@@ -142,22 +142,24 @@ export const HeroSection = () => {
         </TooltipProvider>
 
         {/* Enhanced tagline with better typography */}
-        <div className="max-w-3xl mx-auto animate-slide-up px-4" style={{ animationDelay: '0.4s' }}>
-          <p className="text-base sm:text-xl md:text-2xl text-muted-foreground leading-relaxed">
-            Send encrypted messages with <span className="text-secondary font-bold">micropayments</span>.
-            <br />
-            <span className="text-foreground font-black text-lg sm:text-2xl md:text-3xl gradient-primary bg-clip-text text-transparent">
+        <div className="max-w-3xl mx-auto animate-slide-up px-4 mt-6 sm:mt-8" style={{ animationDelay: '0.4s' }}>
+          <p className="text-base sm:text-xl md:text-2xl text-muted-foreground leading-relaxed space-y-2 sm:space-y-3">
+            <span className="block">
+              Send encrypted messages with <span className="text-secondary font-bold">micropayments</span>.
+            </span>
+            <span className="block text-foreground font-black text-lg sm:text-2xl md:text-3xl gradient-primary bg-clip-text text-transparent mt-3 sm:mt-4">
               Only your recipient can decrypt.
             </span>
-            <br />
-            <span className="text-accent font-semibold text-sm sm:text-base">No intermediaries. True privacy.</span>
+            <span className="block text-accent font-semibold text-sm sm:text-base mt-2 sm:mt-3">
+              No intermediaries. True privacy.
+            </span>
           </p>
         </div>
 
         {/* CTA Button - cleaner glow */}
-        <div className="pt-6 animate-slide-up" style={{ animationDelay: '0.5s' }}>
+        <div className="pt-10 sm:pt-12 md:pt-14 animate-slide-up" style={{ animationDelay: '0.5s' }}>
           <div className="inline-block relative group">
-            <div className="absolute -inset-8 bg-gradient-to-r from-primary via-secondary to-accent opacity-20 blur-3xl group-hover:opacity-30 transition-all duration-500 rounded-full" />
+            <div className="absolute -inset-6 bg-gradient-to-r from-primary via-secondary to-accent opacity-15 blur-2xl group-hover:opacity-25 transition-all duration-500 rounded-full" />
             <div className="relative transform group-hover:scale-105 transition-all duration-300">
               <WalletButton />
             </div>
@@ -165,13 +167,13 @@ export const HeroSection = () => {
         </div>
 
         {/* Trust indicators - reduced to 2 */}
-        <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 pt-6 animate-slide-up" style={{ animationDelay: '0.6s' }}>
-          <div className="flex items-center gap-2 sm:gap-3 glass-card px-3 py-1.5 sm:px-4 sm:py-2 rounded-full hover:scale-105 transition-all cursor-default">
-            <div className="w-2 h-2 rounded-full bg-accent" />
+        <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 md:gap-8 pt-10 sm:pt-12 animate-slide-up" style={{ animationDelay: '0.6s' }}>
+          <div className="flex items-center gap-2.5 sm:gap-3 glass-card px-4 py-2 sm:px-5 sm:py-2.5 rounded-full hover:scale-105 transition-all cursor-default">
+            <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
             <span className="text-xs sm:text-sm font-medium text-muted-foreground">Military-grade encryption</span>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 glass-card px-3 py-1.5 sm:px-4 sm:py-2 rounded-full hover:scale-105 transition-all cursor-default">
-            <div className="w-2 h-2 rounded-full bg-secondary" />
+          <div className="flex items-center gap-2.5 sm:gap-3 glass-card px-4 py-2 sm:px-5 sm:py-2.5 rounded-full hover:scale-105 transition-all cursor-default">
+            <div className="w-2 h-2 rounded-full bg-secondary animate-pulse" style={{ animationDelay: '0.5s' }} />
             <span className="text-xs sm:text-sm font-medium text-muted-foreground">~$0.01 per message</span>
           </div>
         </div>

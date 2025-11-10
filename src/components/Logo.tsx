@@ -32,7 +32,11 @@ export const Logo = ({ size = 'medium', className = '' }: LogoProps) => {
           }}
         />
       </div>
-      <span className={`${textSizeMap[size]} font-black gradient-primary bg-clip-text text-transparent`}>
+      <span className={`${textSizeMap[size]} font-black gradient-primary bg-clip-text text-transparent 
+        opacity-0 group-hover:opacity-100 
+        translate-x-[-10px] group-hover:translate-x-0 
+        max-w-0 group-hover:max-w-[200px]
+        transition-all duration-300 ease-out overflow-hidden whitespace-nowrap`}>
         xmail
       </span>
     </div>

@@ -11,9 +11,9 @@ export const Header = () => {
   const navigate = useNavigate();
 
   return (
-    <header className="fixed top-2 sm:top-4 left-0 right-0 z-50 px-3 sm:px-6">
+    <header className="fixed top-3 sm:top-4 left-0 right-0 z-50 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
-        <nav className="glass-header rounded-[24px] sm:rounded-[35px] px-4 sm:px-8 py-3.5 sm:py-5 flex items-center justify-between gap-4 border-2 border-white/10">
+        <nav className="glass-header rounded-[24px] sm:rounded-[35px] px-5 sm:px-6 md:px-8 py-4 sm:py-5 flex items-center justify-between gap-3 sm:gap-4 border-2 border-white/10 min-h-[60px] sm:min-h-[70px]">
           {/* Logo */}
           <Logo size="small" />
 

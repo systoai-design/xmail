@@ -10,15 +10,31 @@ export const useEncryptionKeys = () => {
   const { publicKey, connected, signMessage } = useWallet();
   const [keysReady, setKeysReady] = useState(false);
   const setupInProgress = useRef(false);
+  const lastAttemptWallet = useRef<string | null>(null);
+  const lastAttemptTime = useRef<number>(0);
 
   useEffect(() => {
     if (!connected || !publicKey || !signMessage) {
       setKeysReady(false);
+      lastAttemptWallet.current = null;
       return;
     }
 
+    const walletAddress = publicKey.toBase58();
+    
+    // Only run if wallet changed OR enough time has passed (5 second cooldown)
+    if (lastAttemptWallet.current === walletAddress) {
+      const now = Date.now();
+      if (now - lastAttemptTime.current < 5000) {
+        // Still in cooldown period, don't retry
+        return;
+      }
+    }
+
+    lastAttemptWallet.current = walletAddress;
+    lastAttemptTime.current = Date.now();
     setupKeys();
-  }, [connected, publicKey, signMessage]);
+  }, [connected, publicKey?.toBase58(), signMessage]);
 
   const setupKeys = async () => {
     if (!publicKey || !signMessage) return;
@@ -83,11 +99,21 @@ export const useEncryptionKeys = () => {
           return;
         } catch (error) {
           console.error('Error decrypting private key:', error);
-          toast({ 
-            title: "Signature Required", 
-            description: "Please sign the message to restore your encryption keys",
-            variant: "default" 
-          });
+          // Check if user rejected signature
+          if (error instanceof Error && (error.message.includes('rejected') || error.message.includes('cancelled'))) {
+            toast({ 
+              title: "Signature Cancelled", 
+              description: "You need to sign to restore your encryption keys. Reconnect your wallet to try again.",
+              variant: "default" 
+            });
+          } else {
+            toast({ 
+              title: "Signature Required", 
+              description: "Please sign the message to restore your encryption keys",
+              variant: "default" 
+            });
+          }
+          setupInProgress.current = false;
           return;
         }
       }

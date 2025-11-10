@@ -108,12 +108,32 @@ const Inbox = () => {
       navigate('/');
       return;
     }
-    if (keysReady) {
-      loadEmails();
-      loadSentEmails();
-      loadDrafts();
-    }
-  }, [connected, navigate, publicKey, keysReady]);
+    
+    // Try to load emails with a wait for keys
+    const loadWithRetry = async () => {
+      // Wait for keys with timeout (up to 10 seconds)
+      let attempts = 0;
+      while (!keysReady && attempts < 20) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        attempts++;
+      }
+      
+      if (keysReady) {
+        loadEmails();
+        loadSentEmails();
+        loadDrafts();
+      } else {
+        setLoading(false);
+        toast({
+          title: 'Keys Not Ready',
+          description: 'Your encryption keys are still being set up. Please wait or reconnect your wallet.',
+          variant: 'default',
+        });
+      }
+    };
+    
+    loadWithRetry();
+  }, [connected, navigate, publicKey]);
 
   // Set up Realtime listener for new emails
   useEffect(() => {
