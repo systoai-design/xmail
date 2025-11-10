@@ -68,8 +68,8 @@ export const AttachmentUpload = ({ draftId, onAttachmentAdded, walletPublicKey, 
     setUploading(true);
 
     try {
-      // Get recipient's public key from session storage
-      const recipientPubKeyBase64 = sessionStorage.getItem('encryption_public_key');
+      // Get recipient's public key from localStorage
+      const recipientPubKeyBase64 = localStorage.getItem('encryption_public_key');
       if (!recipientPubKeyBase64) throw new Error('Encryption key not found');
 
       // Generate AES key for file

@@ -75,7 +75,7 @@ const Inbox = () => {
   // Check for missing key and show banner
   useEffect(() => {
     if (keysReady && connected && publicKey) {
-      const hasPrivateKey = !!sessionStorage.getItem('encryption_private_key');
+      const hasPrivateKey = !!localStorage.getItem('encryption_private_key');
       setShowKeyBanner(!hasPrivateKey);
     }
   }, [keysReady, connected, publicKey]);

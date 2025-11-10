@@ -99,8 +99,8 @@ const EmailView = () => {
     setDecrypting(true);
 
     try {
-      // Get private key from session storage (in production, derive from wallet signature)
-      const privateKeyBase64 = sessionStorage.getItem('encryption_private_key');
+      // Get private key from localStorage (permanently stored and synced via wallet)
+      const privateKeyBase64 = localStorage.getItem('encryption_private_key');
       
       if (!privateKeyBase64) {
         toast({

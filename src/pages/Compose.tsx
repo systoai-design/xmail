@@ -47,7 +47,7 @@ const Compose = () => {
     const loadDraft = async () => {
       if (!draftIdFromUrl || !publicKey || !signMessage || !keysReady) return;
 
-      const privateKeyBase64 = sessionStorage.getItem('encryption_private_key');
+      const privateKeyBase64 = localStorage.getItem('encryption_private_key');
       if (!privateKeyBase64) {
         toast({
           title: 'Cannot load draft',

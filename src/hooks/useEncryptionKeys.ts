@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { generateKeyPair, exportPublicKey, exportPrivateKey } from '@/lib/encryption';
 import { toast } from '@/hooks/use-toast';
 import { openKeyManagement } from '@/lib/events';
+import { deriveKeyFromWallet, encryptPrivateKeyWithWallet, decryptPrivateKeyWithWallet } from '@/lib/walletKeyDerivation';
 
 export const useEncryptionKeys = () => {
   const { publicKey, connected, signMessage } = useWallet();
@@ -24,10 +25,10 @@ export const useEncryptionKeys = () => {
     try {
       const walletAddress = publicKey.toBase58();
       
-      // Always check backend first to verify registration
-      const { data: existingBackendKey, error: lookupError } = await supabase
+      // Check backend for encrypted private key
+      const { data: backendKey, error: lookupError } = await supabase
         .from('encryption_keys')
-        .select('public_key')
+        .select('public_key, encrypted_private_key, iv')
         .eq('wallet_address', walletAddress)
         .maybeSingle();
 
@@ -41,16 +42,93 @@ export const useEncryptionKeys = () => {
         return;
       }
 
-      // Get keys from session storage
+      // Case 1: Backend has encrypted private key - restore it
+      if (backendKey?.encrypted_private_key && backendKey?.iv) {
+        try {
+          const walletKey = await deriveKeyFromWallet(signMessage, walletAddress);
+          const privateKey = await decryptPrivateKeyWithWallet(
+            backendKey.encrypted_private_key,
+            backendKey.iv,
+            walletKey
+          );
+          
+          // Store in localStorage for persistent access
+          localStorage.setItem('encryption_private_key', privateKey);
+          localStorage.setItem('encryption_public_key', backendKey.public_key);
+          
+          // Clean up old sessionStorage if present
+          sessionStorage.removeItem('encryption_private_key');
+          sessionStorage.removeItem('encryption_public_key');
+          
+          toast({ 
+            title: "Keys Restored", 
+            description: "Your encryption keys are ready across all devices!" 
+          });
+          setKeysReady(true);
+          return;
+        } catch (error) {
+          console.error('Error decrypting private key:', error);
+          toast({ 
+            title: "Signature Required", 
+            description: "Please sign the message to restore your encryption keys",
+            variant: "default" 
+          });
+          return;
+        }
+      }
+
+      // Case 2: Migration - User has key in sessionStorage but not encrypted in backend
       const sessionPrivateKey = sessionStorage.getItem('encryption_private_key');
       const sessionPublicKey = sessionStorage.getItem('encryption_public_key');
+      
+      if (sessionPrivateKey && backendKey && !backendKey.encrypted_private_key) {
+        try {
+          // Migrate: encrypt their current key and upload to backend
+          const walletKey = await deriveKeyFromWallet(signMessage, walletAddress);
+          const { encrypted, iv } = await encryptPrivateKeyWithWallet(sessionPrivateKey, walletKey);
+          
+          await supabase.from('encryption_keys').update({
+            encrypted_private_key: encrypted,
+            iv: iv
+          }).eq('wallet_address', walletAddress);
+          
+          // Move to localStorage
+          localStorage.setItem('encryption_private_key', sessionPrivateKey);
+          localStorage.setItem('encryption_public_key', sessionPublicKey || backendKey.public_key);
+          sessionStorage.removeItem('encryption_private_key');
+          sessionStorage.removeItem('encryption_public_key');
+          
+          toast({ 
+            title: "Keys Upgraded ✓", 
+            description: "Your keys are now permanently available across all devices!" 
+          });
+          setKeysReady(true);
+          return;
+        } catch (error) {
+          console.error('Error migrating keys:', error);
+          toast({
+            title: "Migration Failed",
+            description: "Could not upgrade your keys. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
 
-      // Case 1: No backend registration exists
-      if (!existingBackendKey) {
+      // Case 3: First time setup - no backend key exists
+      if (!backendKey) {
         let publicKeyToStore: string;
         let privateKeyToStore: string;
 
-        if (sessionPublicKey && sessionPrivateKey) {
+        // Check if we have keys in sessionStorage or localStorage
+        const localPrivateKey = localStorage.getItem('encryption_private_key');
+        const localPublicKey = localStorage.getItem('encryption_public_key');
+
+        if (localPublicKey && localPrivateKey) {
+          // Reuse existing local keys
+          publicKeyToStore = localPublicKey;
+          privateKeyToStore = localPrivateKey;
+        } else if (sessionPublicKey && sessionPrivateKey) {
           // Reuse existing session keys
           publicKeyToStore = sessionPublicKey;
           privateKeyToStore = sessionPrivateKey;
@@ -61,22 +139,24 @@ export const useEncryptionKeys = () => {
           privateKeyToStore = await exportPrivateKey(keypair.privateKey);
         }
 
-        // Store both keys in session storage
-        sessionStorage.setItem('encryption_public_key', publicKeyToStore);
-        sessionStorage.setItem('encryption_private_key', privateKeyToStore);
+        // Encrypt private key with wallet signature
+        const walletKey = await deriveKeyFromWallet(signMessage, walletAddress);
+        const { encrypted, iv } = await encryptPrivateKeyWithWallet(privateKeyToStore, walletKey);
 
-        // Upsert public key to backend
+        // Upload to backend
         const { error: upsertError } = await supabase
           .from('encryption_keys')
           .upsert({
             wallet_address: walletAddress,
             public_key: publicKeyToStore,
+            encrypted_private_key: encrypted,
+            iv: iv
           }, {
             onConflict: 'wallet_address'
           });
 
         if (upsertError) {
-          console.error('Error storing public key:', upsertError);
+          console.error('Error storing encrypted key:', upsertError);
           toast({
             title: "Registration Failed",
             description: "Failed to register your encryption key. Please try reconnecting your wallet.",
@@ -85,38 +165,31 @@ export const useEncryptionKeys = () => {
           return;
         }
 
+        // Store in localStorage
+        localStorage.setItem('encryption_private_key', privateKeyToStore);
+        localStorage.setItem('encryption_public_key', publicKeyToStore);
+        
+        // Clean up sessionStorage
+        sessionStorage.removeItem('encryption_private_key');
+        sessionStorage.removeItem('encryption_public_key');
+
         // Check if this is first-time registration
-        const isFirstTime = !sessionStorage.getItem('xmail_onboarded');
+        const isFirstTime = !localStorage.getItem('xmail_onboarded');
         
         if (isFirstTime) {
-          sessionStorage.setItem('xmail_onboarded', 'true');
+          localStorage.setItem('xmail_onboarded', 'true');
           toast({
             title: "🎉 Welcome to xMail!",
-            description: "Your encryption keys are ready! You can now send and receive end-to-end encrypted messages. Remember to backup your keys for other devices.",
+            description: "Your encryption keys are now permanently tied to your wallet and work across all devices!",
             duration: 10000,
           });
         } else {
           toast({
             title: "Keys Registered",
-            description: "Your encryption keys have been successfully registered.",
+            description: "Your encryption keys are ready and backed up.",
           });
         }
-      } 
-      // Case 2: Backend has key, but session is missing private key
-      else if (!sessionPrivateKey) {
-        toast({
-          title: "Private Key Not Found",
-          description: "Import your key from another device to read past messages.",
-          variant: "default",
-          duration: 8000,
-        });
-        
-        // Auto-trigger key management dialog after a brief delay
-        setTimeout(() => {
-          openKeyManagement();
-        }, 1000);
       }
-      // Case 3: Both backend and session have keys - all good!
 
       setKeysReady(true);
     } catch (error) {

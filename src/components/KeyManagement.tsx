@@ -41,7 +41,7 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
   // Check for private key and auto-switch to Import tab if missing
   useEffect(() => {
     if (open) {
-      const hasKey = !!sessionStorage.getItem('encryption_private_key');
+      const hasKey = !!localStorage.getItem('encryption_private_key');
       setHasPrivateKey(hasKey);
       if (!hasKey) {
         setDefaultTab('import');
@@ -52,7 +52,7 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
   }, [open]);
 
   const handleExportCopy = () => {
-    const privateKey = sessionStorage.getItem('encryption_private_key');
+    const privateKey = localStorage.getItem('encryption_private_key');
     if (!privateKey) {
       toast({ title: 'No key found', variant: 'destructive' });
       return;
@@ -62,7 +62,7 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
   };
 
   const handleExportDownload = async (withPassword: boolean = false) => {
-    const privateKey = sessionStorage.getItem('encryption_private_key');
+    const privateKey = localStorage.getItem('encryption_private_key');
     if (!privateKey) {
       toast({ title: 'No key found', variant: 'destructive' });
       return;
@@ -133,7 +133,7 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
         }
       }
 
-      sessionStorage.setItem('encryption_private_key', keyValue);
+      localStorage.setItem('encryption_private_key', keyValue);
       toast({ title: 'Key imported!' });
       setImportKeyValue('');
       setImportPassword('');
@@ -161,22 +161,24 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
       const publicKeyStr = await exportPublicKey(keypair.publicKey);
       const privateKeyStr = await exportPrivateKey(keypair.privateKey);
       
-      sessionStorage.setItem('encryption_public_key', publicKeyStr);
-      sessionStorage.setItem('encryption_private_key', privateKeyStr);
+      localStorage.setItem('encryption_public_key', publicKeyStr);
+      localStorage.setItem('encryption_private_key', privateKeyStr);
       
-      // Update backend with new public key
+      // Update backend with new public key (encrypted private key will be updated by useEncryptionKeys hook)
       if (publicKey) {
         await supabase
           .from('encryption_keys')
-          .upsert({
-            wallet_address: publicKey.toBase58(),
+          .update({
             public_key: publicKeyStr,
-          });
+            encrypted_private_key: null, // Clear old encrypted key, will be regenerated
+            iv: null
+          })
+          .eq('wallet_address', publicKey.toBase58());
       }
       
       toast({ 
         title: 'New key generated', 
-        description: 'You can now send and receive messages. Old messages remain unreadable.' 
+        description: 'Keys will be backed up automatically. Old messages remain unreadable.' 
       });
       
       setHasPrivateKey(true);
@@ -207,6 +209,18 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
           </TabsList>
           <TabsContent value="export" className="space-y-4">
             <div className="glass-strong p-6 rounded-xl space-y-4">
+              {hasPrivateKey && (
+                <div className="flex items-start gap-3 text-sm text-green-500 bg-green-500/10 p-4 rounded-lg mb-4">
+                  <Shield className="w-5 h-5 mt-0.5" />
+                  <div>
+                    <p className="font-semibold mb-2">✓ Keys Automatically Backed Up</p>
+                    <p className="text-muted-foreground">
+                      Your encryption keys are securely tied to your wallet and automatically synced across all devices. 
+                      Simply connect your wallet on any device to access your messages.
+                    </p>
+                  </div>
+                </div>
+              )}
               {!hasPrivateKey ? (
                 <div className="space-y-4">
                   <div className="flex items-start gap-3 text-sm text-blue-500 bg-blue-500/10 p-4 rounded-lg">
@@ -214,8 +228,7 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
                     <div>
                       <p className="font-semibold mb-2">No private key found on this device</p>
                       <p className="text-muted-foreground">
-                        Your encryption keys were created on another device or browser session.
-                        To export your key, you need to first import it from your original device.
+                        Reconnect your wallet to automatically restore your keys, or import them manually if needed.
                       </p>
                     </div>
                   </div>
@@ -250,7 +263,7 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
                     <AlertTriangle className="w-5 h-5 mt-0.5" />
                     <div>⚠️ Keep safe! Anyone with this key can decrypt your messages.</div>
                   </div>
-                  <Textarea value={sessionStorage.getItem('encryption_private_key') || ''} readOnly className="font-mono text-sm h-32" />
+                  <Textarea value={localStorage.getItem('encryption_private_key') || ''} readOnly className="font-mono text-sm h-32" />
                   <div className="space-y-3">
                     <Label>Password Protection (Optional)</Label>
                     <Input type="password" placeholder="Password (min 8 chars)" value={exportPassword} onChange={(e) => setExportPassword(e.target.value)} />

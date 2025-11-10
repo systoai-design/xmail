@@ -16,7 +16,7 @@ export const QRKeyTransfer = () => {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   
   const generateQRCode = async () => {
-    const privateKey = sessionStorage.getItem('encryption_private_key');
+    const privateKey = localStorage.getItem('encryption_private_key');
     if (!privateKey) {
       toast({ 
         title: 'No key found', 
@@ -64,7 +64,7 @@ export const QRKeyTransfer = () => {
             
             try {
               await importPrivateKey(key);
-              sessionStorage.setItem('encryption_private_key', key);
+              localStorage.setItem('encryption_private_key', key);
               
               toast({ 
                 title: '✓ Key imported!', 

@@ -128,7 +128,7 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
   const handleDecrypt = async (emailData: EmailData) => {
     if (!publicKey || !signMessage) return;
 
-    const privateKeyBase64 = sessionStorage.getItem('encryption_private_key');
+    const privateKeyBase64 = localStorage.getItem('encryption_private_key');
 
     if (!privateKeyBase64) {
       setMissingKey(true);
@@ -246,7 +246,7 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
   const handleDownloadAttachment = async (attachment: Attachment) => {
     if (!publicKey || !signMessage) return;
 
-    const privateKeyBase64 = sessionStorage.getItem('encryption_private_key');
+    const privateKeyBase64 = localStorage.getItem('encryption_private_key');
     if (!privateKeyBase64) {
       toast({
         title: 'Private key missing',
@@ -307,7 +307,7 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
   const handleDownloadAllAttachments = async () => {
     if (!publicKey || !signMessage || attachments.length === 0) return;
 
-    const privateKeyBase64 = sessionStorage.getItem('encryption_private_key');
+    const privateKeyBase64 = localStorage.getItem('encryption_private_key');
     if (!privateKeyBase64) {
       toast({
         title: 'Private key missing',

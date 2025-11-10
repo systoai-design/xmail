@@ -296,6 +296,8 @@ export type Database = {
       encryption_keys: {
         Row: {
           created_at: string
+          encrypted_private_key: string | null
+          iv: string | null
           key_created_at: string | null
           public_key: string
           updated_at: string
@@ -303,6 +305,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          encrypted_private_key?: string | null
+          iv?: string | null
           key_created_at?: string | null
           public_key: string
           updated_at?: string
@@ -310,6 +314,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          encrypted_private_key?: string | null
+          iv?: string | null
           key_created_at?: string | null
           public_key?: string
           updated_at?: string
