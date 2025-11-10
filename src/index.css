@@ -171,20 +171,45 @@ All colors MUST be HSL.
   }
 
   .glass-glow {
-    background: rgba(26, 26, 26, 0.8);
+    background: rgba(26, 26, 26, 0.85);
     backdrop-filter: blur(20px);
     border: 1px solid transparent;
-    background-image: linear-gradient(rgba(26, 26, 26, 0.8), rgba(26, 26, 26, 0.8)), var(--gradient-border);
+    background-image: linear-gradient(rgba(26, 26, 26, 0.85), rgba(26, 26, 26, 0.85)), var(--gradient-border);
     background-origin: border-box;
     background-clip: padding-box, border-box;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .glass-glow:hover {
-    background-image: linear-gradient(rgba(26, 26, 26, 0.25), rgba(26, 26, 26, 0.25)), var(--gradient-border);
-    backdrop-filter: blur(6px);
+    background-image: linear-gradient(rgba(26, 26, 26, 0.3), rgba(26, 26, 26, 0.3)), var(--gradient-border);
+    backdrop-filter: blur(8px);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* Premium glass card for content */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Subtle glass for backgrounds */
+  .glass-subtle {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Header-specific glass with better contrast */
+  .glass-header {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(32px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   /* Gmail-style email interface */
@@ -350,12 +375,12 @@ All colors MUST be HSL.
 
   /* Scale on hover */
   .hover-lift {
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .hover-lift:hover {
-    transform: translateY(-12px) scale(1.02);
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 60px hsl(267 100% 65% / 0.3);
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 40px hsl(267 100% 65% / 0.2);
   }
 
   /* Glow on hover */
@@ -379,11 +404,20 @@ All colors MUST be HSL.
   }
 
   .hover-glow:hover::before {
-    opacity: 1;
+    opacity: 0.6;
   }
 
   .hover-glow:hover {
-    box-shadow: var(--shadow-elevation);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3), 0 0 40px hsl(267 100% 65% / 0.2);
+  }
+
+  /* Subtle glow on hover */
+  .hover-glow-subtle {
+    transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hover-glow-subtle:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), 0 0 20px hsl(267 100% 65% / 0.15);
   }
 
   /* Gradient text animation */
@@ -401,18 +435,46 @@ All colors MUST be HSL.
     animation: gradient-shift 4s ease infinite;
   }
 
-  /* Pulse glow animation */
+  /* Pulse glow animation - toned down */
   @keyframes pulse-glow {
     0%, 100% {
-      box-shadow: 0 0 20px hsl(267 100% 65% / 0.3);
+      box-shadow: 0 0 15px hsl(267 100% 65% / 0.2);
     }
     50% {
-      box-shadow: 0 0 60px hsl(267 100% 65% / 0.6), 0 0 100px hsl(187 100% 43% / 0.4);
+      box-shadow: 0 0 30px hsl(267 100% 65% / 0.4), 0 0 50px hsl(187 100% 43% / 0.2);
     }
   }
 
   .animate-pulse-glow {
-    animation: pulse-glow 3s ease-in-out infinite;
+    animation: pulse-glow 4s ease-in-out infinite;
+  }
+
+  /* Slow float animation */
+  @keyframes float-slow {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-15px);
+    }
+  }
+
+  .animate-float-slow {
+    animation: float-slow 6s ease-in-out infinite;
+  }
+
+  /* Fade in slow */
+  @keyframes fade-in-slow {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-fade-in-slow {
+    animation: fade-in-slow 0.6s ease-out forwards;
   }
 
   /* Slide in from top */

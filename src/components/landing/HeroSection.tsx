@@ -46,14 +46,13 @@ export const HeroSection = () => {
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-primary/10 to-transparent" />
       </div>
 
-      {/* Enhanced floating orbs - reduced on mobile */}
-      <div className="absolute top-20 right-10 sm:right-20 w-48 sm:w-96 h-48 sm:h-96 bg-primary/30 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-40 left-10 sm:left-20 w-64 sm:w-[500px] h-64 sm:h-[500px] bg-secondary/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      <div className="hidden sm:block absolute top-1/2 left-1/2 w-64 h-64 bg-accent/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-      <div className="hidden sm:block absolute top-40 left-1/3 w-80 h-80 bg-primary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }} />
+      {/* Floating orbs - cleaner, reduced count */}
+      <div className="absolute top-20 right-10 sm:right-20 w-48 sm:w-80 h-48 sm:h-80 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-40 left-10 sm:left-20 w-64 sm:w-96 h-64 sm:h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="hidden lg:block absolute top-1/3 right-1/4 w-64 h-64 bg-accent/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
       
-      {/* Enhanced floating particles - fewer on mobile */}
-      {[...Array(isMobile ? 10 : 30)].map((_, i) => (
+      {/* Floating particles - reduced count */}
+      {[...Array(isMobile ? 8 : 20)].map((_, i) => (
         <div
           key={i}
           className="absolute rounded-full animate-float"
@@ -70,49 +69,41 @@ export const HeroSection = () => {
         />
       ))}
 
-      <div className={`max-w-7xl w-full text-center space-y-6 sm:space-y-12 fade-in-up ${isVisible ? 'visible' : ''} relative z-10`}>
-        {/* Enhanced floating badge with glow */}
-        <div className="inline-flex items-center gap-2 sm:gap-3 glass-glow px-4 py-2 sm:px-8 sm:py-4 rounded-[24px] sm:rounded-[35px] mb-4 sm:mb-8 animate-bounce-slow hover:scale-105 transition-all cursor-default group">
-          <Star className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-accent animate-pulse" />
-          <span className="text-xs sm:text-sm font-black tracking-[0.1em] sm:tracking-[0.2em] uppercase bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-gradient">
+      <div className={`max-w-7xl w-full text-center space-y-8 sm:space-y-12 fade-in-up ${isVisible ? 'visible' : ''} relative z-10`}>
+        {/* Refined floating badge */}
+        <div className="inline-flex items-center gap-2 glass-card px-4 py-2 sm:px-6 sm:py-3 rounded-full hover:scale-105 transition-all cursor-default">
+          <span className="text-xs sm:text-sm font-bold tracking-wider uppercase bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
             Solana x402 Protocol
           </span>
-          <Sparkles className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-primary animate-pulse" style={{ animationDelay: '0.5s' }} />
         </div>
         
-        {/* Enhanced main headline with better animations */}
-        <div className="space-y-3 sm:space-y-6">
+        {/* Main headline - refined sizing */}
+        <div className="space-y-2 sm:space-y-4">
           <h1 className="relative">
-            <span className="block text-[12vw] sm:text-[10vw] md:text-[8rem] font-black leading-none tracking-tighter animate-slide-up">
-              <span className="inline-block hover:scale-110 transition-bounce cursor-default relative">
-                encrypted
-                <div className="absolute -inset-4 bg-primary/10 blur-3xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </span>
+            <span className="block text-[10vw] sm:text-[8vw] md:text-7xl lg:text-8xl font-extrabold leading-none tracking-tight animate-slide-up">
+              encrypted
             </span>
-            <span className="block text-[15vw] sm:text-[14vw] md:text-[11rem] font-black leading-none tracking-tighter -mt-2 sm:-mt-4 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              <span className="gradient-primary bg-clip-text text-transparent inline-block hover:scale-110 transition-bounce cursor-default animate-gradient relative group">
+            <span className="block text-[12vw] sm:text-[10vw] md:text-8xl lg:text-9xl font-black leading-none tracking-tight -mt-2 sm:-mt-3 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+              <span className="gradient-primary bg-clip-text text-transparent animate-gradient">
                 messaging
-                <div className="absolute inset-0 blur-2xl bg-gradient-to-r from-primary to-secondary opacity-30 -z-10" />
               </span>
             </span>
-            <span className="block text-[8vw] sm:text-[7vw] md:text-[5rem] font-black leading-none tracking-tight text-muted-foreground mt-1 sm:mt-2 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-              <span className="inline-block hover:text-foreground transition-all cursor-default hover:scale-105">
-                wallet to wallet
-              </span>
+            <span className="block text-[6vw] sm:text-[5vw] md:text-5xl lg:text-6xl font-extrabold leading-none tracking-tight text-muted-foreground mt-1 sm:mt-2 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+              wallet to wallet
             </span>
           </h1>
         </div>
 
-        {/* Enhanced feature highlights with better styling */}
+        {/* Feature badges - refined */}
         <TooltipProvider>
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: '0.3s' }}>
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: '0.3s' }}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center gap-2 sm:gap-3 glass-glow px-3 py-1.5 sm:px-6 sm:py-3 rounded-[20px] sm:rounded-[35px] hover:scale-105 hover-glow transition-all cursor-default group">
-                  <div className="p-1 sm:p-2 rounded-full bg-primary/20 group-hover:bg-primary/30 transition-all">
-                    <Lock className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
+                <div className="flex items-center gap-2 glass-card px-3 py-2 sm:px-4 sm:py-2.5 rounded-full hover:scale-105 hover-glow-subtle transition-all cursor-default group">
+                  <div className="p-1 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-all">
+                    <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
                   </div>
-                  <span className="text-xs sm:text-sm font-bold">End-to-End Encrypted</span>
+                  <span className="text-xs sm:text-sm font-semibold">End-to-End Encrypted</span>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -122,11 +113,11 @@ export const HeroSection = () => {
             
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center gap-2 sm:gap-3 glass-glow px-3 py-1.5 sm:px-6 sm:py-3 rounded-[20px] sm:rounded-[35px] hover:scale-105 hover-glow transition-all cursor-default group">
-                  <div className="p-1 sm:p-2 rounded-full bg-secondary/20 group-hover:bg-secondary/30 transition-all">
-                    <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-secondary" />
+                <div className="flex items-center gap-2 glass-card px-3 py-2 sm:px-4 sm:py-2.5 rounded-full hover:scale-105 hover-glow-subtle transition-all cursor-default group">
+                  <div className="p-1 rounded-full bg-secondary/10 group-hover:bg-secondary/20 transition-all">
+                    <Zap className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-secondary" />
                   </div>
-                  <span className="text-xs sm:text-sm font-bold">Gasless Payments</span>
+                  <span className="text-xs sm:text-sm font-semibold">Gasless Payments</span>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -136,11 +127,11 @@ export const HeroSection = () => {
             
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center gap-2 sm:gap-3 glass-glow px-3 py-1.5 sm:px-6 sm:py-3 rounded-[20px] sm:rounded-[35px] hover:scale-105 hover-glow transition-all cursor-default group">
-                  <div className="p-1 sm:p-2 rounded-full bg-accent/20 group-hover:bg-accent/30 transition-all">
-                    <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-accent" />
+                <div className="flex items-center gap-2 glass-card px-3 py-2 sm:px-4 sm:py-2.5 rounded-full hover:scale-105 hover-glow-subtle transition-all cursor-default group">
+                  <div className="p-1 rounded-full bg-accent/10 group-hover:bg-accent/20 transition-all">
+                    <Shield className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-accent" />
                   </div>
-                  <span className="text-xs sm:text-sm font-bold">Zero Knowledge</span>
+                  <span className="text-xs sm:text-sm font-semibold">Zero Knowledge</span>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -163,31 +154,25 @@ export const HeroSection = () => {
           </p>
         </div>
 
-        {/* Enhanced CTA Button with better glow */}
-        <div className="pt-8 animate-slide-up" style={{ animationDelay: '0.5s' }}>
+        {/* CTA Button - cleaner glow */}
+        <div className="pt-6 animate-slide-up" style={{ animationDelay: '0.5s' }}>
           <div className="inline-block relative group">
-            {/* Enhanced glow effect */}
-            <div className="absolute -inset-12 bg-gradient-to-r from-primary via-secondary to-accent opacity-40 blur-[60px] group-hover:opacity-70 transition-all duration-700 rounded-full animate-pulse-glow" />
-            <div className="absolute -inset-8 bg-gradient-to-r from-primary/50 via-secondary/50 to-accent/50 opacity-20 blur-2xl group-hover:opacity-40 transition-all duration-500 rounded-full" />
-            <div className="relative transform group-hover:scale-110 transition-bounce">
+            <div className="absolute -inset-8 bg-gradient-to-r from-primary via-secondary to-accent opacity-20 blur-3xl group-hover:opacity-30 transition-all duration-500 rounded-full" />
+            <div className="relative transform group-hover:scale-105 transition-all duration-300">
               <WalletButton />
             </div>
           </div>
         </div>
 
-        {/* Enhanced trust indicators */}
-        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-8 pt-4 sm:pt-8 animate-slide-up" style={{ animationDelay: '0.6s' }}>
-          <div className="flex items-center gap-2 sm:gap-3 glass px-3 py-1.5 sm:px-4 sm:py-2 rounded-[20px] sm:rounded-[35px] hover:scale-105 transition-all cursor-default group">
-            <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-accent animate-pulse group-hover:scale-125 transition-transform" />
-            <span className="text-xs sm:text-sm font-semibold text-muted-foreground group-hover:text-foreground transition-colors">Military-grade encryption</span>
+        {/* Trust indicators - reduced to 2 */}
+        <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 pt-6 animate-slide-up" style={{ animationDelay: '0.6s' }}>
+          <div className="flex items-center gap-2 sm:gap-3 glass-card px-3 py-1.5 sm:px-4 sm:py-2 rounded-full hover:scale-105 transition-all cursor-default">
+            <div className="w-2 h-2 rounded-full bg-accent" />
+            <span className="text-xs sm:text-sm font-medium text-muted-foreground">Military-grade encryption</span>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 glass px-3 py-1.5 sm:px-4 sm:py-2 rounded-[20px] sm:rounded-[35px] hover:scale-105 transition-all cursor-default group">
-            <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-secondary animate-pulse group-hover:scale-125 transition-transform" style={{ animationDelay: '0.5s' }} />
-            <span className="text-xs sm:text-sm font-semibold text-muted-foreground group-hover:text-foreground transition-colors">~$0.01 per message</span>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3 glass px-3 py-1.5 sm:px-4 sm:py-2 rounded-[20px] sm:rounded-[35px] hover:scale-105 transition-all cursor-default group">
-            <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-primary animate-pulse group-hover:scale-125 transition-transform" style={{ animationDelay: '1s' }} />
-            <span className="text-xs sm:text-sm font-semibold text-muted-foreground group-hover:text-foreground transition-colors">No accounts needed</span>
+          <div className="flex items-center gap-2 sm:gap-3 glass-card px-3 py-1.5 sm:px-4 sm:py-2 rounded-full hover:scale-105 transition-all cursor-default">
+            <div className="w-2 h-2 rounded-full bg-secondary" />
+            <span className="text-xs sm:text-sm font-medium text-muted-foreground">~$0.01 per message</span>
           </div>
         </div>
       </div>

@@ -12,7 +12,7 @@ export const Header = () => {
   return (
     <header className="fixed top-2 sm:top-4 left-0 right-0 z-50 px-3 sm:px-6">
       <div className="max-w-7xl mx-auto">
-        <nav className="glass-ultra rounded-[24px] sm:rounded-[35px] px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
+        <nav className="glass-header rounded-[24px] sm:rounded-[35px] px-4 sm:px-8 py-3.5 sm:py-5 flex items-center justify-between gap-4 border-2 border-white/10">
           {/* Logo */}
           <Logo size="small" />
 

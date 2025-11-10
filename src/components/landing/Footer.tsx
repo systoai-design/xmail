@@ -3,9 +3,9 @@ import { Logo } from '@/components/Logo';
 
 export const Footer = () => {
   return (
-    <footer className="bg-background py-8 sm:py-12 px-4 sm:px-6 border-t border-border">
+    <footer className="bg-background py-12 sm:py-16 md:py-20 px-4 sm:px-6 border-t border-border">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col items-center space-y-4 sm:space-y-6">
+        <div className="flex flex-col items-center space-y-6 sm:space-y-8">
           {/* Logo/Brand */}
           <Logo size="large" />
 

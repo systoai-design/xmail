@@ -123,26 +123,24 @@ export const HowItWorks = () => {
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Enhanced section header */}
-        <div className={`text-center mb-12 sm:mb-16 md:mb-20 fade-in-up ${isVisible ? 'visible' : ''}`}>
-          <div className="inline-flex items-center gap-2 sm:gap-3 glass-glow px-4 py-2 sm:px-6 sm:py-3 rounded-full mb-4 sm:mb-8 hover:scale-105 transition-all cursor-default group">
-            <Hexagon className="w-4 h-4 sm:w-5 sm:h-5 text-primary animate-pulse" />
-            <span className="text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.3em] font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+        {/* Section header */}
+        <div className={`text-center mb-16 sm:mb-20 fade-in-up ${isVisible ? 'visible' : ''} space-y-6`}>
+          <div className="inline-flex items-center gap-2 glass-card px-4 py-2 rounded-full">
+            <Hexagon className="w-4 h-4 text-primary" />
+            <span className="text-xs uppercase tracking-wider font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               The Process
             </span>
-            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-secondary animate-pulse" style={{ animationDelay: '0.5s' }} />
           </div>
-          <h2 className="text-4xl sm:text-6xl md:text-8xl font-black mb-4 sm:mb-8 leading-tight px-4">
-            <span className="inline-block hover:scale-105 transition-transform cursor-default">
-              How it
-            </span>
-            <br />
-            <span className="gradient-primary bg-clip-text text-transparent inline-block hover:scale-105 transition-transform cursor-default animate-gradient">
+          
+          <h2 className="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-tight">
+            <span className="block">How it</span>
+            <span className="gradient-primary bg-clip-text text-transparent block">
               works
             </span>
           </h2>
-          <p className="text-base sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto font-medium px-4">
-            Three simple steps to <span className="text-foreground font-bold">secure, encrypted messaging</span>
+          
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+            Three simple steps to <span className="text-foreground font-semibold">secure, encrypted messaging</span>
           </p>
         </div>
 
@@ -155,37 +153,36 @@ export const HowItWorks = () => {
               className={`fade-in-up ${isVisible ? 'visible' : ''}`}
               style={{ transitionDelay: `${index * 150}ms` }}
             >
-              <div className={`relative glass-glow p-6 sm:p-8 md:p-10 rounded-[24px] sm:rounded-[35px] hover-lift hover-glow cursor-default h-full bg-gradient-to-br ${step.gradient} border-2 border-transparent hover:border-${step.color}/30 group`}>
-                {/* Enhanced glow effect */}
+              <div className={`relative glass-glow p-6 sm:p-8 rounded-3xl hover-lift hover-glow-subtle cursor-default h-full bg-gradient-to-br ${step.gradient} border border-transparent hover:border-${step.color}/20 group`}>
                 <div 
-                  className="absolute -inset-4 rounded-[28px] sm:rounded-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-2xl -z-10"
-                  style={{ background: step.glowColor }}
+                  className="absolute -inset-2 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl -z-10"
+                  style={{ background: step.glowColor.replace('0.4', '0.15') }}
                 />
 
-                {/* Enhanced number badge */}
-                <div className="absolute -top-4 -right-4 sm:-top-6 sm:-right-6 w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-[20px] sm:rounded-[35px] glass-glow border-2 border-primary/40 flex items-center justify-center shadow-glow-strong animate-pulse-glow group-hover:scale-110 transition-transform">
-                  <span className="text-xl sm:text-2xl md:text-3xl font-black gradient-primary bg-clip-text text-transparent">{step.number}</span>
+                {/* Number badge - smaller, more elegant */}
+                <div className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 w-10 h-10 sm:w-12 sm:h-12 rounded-2xl glass-card border border-primary/30 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <span className="text-sm sm:text-base font-black gradient-primary bg-clip-text text-transparent">{step.number}</span>
                 </div>
 
-                {/* Enhanced icon */}
-                <div className={`w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-[20px] sm:rounded-[35px] glass-glow bg-gradient-to-br ${step.gradient} border-2 border-${step.color}/40 flex items-center justify-center mb-6 sm:mb-8 group-hover:scale-110 group-hover:rotate-6 transition-all shadow-lg`}>
-                  <step.icon className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-${step.color}`} />
+                {/* Icon - refined size */}
+                <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl glass-card bg-gradient-to-br ${step.gradient} border border-${step.color}/30 flex items-center justify-center mb-6 group-hover:scale-105 transition-all`}>
+                  <step.icon className={`w-7 h-7 sm:w-8 sm:h-8 text-${step.color}`} />
                 </div>
 
-                {/* Enhanced content */}
-                <div className="space-y-4 sm:space-y-6">
+                {/* Content */}
+                <div className="space-y-4">
                   <div>
-                    <h3 className="text-3xl sm:text-4xl md:text-5xl font-black mb-2 group-hover:text-${step.color} transition-colors">{step.title}</h3>
-                    <p className="text-lg sm:text-xl text-muted-foreground font-bold">{step.subtitle}</p>
+                    <h3 className="text-2xl sm:text-3xl font-extrabold mb-1">{step.title}</h3>
+                    <p className="text-base sm:text-lg text-muted-foreground font-semibold">{step.subtitle}</p>
                   </div>
 
-                  <p className="text-base sm:text-lg font-medium leading-relaxed">{step.description}</p>
+                  <p className="text-sm sm:text-base leading-relaxed text-muted-foreground">{step.description}</p>
 
-                  <ul className="space-y-2 sm:space-y-3">
+                  <ul className="space-y-2">
                     {step.details.map((detail, i) => (
-                      <li key={i} className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-                        <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-${step.color} shadow-lg group-hover:scale-125 transition-transform`} />
-                        <span className="font-medium">{detail}</span>
+                      <li key={i} className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                        <div className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-${step.color}`} />
+                        <span>{detail}</span>
                       </li>
                     ))}
                   </ul>

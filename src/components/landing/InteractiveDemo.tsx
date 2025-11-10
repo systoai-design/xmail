@@ -97,11 +97,11 @@ export const InteractiveDemo = () => {
           
           {/* Inbox Mockup */}
           <div className="order-2 lg:order-1">
-            <div className="glass-glow rounded-[24px] sm:rounded-[35px] p-4 sm:p-6 md:p-8 shadow-glow-strong">
+            <div className="glass-glow rounded-3xl p-6 sm:p-8 border border-border/50">
               {/* Mockup Header */}
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/50">
                 <Logo size="small" />
-                <div className="text-xs text-muted-foreground font-mono">
+                <div className="text-xs text-muted-foreground font-mono bg-muted/20 px-3 py-1.5 rounded-full">
                   9mP4...qW7s
                 </div>
               </div>
@@ -176,15 +176,15 @@ export const InteractiveDemo = () => {
           </div>
 
           {/* Description Panel */}
-          <div className="order-1 lg:order-2 space-y-6">
-            <div className="inline-flex items-center gap-2 glass-glow px-4 py-2 rounded-full">
-              <Zap className="w-4 h-4 text-accent animate-pulse" />
-              <span className="text-xs uppercase tracking-[0.2em] font-black text-accent">
+          <div className="order-1 lg:order-2 space-y-8">
+            <div className="inline-flex items-center gap-2 glass-card px-4 py-2 rounded-full">
+              <Zap className="w-4 h-4 text-accent" />
+              <span className="text-xs uppercase tracking-wider font-bold text-accent">
                 See it in action
               </span>
             </div>
 
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-black leading-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">
               Experience
               <br />
               <span className="gradient-primary bg-clip-text text-transparent">
@@ -192,41 +192,41 @@ export const InteractiveDemo = () => {
               </span>
             </h2>
 
-            <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed">
+            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
               Watch how xmail encrypts messages in real-time. Each message is secured with military-grade encryption before it hits the blockchain.
             </p>
 
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full glass-glow flex items-center justify-center flex-shrink-0">
+            <div className="space-y-5">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-xl glass-card flex items-center justify-center flex-shrink-0">
                   <Shield className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <div className="font-bold mb-1">Real-time encryption</div>
+                  <div className="font-semibold mb-1.5">Real-time encryption</div>
                   <div className="text-sm text-muted-foreground">
                     Messages encrypted before transmission
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full glass-glow flex items-center justify-center flex-shrink-0">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-xl glass-card flex items-center justify-center flex-shrink-0">
                   <Zap className="w-5 h-5 text-secondary" />
                 </div>
                 <div>
-                  <div className="font-bold mb-1">Instant delivery via Solana</div>
+                  <div className="font-semibold mb-1.5">Instant delivery via Solana</div>
                   <div className="text-sm text-muted-foreground">
                     Lightning-fast blockchain transactions
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full glass-glow flex items-center justify-center flex-shrink-0">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-xl glass-card flex items-center justify-center flex-shrink-0">
                   <Lock className="w-5 h-5 text-accent" />
                 </div>
                 <div>
-                  <div className="font-bold mb-1">Your keys, your data</div>
+                  <div className="font-semibold mb-1.5">Your keys, your data</div>
                   <div className="text-sm text-muted-foreground">
                     No intermediary servers or third parties
                   </div>

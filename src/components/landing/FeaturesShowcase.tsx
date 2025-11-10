@@ -55,43 +55,41 @@ export const FeaturesShowcase = () => {
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Enhanced Title */}
-        <div className={`text-center mb-12 sm:mb-16 md:mb-20 fade-in-up ${isVisible ? 'visible' : ''} px-4`}>
-          <span className="text-sm sm:text-lg uppercase tracking-[0.2em] sm:tracking-[0.3em] font-black mb-4 sm:mb-6 block bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent">
-            Features
-          </span>
-          <h2 className="text-4xl sm:text-6xl md:text-8xl font-black max-w-4xl mx-auto leading-tight">
-            <span className="inline-block hover:scale-105 transition-transform cursor-default">
-              Privacy meets
+        {/* Section Header */}
+        <div className={`text-center mb-16 sm:mb-20 fade-in-up ${isVisible ? 'visible' : ''} space-y-6`}>
+          <div className="inline-flex items-center gap-2 glass-card px-4 py-2 rounded-full">
+            <span className="text-xs uppercase tracking-wider font-bold bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent">
+              Features
             </span>
-            <br />
-            <span className="gradient-primary bg-clip-text text-transparent inline-block hover:scale-105 transition-transform cursor-default animate-gradient">
+          </div>
+          
+          <h2 className="text-4xl sm:text-5xl md:text-7xl font-extrabold max-w-4xl mx-auto leading-tight">
+            <span className="block">Privacy meets</span>
+            <span className="gradient-primary bg-clip-text text-transparent block">
               simplicity
             </span>
           </h2>
         </div>
 
-        {/* Enhanced Features grid with staggered layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 md:gap-10">
+        {/* Features grid - aligned, no stagger */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
           {features.map((feature, index) => (
             <div
               key={index}
-              className={`fade-in-up ${isVisible ? 'visible' : ''} ${index % 2 === 1 ? 'md:mt-16' : ''}`}
+              className={`fade-in-up ${isVisible ? 'visible' : ''}`}
               style={{ transitionDelay: `${index * 100}ms` }}
             >
-              <div className="glass-glow p-6 sm:p-10 md:p-12 rounded-[24px] sm:rounded-[35px] hover-lift hover-glow h-full group cursor-pointer border-2 border-transparent hover:border-primary/40 relative">
-                {/* Glow effect */}
-                <div className="absolute -inset-4 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-3xl rounded-[28px] sm:rounded-[40px] -z-10" />
+              <div className="glass-glow p-6 sm:p-8 rounded-3xl hover-lift hover-glow-subtle h-full group cursor-pointer border border-transparent hover:border-primary/20 relative">
+                <div className="absolute -inset-2 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-2xl rounded-3xl -z-10" />
                 
-                {/* Icon container */}
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-[20px] sm:rounded-[35px] glass-glow border-2 border-primary/30 flex items-center justify-center mb-6 sm:mb-8 group-hover:scale-110 group-hover:rotate-6 transition-all shadow-lg">
-                  <feature.icon className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl glass-card border border-primary/20 flex items-center justify-center mb-6 group-hover:scale-105 transition-all">
+                  <feature.icon className="w-6 h-6 sm:w-7 sm:h-7 text-primary" />
                 </div>
                 
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-black mb-4 sm:mb-6 group-hover:gradient-primary group-hover:bg-clip-text group-hover:text-transparent transition-all">
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold mb-4 group-hover:text-primary transition-colors">
                   {feature.title}
                 </h3>
-                <p className="text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed group-hover:text-foreground transition-colors">
+                <p className="text-sm sm:text-base md:text-lg text-muted-foreground leading-relaxed">
                   {feature.description}
                 </p>
               </div>

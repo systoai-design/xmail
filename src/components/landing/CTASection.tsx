@@ -1,6 +1,6 @@
 import { WalletButton } from '@/components/WalletButton';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { Lock, Shield, Zap } from 'lucide-react';
 
 export const CTASection = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -24,17 +24,16 @@ export const CTASection = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative bg-background py-16 sm:py-20 md:py-24 px-4 sm:px-6 overflow-hidden">
-      {/* Massive gradient background */}
+    <section ref={sectionRef} className="relative bg-background py-20 sm:py-24 md:py-32 px-4 sm:px-6 overflow-hidden">
+      {/* Simplified background */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 gradient-hero" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] sm:w-[600px] md:w-[800px] h-[400px] sm:h-[600px] md:h-[800px] bg-primary/20 rounded-full blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[700px] h-[500px] sm:h-[700px] bg-primary/15 rounded-full blur-[100px]" />
       </div>
 
-      <div className="max-w-5xl mx-auto text-center relative z-10">
-        <div className={`space-y-8 sm:space-y-12 fade-in-up ${isVisible ? 'visible' : ''}`}>
-          {/* Headline */}
-          <h2 className="text-4xl sm:text-6xl md:text-8xl font-black leading-tight px-4">
+      <div className="max-w-4xl mx-auto text-center relative z-10">
+        <div className={`space-y-10 sm:space-y-12 fade-in-up ${isVisible ? 'visible' : ''}`}>
+          {/* Headline - more impactful */}
+          <h2 className="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-tight">
             Ready to send
             <br />
             <span className="gradient-primary bg-clip-text text-transparent">
@@ -43,33 +42,33 @@ export const CTASection = () => {
           </h2>
 
           {/* Subtext */}
-          <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto px-4">
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
             Connect your wallet and start messaging with true privacy
           </p>
 
-          {/* CTA Button */}
-          <div className="pt-4 sm:pt-8">
+          {/* CTA Button - single clean glow with subtle pulse */}
+          <div className="pt-6">
             <div className="inline-block relative group">
-              <div className="absolute -inset-4 sm:-inset-6 bg-gradient-to-r from-primary via-secondary to-primary opacity-30 blur-3xl group-hover:opacity-50 transition-smooth rounded-full" />
+              <div className="absolute -inset-6 bg-gradient-to-r from-primary to-secondary opacity-20 blur-2xl group-hover:opacity-30 transition-all duration-500 rounded-full animate-pulse-glow" />
               <div className="relative">
                 <WalletButton />
               </div>
             </div>
           </div>
 
-          {/* Additional info */}
-          <div className="pt-8 sm:pt-12 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs sm:text-sm text-muted-foreground px-4">
-            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent" />
-              <span>No email required</span>
+          {/* Trust indicators - with icons */}
+          <div className="pt-10 flex flex-wrap items-center justify-center gap-6 sm:gap-8">
+            <div className="flex items-center gap-2 glass-card px-4 py-2 rounded-full">
+              <Shield className="w-3.5 h-3.5 text-accent" />
+              <span className="text-xs sm:text-sm font-medium">No email required</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-secondary" />
-              <span>Gasless transactions</span>
+            <div className="flex items-center gap-2 glass-card px-4 py-2 rounded-full">
+              <Zap className="w-3.5 h-3.5 text-secondary" />
+              <span className="text-xs sm:text-sm font-medium">Gasless transactions</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary" />
-              <span>100% encrypted</span>
+            <div className="flex items-center gap-2 glass-card px-4 py-2 rounded-full">
+              <Lock className="w-3.5 h-3.5 text-primary" />
+              <span className="text-xs sm:text-sm font-medium">100% encrypted</span>
             </div>
           </div>
         </div>

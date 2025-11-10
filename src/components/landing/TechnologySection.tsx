@@ -41,30 +41,31 @@ export const TechnologySection = () => {
 
   return (
     <section ref={sectionRef} className="gradient-section py-16 sm:py-20 md:py-24 px-4 sm:px-6">
-      <div className="max-w-6xl mx-auto">
-        <h2
-          className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-center mb-10 sm:mb-12 md:mb-16 fade-in-up gradient-primary bg-clip-text text-transparent ${
-            isVisible ? 'visible' : ''
-          }`}
-        >
-          POWERED BY
-        </h2>
+      <div className="max-w-5xl mx-auto">
+        <div className={`text-center mb-16 fade-in-up ${isVisible ? 'visible' : ''} space-y-4`}>
+          <span className="text-xs uppercase tracking-wider font-bold bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent">
+            Powered By
+          </span>
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold gradient-primary bg-clip-text text-transparent">
+            Built on the best
+          </h2>
+        </div>
 
-        <div className="space-y-6 sm:space-y-8">
+        <div className="space-y-5 sm:space-y-6">
           {technologies.map((tech, index) => (
             <div
               key={index}
-              className={`glass-strong p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl hover:shadow-glow transition-slow fade-in-up ${
+              className={`glass-card p-6 sm:p-8 rounded-2xl hover-glow-subtle transition-all fade-in-up ${
                 isVisible ? 'visible' : ''
               }`}
               style={{ 
-                transitionDelay: `${index * 150}ms`
+                transitionDelay: `${index * 100}ms`
               }}
             >
-              <h3 className={`text-3xl sm:text-4xl md:text-5xl font-black mb-2 sm:mb-3 ${tech.color}`}>
+              <h3 className={`text-2xl sm:text-3xl md:text-4xl font-extrabold mb-2 ${tech.color}`}>
                 {tech.name}
               </h3>
-              <p className="text-base sm:text-lg md:text-xl text-muted-foreground">
+              <p className="text-sm sm:text-base md:text-lg text-muted-foreground">
                 {tech.description}
               </p>
             </div>
