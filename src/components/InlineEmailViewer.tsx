@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from '@/components/ui/button';
-import { X, Lock, Shield, ExternalLink, Loader2, Trash2, Key } from 'lucide-react';
+import { X, Lock, Shield, ExternalLink, Loader2, Trash2, Key, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { decryptMessage, importPrivateKey, decryptAESKey, decryptFile } from '@/lib/encryption';
 import { callSecureEndpoint } from '@/lib/secureApi';
@@ -51,6 +51,7 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
   const [missingKey, setMissingKey] = useState(false);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [decryptedImages, setDecryptedImages] = useState<Record<string, string>>({});
+  const [downloadingAttachments, setDownloadingAttachments] = useState<Record<string, boolean>>({});
 
   // Listen for key import events to auto-retry decryption
   useEffect(() => {
@@ -240,6 +241,67 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
     }
   };
 
+  const handleDownloadAttachment = async (attachment: Attachment) => {
+    if (!publicKey || !signMessage) return;
+
+    const privateKeyBase64 = sessionStorage.getItem('encryption_private_key');
+    if (!privateKeyBase64) {
+      toast({
+        title: 'Private key missing',
+        description: 'Please import your private key to download attachments',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setDownloadingAttachments(prev => ({ ...prev, [attachment.id]: true }));
+
+    try {
+      const privateKey = await importPrivateKey(privateKeyBase64);
+      
+      // Decrypt the AES key
+      const aesKey = await decryptAESKey(attachment.encrypted_symmetric_key, privateKey);
+      
+      // Download encrypted file from storage
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from('email-attachments')
+        .download(attachment.storage_path);
+      
+      if (downloadError || !fileData) {
+        throw new Error('Failed to download attachment');
+      }
+      
+      // Decrypt file
+      const encryptedBuffer = await fileData.arrayBuffer();
+      const decryptedBuffer = await decryptFile(encryptedBuffer, aesKey, attachment.iv);
+      
+      // Create blob and trigger download
+      const blob = new Blob([decryptedBuffer], { type: attachment.mime_type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = attachment.file_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Download complete',
+        description: `${attachment.file_name} has been downloaded`,
+      });
+    } catch (error) {
+      console.error('Error downloading attachment:', error);
+      toast({
+        title: 'Download failed',
+        description: 'Unable to download and decrypt this attachment',
+        variant: 'destructive',
+      });
+    } finally {
+      setDownloadingAttachments(prev => ({ ...prev, [attachment.id]: false }));
+    }
+  };
+
   const formatDate = (timestamp: string) => {
     return new Date(timestamp).toLocaleString('en-US', {
       month: 'long',
@@ -367,39 +429,54 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
               dangerouslySetInnerHTML={{ __html: decryptedBody }}
             />
 
-            {/* Image Attachments - Inline Previews */}
-            {attachments.filter(att => att.mime_type.startsWith('image/')).length > 0 && (
+            {/* All Attachments */}
+            {attachments.length > 0 && (
               <div className="mt-8 space-y-4">
                 <div className="text-sm font-medium text-muted-foreground border-t border-border pt-4">
-                  Image Attachments ({attachments.filter(att => att.mime_type.startsWith('image/')).length})
+                  Attachments ({attachments.length})
                 </div>
-                <div className="grid grid-cols-1 gap-4">
-                  {attachments
-                    .filter(att => att.mime_type.startsWith('image/'))
-                    .map(attachment => (
+                <div className="space-y-3">
+                  {attachments.map(attachment => {
+                    const isImage = attachment.mime_type.startsWith('image/');
+                    return (
                       <div key={attachment.id} className="space-y-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm text-foreground font-medium">{attachment.file_name}</span>
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
-                            {attachment.mime_type.split('/')[1].toUpperCase()}
-                          </span>
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
-                            {(attachment.file_size_bytes / 1024).toFixed(1)} KB
-                          </span>
+                        <div className="flex items-center justify-between gap-2 p-3 bg-muted/50 rounded-lg border border-border">
+                          <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                            <span className="text-sm text-foreground font-medium truncate">{attachment.file_name}</span>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
+                              {attachment.mime_type.split('/')[1].toUpperCase()}
+                            </span>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
+                              {(attachment.file_size_bytes / 1024).toFixed(1)} KB
+                            </span>
+                          </div>
+                          <Button
+                            onClick={() => handleDownloadAttachment(attachment)}
+                            disabled={downloadingAttachments[attachment.id]}
+                            variant="ghost"
+                            size="sm"
+                            className="gap-2"
+                          >
+                            {downloadingAttachments[attachment.id] ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Download className="w-4 h-4" />
+                            )}
+                            Download
+                          </Button>
                         </div>
-                        {decryptedImages[attachment.id] ? (
+                        
+                        {/* Show inline preview for images */}
+                        {isImage && decryptedImages[attachment.id] && (
                           <img
                             src={decryptedImages[attachment.id]}
                             alt={attachment.file_name}
                             className="rounded-lg border border-border max-w-full h-auto"
                           />
-                        ) : (
-                          <div className="flex items-center justify-center h-40 bg-muted rounded-lg">
-                            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                          </div>
                         )}
                       </div>
-                    ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
