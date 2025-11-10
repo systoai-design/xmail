@@ -7,12 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Key, Download, Upload, Copy, AlertTriangle, Loader2, Shield } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Key, Download, Upload, Copy, AlertTriangle, Loader2, Shield, RefreshCw, CheckCircle2, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { importPrivateKey, decryptMessage, generateKeyPair, exportPublicKey, exportPrivateKey } from '@/lib/encryption';
 import { encryptKeyWithPassword, decryptKeyWithPassword } from '@/lib/keyProtection';
 import { QRKeyTransfer } from '@/components/QRKeyTransfer';
 import { onOpenKeyManagement, emitKeyImported } from '@/lib/events';
+import { formatDistanceToNow } from 'date-fns';
 
 interface KeyManagementProps {
   compact?: boolean;
@@ -30,6 +32,9 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [hasPrivateKey, setHasPrivateKey] = useState(false);
   const [defaultTab, setDefaultTab] = useState<string>("export");
+  const [lastBackupTime, setLastBackupTime] = useState<string | null>(null);
+  const [isSynced, setIsSynced] = useState(false);
+  const [resyncing, setResyncing] = useState(false);
 
   // Listen for global "open key management" events
   useEffect(() => {
@@ -38,7 +43,7 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
     });
   }, []);
 
-  // Check for private key and auto-switch to Import tab if missing
+  // Check for private key and fetch backup status
   useEffect(() => {
     if (open) {
       const hasKey = !!localStorage.getItem('encryption_private_key');
@@ -48,8 +53,32 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
       } else {
         setDefaultTab('export');
       }
+      
+      // Fetch last backup timestamp
+      fetchBackupStatus();
     }
-  }, [open]);
+  }, [open, publicKey]);
+
+  const fetchBackupStatus = async () => {
+    if (!publicKey) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('encryption_keys')
+        .select('updated_at, encrypted_private_key')
+        .eq('wallet_address', publicKey.toBase58())
+        .maybeSingle();
+      
+      if (error) throw error;
+      
+      if (data) {
+        setLastBackupTime(data.updated_at);
+        setIsSynced(!!data.encrypted_private_key);
+      }
+    } catch (error) {
+      console.error('Error fetching backup status:', error);
+    }
+  };
 
   const handleExportCopy = () => {
     const privateKey = localStorage.getItem('encryption_private_key');
@@ -184,8 +213,37 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
       setHasPrivateKey(true);
       setDefaultTab('export');
       emitKeyImported();
+      fetchBackupStatus();
     } catch (error) {
       toast({ title: 'Key generation failed', variant: 'destructive' });
+    }
+  };
+
+  const handleForceResync = async () => {
+    if (!publicKey) return;
+    
+    setResyncing(true);
+    try {
+      // Clear localStorage to force re-sync
+      localStorage.removeItem('encryption_private_key');
+      localStorage.removeItem('encryption_public_key');
+      
+      toast({
+        title: 'Re-syncing...',
+        description: 'Please reconnect your wallet to restore keys.',
+      });
+      
+      // Refresh the page to trigger wallet reconnection
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (error) {
+      toast({ 
+        title: 'Re-sync failed', 
+        variant: 'destructive',
+        description: 'Please try reconnecting your wallet manually.'
+      });
+      setResyncing(false);
     }
   };
 
@@ -199,7 +257,21 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Encryption Key Management</DialogTitle>
+          <DialogTitle className="flex items-center justify-between text-2xl font-bold">
+            <span>Encryption Key Management</span>
+            {isSynced && hasPrivateKey && (
+              <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                Synced
+              </Badge>
+            )}
+          </DialogTitle>
+          {lastBackupTime && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+              <Clock className="w-4 h-4" />
+              <span>Last backup: {formatDistanceToNow(new Date(lastBackupTime), { addSuffix: true })}</span>
+            </div>
+          )}
         </DialogHeader>
         <Tabs value={defaultTab} onValueChange={setDefaultTab}>
           <TabsList className="grid w-full grid-cols-3">
@@ -273,6 +345,24 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
                     <Button onClick={handleExportCopy} variant="outline"><Copy className="w-4 h-4 mr-2" />Copy</Button>
                     <Button onClick={() => handleExportDownload(false)} variant="secondary"><Download className="w-4 h-4 mr-2" />Download</Button>
                     <Button onClick={() => handleExportDownload(true)} disabled={!exportPassword || exportPassword !== confirmPassword}><Shield className="w-4 h-4 mr-2" />Protected</Button>
+                  </div>
+                  
+                  <div className="pt-4 border-t border-border/50">
+                    <Button 
+                      onClick={handleForceResync} 
+                      variant="outline" 
+                      className="w-full"
+                      disabled={resyncing}
+                    >
+                      {resyncing ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Re-syncing...</>
+                      ) : (
+                        <><RefreshCw className="w-4 h-4 mr-2" />Force Re-sync Keys</>
+                      )}
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center mt-2">
+                      Clear local keys and restore from wallet backup
+                    </p>
                   </div>
                 </>
               )}
