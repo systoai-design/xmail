@@ -15,8 +15,13 @@ const Landing = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (connected) {
+    const isFromInbox = sessionStorage.getItem('fromInbox');
+    if (connected && !isFromInbox) {
       navigate('/inbox');
+    }
+    // Clear the flag after checking
+    if (isFromInbox) {
+      sessionStorage.removeItem('fromInbox');
     }
   }, [connected, navigate]);
 

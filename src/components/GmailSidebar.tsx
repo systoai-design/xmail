@@ -87,9 +87,16 @@ export const GmailSidebar = ({
       {/* Header */}
       <div className="p-4 flex items-center justify-between border-b border-border">
         {!collapsed && (
-          <div className="flex items-center gap-2">
+          <button 
+            onClick={() => {
+              sessionStorage.setItem('fromInbox', 'true');
+              navigate('/');
+              setMobileOpen(false);
+            }}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
             <Logo size="small" />
-          </div>
+          </button>
         )}
         <Button
           variant="ghost"
@@ -119,7 +126,13 @@ export const GmailSidebar = ({
             onCompose();
             setMobileOpen(false);
           }}
-          className="w-full font-bold shadow-glow justify-start gap-3"
+          variant="outline"
+          className={cn(
+            "w-full font-semibold transition-all",
+            "bg-primary/10 hover:bg-primary/20 border-primary/30",
+            "text-primary hover:text-primary",
+            collapsed ? "justify-center" : "justify-start gap-3"
+          )}
           size={collapsed ? "icon" : "lg"}
         >
           <Plus className="w-5 h-5" />
