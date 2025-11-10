@@ -216,7 +216,8 @@ All colors MUST be HSL.
   .gmail-email-row {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, background-color;
   }
 
   .gmail-email-row:hover {
@@ -376,11 +377,21 @@ All colors MUST be HSL.
   /* Scale on hover */
   .hover-lift {
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
   }
 
   .hover-lift:hover {
     transform: translateY(-8px) scale(1.01);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 40px hsl(267 100% 65% / 0.2);
+  }
+
+  /* Press feedback for interactive elements */
+  .press-feedback {
+    transition: transform 0.1s ease;
+  }
+
+  .press-feedback:active {
+    transform: scale(0.95);
   }
 
   /* Glow on hover */

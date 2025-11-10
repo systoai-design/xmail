@@ -65,9 +65,9 @@ export const EmailRow = ({
   return (
     <div
       className={cn(
-        "gmail-email-row group",
+        "gmail-email-row group transition-all duration-200 hover:scale-[1.01] hover:bg-muted/20",
         !read && "gmail-email-row-unread",
-        selected && "bg-muted/30"
+        selected && "bg-muted/30 border-l-2 border-primary"
       )}
       onClick={onClick}
     >
@@ -86,12 +86,12 @@ export const EmailRow = ({
             e.stopPropagation();
             onStarToggle();
           }}
-          className="flex-shrink-0 text-muted-foreground hover:text-yellow-500 transition-colors"
+          className="flex-shrink-0 text-muted-foreground hover:text-yellow-500 transition-all duration-200 hover:scale-110 active:scale-90"
         >
           <Star
             className={cn(
-              "w-5 h-5",
-              starred && "fill-yellow-500 text-yellow-500"
+              "w-5 h-5 transition-all duration-200",
+              starred && "fill-yellow-500 text-yellow-500 animate-bounce-in"
             )}
           />
         </button>
@@ -126,12 +126,12 @@ export const EmailRow = ({
           {/* Badges */}
           <div className="flex items-center gap-2 flex-shrink-0">
             {!read && (
-              <Badge variant="default" className="bg-accent text-xs">
+              <Badge variant="default" className="bg-accent text-xs animate-pulse">
                 New
               </Badge>
             )}
             {paid && (
-              <div className="text-xs bg-accent/20 text-accent px-2 py-1 rounded-full font-bold">
+              <div className="text-xs bg-accent/20 text-accent px-2 py-1 rounded-full font-bold animate-scale-in">
                 ✓
               </div>
             )}
