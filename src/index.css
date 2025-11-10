@@ -604,4 +604,61 @@ All colors MUST be HSL.
   .rich-text-editor .ql-toolbar button.ql-active .ql-fill {
     fill: hsl(var(--primary));
   }
+
+  /* Prose content styles for rendered HTML emails */
+  .prose-content {
+    line-height: 1.6;
+    color: inherit;
+  }
+
+  .prose-content p {
+    margin-bottom: 1em;
+  }
+
+  .prose-content p:last-child {
+    margin-bottom: 0;
+  }
+
+  .prose-content strong {
+    font-weight: 600;
+  }
+
+  .prose-content em {
+    font-style: italic;
+  }
+
+  .prose-content u {
+    text-decoration: underline;
+  }
+
+  .prose-content s {
+    text-decoration: line-through;
+  }
+
+  .prose-content ul,
+  .prose-content ol {
+    margin: 1em 0;
+    padding-left: 1.5em;
+  }
+
+  .prose-content ul {
+    list-style-type: disc;
+  }
+
+  .prose-content ol {
+    list-style-type: decimal;
+  }
+
+  .prose-content li {
+    margin: 0.5em 0;
+  }
+
+  .prose-content a {
+    color: rgb(59, 130, 246);
+    text-decoration: underline;
+  }
+
+  .prose-content a:hover {
+    color: rgb(37, 99, 235);
+  }
 }
