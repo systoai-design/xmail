@@ -378,7 +378,15 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
                     .filter(att => att.mime_type.startsWith('image/'))
                     .map(attachment => (
                       <div key={attachment.id} className="space-y-2">
-                        <div className="text-sm text-muted-foreground">{attachment.file_name}</div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm text-foreground font-medium">{attachment.file_name}</span>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
+                            {attachment.mime_type.split('/')[1].toUpperCase()}
+                          </span>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
+                            {(attachment.file_size_bytes / 1024).toFixed(1)} KB
+                          </span>
+                        </div>
                         {decryptedImages[attachment.id] ? (
                           <img
                             src={decryptedImages[attachment.id]}
