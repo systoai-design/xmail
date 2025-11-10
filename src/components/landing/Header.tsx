@@ -21,16 +21,16 @@ export const Header = () => {
             {connected && (
               <Button
                 onClick={() => navigate('/inbox')}
-                variant="outline"
+                variant="default"
                 size="sm"
-                className="bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary font-semibold"
+                className="bg-primary hover:bg-primary/90 text-white font-semibold shadow-md"
               >
                 <span className="hidden sm:inline">Launch xmail</span>
                 <span className="sm:hidden">Launch</span>
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             )}
-            <WalletButton />
+            <WalletButton variant="compact" />
           </div>
         </nav>
       </div>
