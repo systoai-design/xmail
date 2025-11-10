@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Key, Download, Upload, Copy, AlertTriangle, Loader2, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { importPrivateKey, decryptMessage } from '@/lib/encryption';
+import { importPrivateKey, decryptMessage, generateKeyPair, exportPublicKey, exportPrivateKey } from '@/lib/encryption';
 import { encryptKeyWithPassword, decryptKeyWithPassword } from '@/lib/keyProtection';
 import { QRKeyTransfer } from '@/components/QRKeyTransfer';
 import { onOpenKeyManagement, emitKeyImported } from '@/lib/events';
@@ -28,6 +28,8 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [importPassword, setImportPassword] = useState('');
   const [importFile, setImportFile] = useState<File | null>(null);
+  const [hasPrivateKey, setHasPrivateKey] = useState(false);
+  const [defaultTab, setDefaultTab] = useState<string>("export");
 
   // Listen for global "open key management" events
   useEffect(() => {
@@ -35,6 +37,19 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
       setOpen(true);
     });
   }, []);
+
+  // Check for private key and auto-switch to Import tab if missing
+  useEffect(() => {
+    if (open) {
+      const hasKey = !!sessionStorage.getItem('encryption_private_key');
+      setHasPrivateKey(hasKey);
+      if (!hasKey) {
+        setDefaultTab('import');
+      } else {
+        setDefaultTab('export');
+      }
+    }
+  }, [open]);
 
   const handleExportCopy = () => {
     const privateKey = sessionStorage.getItem('encryption_private_key');
@@ -123,6 +138,8 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
       setImportKeyValue('');
       setImportPassword('');
       setImportFile(null);
+      setHasPrivateKey(true);
+      setDefaultTab('export');
       setOpen(false);
       
       // Emit event so other components can react
@@ -131,6 +148,42 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
       toast({ title: 'Invalid key', variant: 'destructive' });
     } finally {
       setImporting(false);
+    }
+  };
+
+  const handleGenerateNewKey = async () => {
+    if (!confirm('⚠️ WARNING: Generating a new key will make ALL your existing messages unreadable. Only do this if you cannot access your original key. Continue?')) {
+      return;
+    }
+    
+    try {
+      const keypair = await generateKeyPair();
+      const publicKeyStr = await exportPublicKey(keypair.publicKey);
+      const privateKeyStr = await exportPrivateKey(keypair.privateKey);
+      
+      sessionStorage.setItem('encryption_public_key', publicKeyStr);
+      sessionStorage.setItem('encryption_private_key', privateKeyStr);
+      
+      // Update backend with new public key
+      if (publicKey) {
+        await supabase
+          .from('encryption_keys')
+          .upsert({
+            wallet_address: publicKey.toBase58(),
+            public_key: publicKeyStr,
+          });
+      }
+      
+      toast({ 
+        title: 'New key generated', 
+        description: 'You can now send and receive messages. Old messages remain unreadable.' 
+      });
+      
+      setHasPrivateKey(true);
+      setDefaultTab('export');
+      emitKeyImported();
+    } catch (error) {
+      toast({ title: 'Key generation failed', variant: 'destructive' });
     }
   };
 
@@ -146,7 +199,7 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">Encryption Key Management</DialogTitle>
         </DialogHeader>
-        <Tabs defaultValue="export">
+        <Tabs value={defaultTab} onValueChange={setDefaultTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="export">Export</TabsTrigger>
             <TabsTrigger value="import">Import</TabsTrigger>
@@ -154,21 +207,62 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
           </TabsList>
           <TabsContent value="export" className="space-y-4">
             <div className="glass-strong p-6 rounded-xl space-y-4">
-              <div className="flex items-start gap-3 text-sm text-yellow-500 bg-yellow-500/10 p-4 rounded-lg">
-                <AlertTriangle className="w-5 h-5 mt-0.5" />
-                <div>⚠️ Keep safe! Anyone with this key can decrypt your messages.</div>
-              </div>
-              <Textarea value={sessionStorage.getItem('encryption_private_key') || ''} readOnly className="font-mono text-sm h-32" />
-              <div className="space-y-3">
-                <Label>Password Protection (Optional)</Label>
-                <Input type="password" placeholder="Password (min 8 chars)" value={exportPassword} onChange={(e) => setExportPassword(e.target.value)} />
-                <Input type="password" placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <Button onClick={handleExportCopy} variant="outline"><Copy className="w-4 h-4 mr-2" />Copy</Button>
-                <Button onClick={() => handleExportDownload(false)} variant="secondary"><Download className="w-4 h-4 mr-2" />Download</Button>
-                <Button onClick={() => handleExportDownload(true)} disabled={!exportPassword || exportPassword !== confirmPassword}><Shield className="w-4 h-4 mr-2" />Protected</Button>
-              </div>
+              {!hasPrivateKey ? (
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3 text-sm text-blue-500 bg-blue-500/10 p-4 rounded-lg">
+                    <AlertTriangle className="w-5 h-5 mt-0.5" />
+                    <div>
+                      <p className="font-semibold mb-2">No private key found on this device</p>
+                      <p className="text-muted-foreground">
+                        Your encryption keys were created on another device or browser session.
+                        To export your key, you need to first import it from your original device.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <Button 
+                      onClick={() => setDefaultTab('import')} 
+                      className="w-full"
+                      variant="default"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Go to Import Tab
+                    </Button>
+                    
+                    <div className="text-center text-sm text-muted-foreground">
+                      OR
+                    </div>
+                    
+                    <Button 
+                      onClick={handleGenerateNewKey} 
+                      variant="outline"
+                      className="w-full"
+                    >
+                      <Key className="w-4 h-4 mr-2" />
+                      Generate New Key (Lose Access to Old Messages)
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-start gap-3 text-sm text-yellow-500 bg-yellow-500/10 p-4 rounded-lg">
+                    <AlertTriangle className="w-5 h-5 mt-0.5" />
+                    <div>⚠️ Keep safe! Anyone with this key can decrypt your messages.</div>
+                  </div>
+                  <Textarea value={sessionStorage.getItem('encryption_private_key') || ''} readOnly className="font-mono text-sm h-32" />
+                  <div className="space-y-3">
+                    <Label>Password Protection (Optional)</Label>
+                    <Input type="password" placeholder="Password (min 8 chars)" value={exportPassword} onChange={(e) => setExportPassword(e.target.value)} />
+                    <Input type="password" placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button onClick={handleExportCopy} variant="outline"><Copy className="w-4 h-4 mr-2" />Copy</Button>
+                    <Button onClick={() => handleExportDownload(false)} variant="secondary"><Download className="w-4 h-4 mr-2" />Download</Button>
+                    <Button onClick={() => handleExportDownload(true)} disabled={!exportPassword || exportPassword !== confirmPassword}><Shield className="w-4 h-4 mr-2" />Protected</Button>
+                  </div>
+                </>
+              )}
             </div>
           </TabsContent>
           <TabsContent value="import" className="space-y-4">
