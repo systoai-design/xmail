@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from '@/components/ui/button';
-import { X, Lock, Shield, ExternalLink, Loader2, Trash2 } from 'lucide-react';
+import { X, Lock, Shield, ExternalLink, Loader2, Trash2, Key } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { decryptMessage, importPrivateKey } from '@/lib/encryption';
 import { callSecureEndpoint } from '@/lib/secureApi';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { openKeyManagement, onKeyImported } from '@/lib/events';
 
 interface EmailData {
   id: string;
@@ -36,6 +37,16 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
   const [decrypting, setDecrypting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [missingKey, setMissingKey] = useState(false);
+
+  // Listen for key import events to auto-retry decryption
+  useEffect(() => {
+    return onKeyImported(() => {
+      if (email && missingKey) {
+        handleDecrypt(email);
+      }
+    });
+  }, [email, missingKey]);
 
   useEffect(() => {
     loadEmail();
@@ -93,19 +104,17 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
   const handleDecrypt = async (emailData: EmailData) => {
     if (!publicKey || !signMessage) return;
 
+    const privateKeyBase64 = sessionStorage.getItem('encryption_private_key');
+
+    if (!privateKeyBase64) {
+      setMissingKey(true);
+      return;
+    }
+
+    setMissingKey(false);
     setDecrypting(true);
 
     try {
-      const privateKeyBase64 = sessionStorage.getItem('encryption_private_key');
-
-      if (!privateKeyBase64) {
-        toast({
-          title: 'Decryption key not found',
-          description: 'Please reconnect your wallet to generate decryption keys',
-          variant: 'destructive',
-        });
-        return;
-      }
 
       const privateKey = await importPrivateKey(privateKeyBase64);
 
@@ -280,7 +289,23 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
         </div>
 
         {/* Email Content */}
-        {decrypting ? (
+        {missingKey ? (
+          <div className="glass p-12 rounded-xl text-center border border-border/50 space-y-4">
+            <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+              <Key className="w-8 h-8 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-semibold">Private Key Missing</h3>
+              <p className="text-muted-foreground text-sm">
+                Your private decryption key is not available on this device. Import it from another device to read this message.
+              </p>
+            </div>
+            <Button onClick={() => openKeyManagement()} className="gap-2">
+              <Key className="w-4 h-4" />
+              Restore Key
+            </Button>
+          </div>
+        ) : decrypting ? (
           <div className="glass p-12 rounded-xl flex flex-col items-center justify-center border border-border/50">
             <Loader2 className="w-16 h-16 animate-spin text-primary mb-4" />
             <p className="text-xl font-bold">Decrypting message...</p>

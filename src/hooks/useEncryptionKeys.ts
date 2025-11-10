@@ -3,6 +3,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { supabase } from '@/integrations/supabase/client';
 import { generateKeyPair, exportPublicKey, exportPrivateKey } from '@/lib/encryption';
 import { toast } from '@/hooks/use-toast';
+import { openKeyManagement } from '@/lib/events';
 
 export const useEncryptionKeys = () => {
   const { publicKey, connected, signMessage } = useWallet();
@@ -104,10 +105,16 @@ export const useEncryptionKeys = () => {
       // Case 2: Backend has key, but session is missing private key
       else if (!sessionPrivateKey) {
         toast({
-          title: "Decryption Key Missing",
-          description: "You can send messages, but cannot decrypt past messages on this device.",
+          title: "Private Key Not Found",
+          description: "Import your key from another device to read past messages.",
           variant: "default",
+          duration: 8000,
         });
+        
+        // Auto-trigger key management dialog after a brief delay
+        setTimeout(() => {
+          openKeyManagement();
+        }, 1000);
       }
       // Case 3: Both backend and session have keys - all good!
 

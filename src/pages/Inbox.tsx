@@ -1,7 +1,7 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
-import { Search, Loader2, X, RefreshCw, Trash2 } from 'lucide-react';
+import { Search, Loader2, X, RefreshCw, Trash2, Key, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,6 +17,7 @@ import { ComposeModal } from '@/components/ComposeModal';
 import { ComposeTabSwitcher, ComposeWindow } from '@/components/ComposeTabSwitcher';
 import { InlineEmailViewer } from '@/components/InlineEmailViewer';
 import { cn } from '@/lib/utils';
+import { openKeyManagement, onKeyImported } from '@/lib/events';
 
 interface EncryptedEmail {
   id: string;
@@ -69,6 +70,22 @@ const Inbox = () => {
 
   // Inline email viewer state
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
+  const [showKeyBanner, setShowKeyBanner] = useState(false);
+
+  // Check for missing key and show banner
+  useEffect(() => {
+    if (keysReady && connected && publicKey) {
+      const hasPrivateKey = !!sessionStorage.getItem('encryption_private_key');
+      setShowKeyBanner(!hasPrivateKey);
+    }
+  }, [keysReady, connected, publicKey]);
+
+  // Listen for key imports to hide banner
+  useEffect(() => {
+    return onKeyImported(() => {
+      setShowKeyBanner(false);
+    });
+  }, []);
 
   const activeTab = tabFromUrl as 'inbox' | 'sent' | 'drafts' | 'starred';
 
@@ -518,6 +535,39 @@ const Inbox = () => {
         "flex-1 flex flex-col min-w-0",
         selectedEmailId && "hidden md:flex md:max-w-xl lg:max-w-2xl"
       )}>
+        {/* Missing Key Banner */}
+        {showKeyBanner && (
+          <div className="bg-yellow-500/10 border-b border-yellow-500/20 px-4 py-3">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 flex-1">
+                <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">Private decryption key not found on this device</p>
+                  <p className="text-xs text-muted-foreground">Import your key to read encrypted messages</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Button 
+                  size="sm" 
+                  variant="default" 
+                  onClick={() => openKeyManagement()}
+                  className="gap-2"
+                >
+                  <Key className="w-4 h-4" />
+                  Restore Key
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={() => setShowKeyBanner(false)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Header */}
         <header className="border-b border-border bg-background sticky top-0 z-10">
           <div className="px-4 md:px-6 py-3 flex items-center gap-4">

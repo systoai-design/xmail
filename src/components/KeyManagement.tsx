@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { importPrivateKey, decryptMessage } from '@/lib/encryption';
 import { encryptKeyWithPassword, decryptKeyWithPassword } from '@/lib/keyProtection';
 import { QRKeyTransfer } from '@/components/QRKeyTransfer';
+import { onOpenKeyManagement, emitKeyImported } from '@/lib/events';
 
 interface KeyManagementProps {
   compact?: boolean;
@@ -27,6 +28,13 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [importPassword, setImportPassword] = useState('');
   const [importFile, setImportFile] = useState<File | null>(null);
+
+  // Listen for global "open key management" events
+  useEffect(() => {
+    return onOpenKeyManagement(() => {
+      setOpen(true);
+    });
+  }, []);
 
   const handleExportCopy = () => {
     const privateKey = sessionStorage.getItem('encryption_private_key');
@@ -116,6 +124,9 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
       setImportPassword('');
       setImportFile(null);
       setOpen(false);
+      
+      // Emit event so other components can react
+      emitKeyImported();
     } catch {
       toast({ title: 'Invalid key', variant: 'destructive' });
     } finally {
