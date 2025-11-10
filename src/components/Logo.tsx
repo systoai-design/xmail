@@ -101,23 +101,21 @@ export const Logo = ({ size = 'medium', className = '' }: LogoProps) => {
         }`}
       >
         <Lock className={`${iconSizeMap[size]} text-primary animate-pulse`} />
-        <span className={`${textSizeMap[size]} font-black gradient-primary bg-clip-text text-transparent`}>
+        <span className={`${textSizeMap[size]} font-black text-primary`}>
           xmail
         </span>
       </div>
 
       {/* Revealed state: Full logo */}
-      <div
-        className={`absolute inset-0 flex items-center transition-all duration-300 ${
-          isRevealed ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
-        }`}
-      >
-        <img
-          src={logoImage}
-          alt="xmail logo"
-          className={`${sizeMap[size]} h-auto object-contain`}
-        />
-      </div>
+      {isRevealed && (
+        <div className="absolute inset-0 flex items-center transition-all duration-300 opacity-100 scale-100">
+          <img
+            src={logoImage}
+            alt="xmail logo"
+            className={`${sizeMap[size]} h-auto object-contain`}
+          />
+        </div>
+      )}
     </div>
   );
 };
