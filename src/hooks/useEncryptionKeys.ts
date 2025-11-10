@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { supabase } from '@/integrations/supabase/client';
 import { generateKeyPair, exportPublicKey, exportPrivateKey } from '@/lib/encryption';
@@ -9,6 +9,7 @@ import { deriveKeyFromWallet, encryptPrivateKeyWithWallet, decryptPrivateKeyWith
 export const useEncryptionKeys = () => {
   const { publicKey, connected, signMessage } = useWallet();
   const [keysReady, setKeysReady] = useState(false);
+  const setupInProgress = useRef(false);
 
   useEffect(() => {
     if (!connected || !publicKey || !signMessage) {
@@ -21,9 +22,23 @@ export const useEncryptionKeys = () => {
 
   const setupKeys = async () => {
     if (!publicKey || !signMessage) return;
+    
+    // Prevent simultaneous setup calls
+    if (setupInProgress.current) return;
+    setupInProgress.current = true;
 
     try {
       const walletAddress = publicKey.toBase58();
+      
+      // Early exit: Check localStorage first (no signature needed!)
+      const localPrivateKey = localStorage.getItem('encryption_private_key');
+      const localPublicKey = localStorage.getItem('encryption_public_key');
+      
+      if (localPrivateKey && localPublicKey) {
+        setKeysReady(true);
+        setupInProgress.current = false;
+        return;
+      }
       
       // Check backend for encrypted private key
       const { data: backendKey, error: lookupError } = await supabase
@@ -199,6 +214,8 @@ export const useEncryptionKeys = () => {
         description: "An unexpected error occurred during key setup.",
         variant: "destructive",
       });
+    } finally {
+      setupInProgress.current = false;
     }
   };
 
