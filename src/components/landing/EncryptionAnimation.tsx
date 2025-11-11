@@ -24,7 +24,7 @@ export const EncryptionAnimation = () => {
   };
 
   return (
-    <div className="hidden md:block absolute bottom-40 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 opacity-30 hover:opacity-60 transition-opacity duration-500 pointer-events-none">
+    <div className="hidden md:block absolute bottom-72 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 opacity-30 hover:opacity-60 transition-opacity duration-500 pointer-events-none">
       <div className="flex items-center justify-center gap-4 lg:gap-8">
         {/* Plain Text Box */}
         <div 

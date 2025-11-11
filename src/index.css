@@ -88,17 +88,8 @@ All colors MUST be HSL.
   }
 
   .gradient-hero {
-    background: var(--gradient-hero);
+    background: hsl(0 0% 4%);
     position: relative;
-  }
-
-  .gradient-hero::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--gradient-mesh);
-    opacity: 0.4;
-    animation: mesh-move 20s ease-in-out infinite;
   }
 
   .gradient-section {
