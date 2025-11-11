@@ -84,24 +84,20 @@ export const InteractiveDemo = () => {
   }, [isVisible]);
 
   return (
-    <section ref={sectionRef} className="bg-background py-16 sm:py-20 md:py-24 px-4 sm:px-6 relative overflow-hidden">
+    <section ref={sectionRef} className="gradient-section py-16 sm:py-20 md:py-24 px-4 sm:px-6 relative overflow-hidden">
       {/* Background effects */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: 'radial-gradient(circle at 30% 50%, hsl(267 100% 35%) 0px, transparent 50%), radial-gradient(circle at 70% 50%, hsl(187 100% 35%) 0px, transparent 50%)',
-        }} />
-      </div>
+      <div className="absolute inset-0 security-grid opacity-15" />
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center fade-in-up ${isVisible ? 'visible' : ''}`}>
           
           {/* Inbox Mockup */}
           <div className="order-2 lg:order-1">
-            <div className="glass-glow rounded-3xl p-6 sm:p-8 border border-border/50">
+            <div className="glass-card rounded-3xl p-6 sm:p-8 border-2 border-border/50 hover:border-primary/30 transition-all duration-500">
               {/* Mockup Header */}
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/50">
                 <Logo size="small" />
-                <div className="text-xs text-muted-foreground font-mono bg-muted/20 px-3 py-1.5 rounded-full">
+                <div className="text-xs text-muted-foreground font-mono glass-card px-3 py-1.5 rounded-full border border-border/30">
                   9mP4...qW7s
                 </div>
               </div>
@@ -111,19 +107,21 @@ export const InteractiveDemo = () => {
                 {messages.length === 0 && animatingIndex === null && (
                   <div className="text-center py-12 text-muted-foreground">
                     <Mail className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p className="text-sm">Waiting for messages...</p>
+                    <p className="text-sm">Waiting for encrypted messages...</p>
                   </div>
                 )}
 
                 {messages.map((message, index) => (
                   <div
                     key={index}
-                    className="glass p-4 rounded-xl border border-border/50 hover:border-primary/40 transition-all cursor-pointer animate-slide-in-top"
+                    className="glass-card p-4 rounded-xl border-2 border-border/50 hover:border-primary/30 transition-all cursor-pointer animate-slide-in-top group"
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <div className={`w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center ${!message.encrypted ? 'animate-lock-pulse' : ''}`}>
+                        <div className={`w-8 h-8 rounded-full bg-primary/20 border-2 flex items-center justify-center transition-all duration-500 ${
+                          !message.encrypted ? 'border-secondary animate-lock-pulse scale-110' : 'border-primary'
+                        }`}>
                           {message.encrypted ? (
                             <Lock className="w-4 h-4 text-primary" />
                           ) : (
@@ -131,7 +129,7 @@ export const InteractiveDemo = () => {
                           )}
                         </div>
                         <div>
-                          <div className="text-xs font-mono text-muted-foreground">
+                          <div className="text-xs font-mono text-muted-foreground font-semibold">
                             {message.from}
                           </div>
                           <div className="text-xs text-muted-foreground/70">
@@ -141,7 +139,7 @@ export const InteractiveDemo = () => {
                       </div>
                       <div className="flex items-center gap-1">
                         {message.paid && (
-                          <div className="text-[10px] bg-accent/20 text-accent px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                          <div className="text-[10px] bg-accent/20 text-accent px-2 py-0.5 rounded-full font-bold flex items-center gap-1 border border-accent/30">
                             <Check className="w-3 h-3" />
                             Paid
                           </div>
@@ -151,16 +149,17 @@ export const InteractiveDemo = () => {
 
                     {!message.encrypted ? (
                       <div className="space-y-2">
-                        <div className="text-sm font-semibold text-secondary">
+                        <div className="text-sm font-semibold text-secondary flex items-center gap-2">
+                          <Shield className="w-4 h-4 animate-lock-pulse" />
                           Encrypting...
                         </div>
                         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-primary to-secondary animate-progress-fill" />
+                          <div className="h-full bg-gradient-to-r from-primary via-secondary to-accent animate-progress-fill" />
                         </div>
                       </div>
                     ) : (
                       <div>
-                        <div className="text-sm font-semibold mb-1 flex items-center gap-2">
+                        <div className="text-sm font-semibold mb-1 flex items-center gap-2 text-foreground">
                           <Lock className="w-3 h-3" />
                           Encrypted Message
                         </div>
@@ -177,14 +176,14 @@ export const InteractiveDemo = () => {
 
           {/* Description Panel */}
           <div className="order-1 lg:order-2 space-y-8">
-            <div className="inline-flex items-center gap-2 glass-card px-4 py-2 rounded-full">
-              <Zap className="w-4 h-4 text-accent" />
+            <div className="inline-flex items-center gap-2 glass-card px-4 py-2 rounded-full border border-primary/20">
+              <Zap className="w-4 h-4 text-accent animate-lock-pulse" />
               <span className="text-xs uppercase tracking-wider font-bold text-accent">
                 See it in action
               </span>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black leading-tight">
               Experience
               <br />
               <span className="gradient-primary bg-clip-text text-transparent">
@@ -198,11 +197,11 @@ export const InteractiveDemo = () => {
 
             <div className="space-y-5">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl glass-card flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl glass-card border-2 border-primary/30 flex items-center justify-center flex-shrink-0">
                   <Shield className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <div className="font-semibold mb-1.5">Real-time encryption</div>
+                  <div className="font-semibold mb-1.5 text-foreground">Real-time encryption</div>
                   <div className="text-sm text-muted-foreground">
                     Messages encrypted before transmission
                   </div>
@@ -210,11 +209,11 @@ export const InteractiveDemo = () => {
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl glass-card flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl glass-card border-2 border-secondary/30 flex items-center justify-center flex-shrink-0">
                   <Zap className="w-5 h-5 text-secondary" />
                 </div>
                 <div>
-                  <div className="font-semibold mb-1.5">Instant delivery via Solana</div>
+                  <div className="font-semibold mb-1.5 text-foreground">Instant delivery via Solana</div>
                   <div className="text-sm text-muted-foreground">
                     Lightning-fast blockchain transactions
                   </div>
@@ -222,11 +221,11 @@ export const InteractiveDemo = () => {
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl glass-card flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl glass-card border-2 border-accent/30 flex items-center justify-center flex-shrink-0">
                   <Lock className="w-5 h-5 text-accent" />
                 </div>
                 <div>
-                  <div className="font-semibold mb-1.5">Your keys, your data</div>
+                  <div className="font-semibold mb-1.5 text-foreground">Your keys, your data</div>
                   <div className="text-sm text-muted-foreground">
                     No intermediary servers or third parties
                   </div>

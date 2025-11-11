@@ -1,16 +1,11 @@
-import { Wallet, Lock, Zap, ArrowRight, Sparkles, Hexagon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { Wallet, Shield, Send, ArrowRight } from 'lucide-react';
 
 export const HowItWorks = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const step1Ref = useRef<HTMLDivElement>(null);
-  const step2Ref = useRef<HTMLDivElement>(null);
-  const step3Ref = useRef<HTMLDivElement>(null);
-  
+  const stepRefs = [useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null)];
   const [isVisible, setIsVisible] = useState(false);
-  const [step1Visible, setStep1Visible] = useState(false);
-  const [step2Visible, setStep2Visible] = useState(false);
-  const [step3Visible, setStep3Visible] = useState(false);
+  const [visibleSteps, setVisibleSteps] = useState<boolean[]>([false, false, false]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -19,7 +14,7 @@ export const HowItWorks = () => {
           setIsVisible(true);
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.1 }
     );
 
     if (sectionRef.current) {
@@ -30,194 +25,166 @@ export const HowItWorks = () => {
   }, []);
 
   useEffect(() => {
-    const observer1 = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setStep1Visible(true);
-        }
-      },
-      { threshold: 0.5 }
-    );
+    const observers = stepRefs.map((ref, index) => {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setVisibleSteps(prev => {
+              const newState = [...prev];
+              newState[index] = true;
+              return newState;
+            });
+          }
+        },
+        { threshold: 0.3 }
+      );
 
-    const observer2 = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setStep2Visible(true);
-        }
-      },
-      { threshold: 0.5 }
-    );
+      if (ref.current) {
+        observer.observe(ref.current);
+      }
 
-    const observer3 = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setStep3Visible(true);
-        }
-      },
-      { threshold: 0.5 }
-    );
+      return observer;
+    });
 
-    if (step1Ref.current) observer1.observe(step1Ref.current);
-    if (step2Ref.current) observer2.observe(step2Ref.current);
-    if (step3Ref.current) observer3.observe(step3Ref.current);
-
-    return () => {
-      observer1.disconnect();
-      observer2.disconnect();
-      observer3.disconnect();
-    };
+    return () => observers.forEach(observer => observer.disconnect());
   }, []);
 
   const steps = [
     {
       icon: Wallet,
       number: '01',
-      title: 'Connect',
-      subtitle: 'Your Wallet',
-      description: 'Your Solana wallet becomes your identity',
-      details: ['No email required', 'No passwords', 'No signup forms'],
+      title: 'Connect Wallet',
+      subtitle: 'No signup required',
+      description: 'Connect your Solana wallet to get started instantly. No email, no password, no personal data.',
+      details: ['One-click connection', 'Supports all major wallets', 'Instant access'],
       color: 'primary',
-      gradient: 'from-primary/20 to-primary/5',
-      glowColor: 'hsl(267 100% 65% / 0.4)',
+      gradient: 'from-primary to-primary/70',
+      glow: 'shadow-glow'
     },
     {
-      icon: Lock,
+      icon: Shield,
       number: '02',
-      title: 'Compose',
-      subtitle: 'Private Message',
-      description: 'Write and encrypt your message',
-      details: ['End-to-end encrypted', 'Web Crypto API', 'Zero-knowledge'],
+      title: 'Compose & Encrypt',
+      subtitle: 'Military-grade security',
+      description: 'Write your message and we encrypt it with AES-256-GCM before it ever leaves your device.',
+      details: ['End-to-end encryption', 'Client-side processing', 'Zero-knowledge architecture'],
       color: 'secondary',
-      gradient: 'from-secondary/20 to-secondary/5',
-      glowColor: 'hsl(187 100% 43% / 0.4)',
+      gradient: 'from-secondary to-secondary/70',
+      glow: 'shadow-glow-cyan'
     },
     {
-      icon: Zap,
+      icon: Send,
       number: '03',
-      title: 'Send',
-      subtitle: 'via x402',
-      description: 'Deliver with micropayment',
-      details: ['Gasless transaction', '~$0.01 USDC', 'Spam prevention'],
+      title: 'Send via Solana',
+      subtitle: 'Instant & secure',
+      description: 'Your encrypted message is transmitted via Solana blockchain. Recipient pays $0.0001 to decrypt.',
+      details: ['Lightning-fast delivery', 'Spam protection built-in', 'Blockchain verified'],
       color: 'accent',
-      gradient: 'from-accent/20 to-accent/5',
-      glowColor: 'hsl(150 100% 50% / 0.4)',
-    },
+      gradient: 'from-accent to-accent/70',
+      glow: 'shadow-glow-secure'
+    }
   ];
 
-  const stepRefs = [step1Ref, step2Ref, step3Ref];
-
   return (
-    <section
-      id="how-it-works"
-      ref={sectionRef}
-      className="min-h-screen gradient-section py-16 sm:py-20 md:py-24 px-4 sm:px-6 relative overflow-hidden mt-[-1px]"
-    >
-      {/* Enhanced animated background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 opacity-20" style={{
-          backgroundImage: 'radial-gradient(circle at 20% 50%, hsl(267 100% 35%) 0px, transparent 50%), radial-gradient(circle at 80% 80%, hsl(187 100% 35%) 0px, transparent 50%), radial-gradient(circle at 50% 20%, hsl(150 100% 35%) 0px, transparent 50%)'
-        }} />
-        <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: 'repeating-linear-gradient(45deg, hsl(267 100% 65% / 0.03) 0px, hsl(267 100% 65% / 0.03) 2px, transparent 2px, transparent 10px)'
-        }} />
-      </div>
+    <section id="how-it-works" ref={sectionRef} className="gradient-section py-16 sm:py-20 md:py-28 px-4 sm:px-6 relative overflow-hidden">
+      {/* Background Grid */}
+      <div className="absolute inset-0 security-grid opacity-20" />
 
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Section header */}
-        <div className={`text-center mb-16 sm:mb-20 fade-in-up ${isVisible ? 'visible' : ''} space-y-6`}>
-          <div className="inline-flex items-center gap-2 glass-card px-4 py-2 rounded-full">
-            <Hexagon className="w-4 h-4 text-primary" />
-            <span className="text-xs uppercase tracking-wider font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              The Process
+        {/* Section Header */}
+        <div className={`text-center max-w-3xl mx-auto mb-12 sm:mb-16 md:mb-20 fade-in-up ${isVisible ? 'visible' : ''}`}>
+          <div className="inline-flex items-center gap-2 glass-card px-4 py-2 rounded-full mb-6 border border-primary/20">
+            <Shield className="w-4 h-4 text-primary animate-lock-pulse" />
+            <span className="text-xs sm:text-sm font-bold tracking-wider text-primary uppercase">
+              How It Works
             </span>
           </div>
-          
-          <h2 className="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-tight">
-            <span className="block">How it</span>
-            <span className="gradient-primary bg-clip-text text-transparent block">
-              works
-            </span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 sm:mb-6 leading-tight">
+            <span className="gradient-primary bg-clip-text text-transparent">Three Simple Steps</span>
+            <br />
+            <span className="text-foreground">to Secure Messaging</span>
           </h2>
-          
-          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Three simple steps to <span className="text-foreground font-semibold">secure, encrypted messaging</span>
+          <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
+            Experience private, encrypted communication with the power of blockchain technology
           </p>
         </div>
 
-        {/* Enhanced steps */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-16 md:mb-20">
-          {steps.map((step, index) => (
-            <div
-              key={index}
-              ref={stepRefs[index]}
-              className={`fade-in-up ${isVisible ? 'visible' : ''}`}
-              style={{ transitionDelay: `${index * 150}ms` }}
-            >
-              <div className={`relative glass-glow p-6 sm:p-8 rounded-3xl hover-lift hover-glow-subtle cursor-default h-full bg-gradient-to-br ${step.gradient} border border-transparent hover:border-${step.color}/20 group`}>
-                <div 
-                  className="absolute -inset-2 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl -z-10"
-                  style={{ background: step.glowColor.replace('0.4', '0.15') }}
-                />
-
-                {/* Number badge - smaller, more elegant */}
-                <div className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 w-10 h-10 sm:w-12 sm:h-12 rounded-2xl glass-card border border-primary/30 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <span className="text-sm sm:text-base font-black gradient-primary bg-clip-text text-transparent">{step.number}</span>
-                </div>
-
-                {/* Icon - refined size */}
-                <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl glass-card bg-gradient-to-br ${step.gradient} border border-${step.color}/30 flex items-center justify-center mb-6 group-hover:scale-105 transition-all`}>
-                  <step.icon className={`w-7 h-7 sm:w-8 sm:h-8 text-${step.color}`} />
-                </div>
-
-                {/* Content */}
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-2xl sm:text-3xl font-extrabold mb-1">{step.title}</h3>
-                    <p className="text-base sm:text-lg text-muted-foreground font-semibold">{step.subtitle}</p>
+        {/* Steps */}
+        <div className="relative">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 lg:gap-8">
+            {steps.map((step, index) => (
+              <div
+                key={index}
+                ref={stepRefs[index]}
+                className={`fade-in-up ${visibleSteps[index] ? 'visible' : ''}`}
+                style={{ transitionDelay: `${index * 0.2}s` }}
+              >
+                <div className="glass-card rounded-3xl p-6 sm:p-8 border border-border/50 hover:border-primary/30 transition-all duration-500 hover-lift h-full relative group">
+                  {/* Glow Effect on Hover */}
+                  <div className={`absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${step.glow}`} />
+                  
+                  {/* Number Badge */}
+                  <div className={`inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br ${step.gradient} text-white font-black text-xl sm:text-2xl mb-6 relative z-10`}>
+                    {step.number}
                   </div>
 
-                  <p className="text-sm sm:text-base leading-relaxed text-muted-foreground">{step.description}</p>
+                  {/* Icon */}
+                  <div className={`inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl glass-card border-2 border-${step.color}/30 mb-6 relative z-10`}>
+                    <step.icon className={`w-8 h-8 sm:w-10 sm:h-10 text-${step.color}`} />
+                  </div>
 
-                  <ul className="space-y-2">
-                    {step.details.map((detail, i) => (
-                      <li key={i} className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                        <div className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-${step.color}`} />
-                        <span>{detail}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {/* Content */}
+                  <div className="space-y-4 relative z-10">
+                    <div>
+                      <h3 className="text-2xl sm:text-3xl font-black mb-2 text-foreground">
+                        {step.title}
+                      </h3>
+                      <p className={`text-xs sm:text-sm font-semibold text-${step.color} uppercase tracking-wider`}>
+                        {step.subtitle}
+                      </p>
+                    </div>
+
+                    <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                      {step.description}
+                    </p>
+
+                    {/* Details List */}
+                    <ul className="space-y-2 pt-2">
+                      {step.details.map((detail, idx) => (
+                        <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <div className={`w-1.5 h-1.5 rounded-full bg-${step.color} mt-1.5 flex-shrink-0`} />
+                          <span>{detail}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        {/* Enhanced progressive Flow indicator - vertical on mobile, horizontal on desktop */}
-        <div className="flex md:flex-row flex-col items-center justify-center gap-4 md:gap-6">
-          {/* Line 1 */}
-          <div 
-            className={`md:h-1.5 md:w-32 lg:w-40 h-16 w-1.5 bg-gradient-to-b md:bg-gradient-to-r from-transparent via-primary to-transparent rounded-full ${step1Visible ? 'animate-draw-line' : 'opacity-0'}`}
-          />
-          {/* Arrow 1 */}
-          <div className={`${step1Visible ? 'animate-arrow-enter' : 'opacity-0'}`} style={{ animationDelay: '0.4s' }}>
-            <div className="p-2 sm:p-3 rounded-full glass-glow border-2 border-primary/30 hover:scale-110 transition-all cursor-default">
-              <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-primary md:rotate-0 rotate-90" />
+          {/* Connection Lines (Desktop Only) */}
+          <div className="hidden md:block absolute top-1/2 left-0 right-0 -translate-y-1/2 pointer-events-none">
+            <div className="max-w-7xl mx-auto px-6 lg:px-8">
+              <div className="flex items-center justify-between">
+                {[0, 1].map((index) => (
+                  <div
+                    key={index}
+                    className={`flex items-center gap-4 fade-in ${visibleSteps[index] ? 'visible' : ''}`}
+                    style={{ 
+                      transitionDelay: `${(index + 1) * 0.3}s`,
+                      width: '33.33%',
+                      justifyContent: 'flex-end',
+                      paddingRight: '1rem'
+                    }}
+                  >
+                    <div className="h-px bg-gradient-to-r from-primary/50 to-secondary/50 flex-1 animate-draw-line" />
+                    <ArrowRight className="w-6 h-6 text-primary/70 animate-arrow-enter" />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-          {/* Line 2 */}
-          <div 
-            className={`md:h-1.5 md:w-32 lg:w-40 h-16 w-1.5 bg-gradient-to-b md:bg-gradient-to-r from-transparent via-secondary to-transparent rounded-full ${step2Visible ? 'animate-draw-line' : 'opacity-0'}`}
-          />
-          {/* Arrow 2 */}
-          <div className={`${step2Visible ? 'animate-arrow-enter' : 'opacity-0'}`} style={{ animationDelay: '0.4s' }}>
-            <div className="p-2 sm:p-3 rounded-full glass-glow border-2 border-secondary/30 hover:scale-110 transition-all cursor-default">
-              <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-secondary md:rotate-0 rotate-90" />
-            </div>
-          </div>
-          {/* Line 3 */}
-          <div 
-            className={`md:h-1.5 md:w-32 lg:w-40 h-16 w-1.5 bg-gradient-to-b md:bg-gradient-to-r from-transparent via-accent to-transparent rounded-full ${step3Visible ? 'animate-draw-line' : 'opacity-0'}`}
-          />
         </div>
       </div>
     </section>

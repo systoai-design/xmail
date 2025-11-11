@@ -8,52 +8,54 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 100%;
-
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 100%;
-
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 100%;
-
-    --primary: 217 91% 60%;
+    /* Core Colors - Security Theme */
+    --background: 0 0% 3%;
+    --background-darker: 0 0% 1.5%;
+    --foreground: 210 20% 98%;
+    
+    --card: 220 25% 4%;
+    --card-foreground: 210 20% 98%;
+    
+    --popover: 220 25% 4%;
+    --popover-foreground: 210 20% 98%;
+    
+    --primary: 217 100% 64%;
     --primary-foreground: 0 0% 100%;
-
-    --secondary: 187 100% 43%;
+    
+    --secondary: 187 100% 51%;
     --secondary-foreground: 0 0% 0%;
-
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 63%;
-
+    
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20.2% 65.1%;
+    
     --accent: 150 100% 50%;
     --accent-foreground: 0 0% 0%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 16%;
-    --input: 0 0% 16%;
-    --ring: 217 91% 60%;
-
-    --radius: 0.75rem;
-
-    /* Custom design tokens */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(187 100% 43%));
-    --gradient-primary-intense: linear-gradient(135deg, hsl(217 91% 65%), hsl(187 100% 50%));
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 10%), hsl(0 0% 7%));
-    --gradient-hero: radial-gradient(ellipse at top, hsl(217 91% 25%) 0%, hsl(0 0% 4%) 50%);
-    --gradient-section: linear-gradient(180deg, hsl(0 0% 4%), hsl(217 91% 15%), hsl(0 0% 4%));
-    --gradient-mesh: radial-gradient(at 40% 20%, hsl(217 91% 35%) 0px, transparent 50%),
-                     radial-gradient(at 80% 0%, hsl(187 100% 35%) 0px, transparent 50%),
-                     radial-gradient(at 0% 50%, hsl(217 91% 25%) 0px, transparent 50%);
-    --gradient-accent: linear-gradient(135deg, hsl(217 91% 60%), hsl(150 100% 50%));
-    --gradient-border: linear-gradient(135deg, hsl(217 91% 60% / 0.3), hsl(187 100% 43% / 0.3));
-    --shadow-glow: 0 0 40px hsl(217 91% 60% / 0.3);
-    --shadow-glow-cyan: 0 0 40px hsl(187 100% 43% / 0.3);
-    --shadow-glow-strong: 0 0 60px hsl(217 91% 60% / 0.5);
-    --shadow-glow-accent: 0 0 50px hsl(150 100% 50% / 0.4);
-    --shadow-elevation: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 100px hsl(217 91% 60% / 0.2);
+    
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 210 20% 98%;
+    
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 217 100% 64%;
+    --radius: 1rem;
+    
+    /* Security-focused gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217 100% 64%), hsl(187 100% 51%));
+    --gradient-hero: linear-gradient(180deg, hsl(0 0% 3%) 0%, hsl(220 25% 4%) 50%, hsl(0 0% 3%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(220 30% 5% / 0.8), hsl(217 40% 6% / 0.8));
+    --gradient-button: linear-gradient(135deg, hsl(217 100% 64%), hsl(217 100% 54%));
+    --gradient-section: linear-gradient(180deg, hsl(0 0% 3%) 0%, hsl(220 25% 4%) 50%, hsl(0 0% 3%) 100%);
+    --gradient-secure: linear-gradient(135deg, hsl(150 100% 50% / 0.2), hsl(150 100% 40% / 0.1));
+    --gradient-encrypted: linear-gradient(135deg, hsl(217 100% 64% / 0.2), hsl(187 100% 51% / 0.1));
+    
+    /* Shadows - Enhanced for security aesthetic */
+    --shadow-glow: 0 0 40px hsl(217 100% 64% / 0.25);
+    --shadow-glow-cyan: 0 0 40px hsl(187 100% 51% / 0.25);
+    --shadow-glow-secure: 0 0 30px hsl(150 100% 50% / 0.2);
+    --shadow-elegant: 0 10px 30px -10px hsl(217 100% 64% / 0.3);
+    --shadow-card: 0 8px 32px -8px hsl(0 0% 0% / 0.5);
+    
+    /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -88,8 +90,19 @@ All colors MUST be HSL.
   }
 
   .gradient-hero {
-    background: hsl(0 0% 4%);
+    background: var(--gradient-hero);
     position: relative;
+  }
+  
+  .gradient-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+      repeating-linear-gradient(0deg, transparent, transparent 2px, hsl(217 100% 64% / 0.03) 2px, hsl(217 100% 64% / 0.03) 4px),
+      repeating-linear-gradient(90deg, transparent, transparent 2px, hsl(217 100% 64% / 0.03) 2px, hsl(217 100% 64% / 0.03) 4px);
+    opacity: 0.5;
+    pointer-events: none;
   }
 
   .gradient-section {
@@ -197,9 +210,11 @@ All colors MUST be HSL.
 
   /* Header-specific glass with better contrast */
   .glass-header {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(32px) saturate(200%);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid hsl(217 100% 64% / 0.15);
+    box-shadow: 0 0 20px hsl(217 100% 64% / 0.1);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -283,6 +298,134 @@ All colors MUST be HSL.
 
   .animate-float {
     animation: float linear infinite;
+  }
+  
+  /* Security-focused animations */
+  @keyframes security-scan {
+    0% {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    50% {
+      opacity: 0.3;
+    }
+    100% {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+  }
+  
+  @keyframes data-flow {
+    0% {
+      transform: translateX(-100%) translateY(0);
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.6;
+    }
+    90% {
+      opacity: 0.6;
+    }
+    100% {
+      transform: translateX(100%) translateY(-20px);
+      opacity: 0;
+    }
+  }
+  
+  @keyframes grid-pulse {
+    0%, 100% {
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+  
+  @keyframes encrypt-reveal {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+      filter: blur(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0);
+    }
+  }
+  
+  @keyframes border-scan {
+    0% {
+      opacity: 0;
+      offset-distance: 0%;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      offset-distance: 100%;
+    }
+  }
+  
+  .animate-security-scan {
+    animation: security-scan 3s linear infinite;
+  }
+  
+  .animate-data-flow {
+    animation: data-flow 4s linear infinite;
+  }
+  
+  .animate-grid-pulse {
+    animation: grid-pulse 3s ease-in-out infinite;
+  }
+  
+  .animate-encrypt-reveal {
+    animation: encrypt-reveal 0.8s ease-out forwards;
+  }
+  
+  /* Security utility classes */
+  .security-grid {
+    background-image: 
+      repeating-linear-gradient(0deg, transparent, transparent 40px, hsl(217 100% 64% / 0.05) 40px, hsl(217 100% 64% / 0.05) 41px),
+      repeating-linear-gradient(90deg, transparent, transparent 40px, hsl(217 100% 64% / 0.05) 40px, hsl(217 100% 64% / 0.05) 41px);
+  }
+  
+  .scanline {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .scanline::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 0%, hsl(187 100% 51% / 0.1) 50%, transparent 100%);
+    animation: security-scan 6s linear infinite;
+    pointer-events: none;
+  }
+  
+  .data-particles {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  
+  .data-particles::before,
+  .data-particles::after {
+    content: '';
+    position: absolute;
+    width: 100px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, hsl(217 100% 64% / 0.6), transparent);
+    animation: data-flow 8s linear infinite;
+    top: 30%;
+  }
+  
+  .data-particles::after {
+    animation-delay: 4s;
+    top: 60%;
   }
 
   /* Slow bounce */
@@ -502,13 +645,13 @@ All colors MUST be HSL.
       opacity: 1;
     }
     50% {
-      transform: scale(1.2);
+      transform: scale(1.1);
       opacity: 0.8;
     }
   }
 
   .animate-lock-pulse {
-    animation: lock-pulse 1s ease-in-out infinite;
+    animation: lock-pulse 2s ease-in-out infinite;
   }
 
   /* Progress bar fill */
