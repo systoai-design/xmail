@@ -6,19 +6,11 @@ import { EncryptionAnimation } from '@/components/landing/EncryptionAnimation';
 
 export const HeroSection = () => {
   const [isVisible, setIsVisible] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     setIsVisible(true);
     setIsMobile(window.innerWidth < 768);
-    
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-    
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
   const scrollToNext = () => {
@@ -28,24 +20,6 @@ export const HeroSection = () => {
 
   return (
     <section className="min-h-screen gradient-hero flex flex-col items-center justify-center relative px-4 sm:px-6 pt-24 sm:pt-32 md:pt-40 pb-12 sm:pb-20 md:pb-24 overflow-hidden">
-      {/* Enhanced animated grid background */}
-      <div className="absolute inset-0">
-        {/* Mouse-reactive gradient - reduced opacity */}
-        <div className="absolute inset-0 opacity-15" style={{
-          backgroundImage: `radial-gradient(circle 800px at ${mousePosition.x}px ${mousePosition.y}px, hsl(217 91% 60% / 0.4) 0%, transparent 50%)`,
-          transition: 'background-image 0.3s ease-out'
-        }} />
-        
-        {/* Animated grid - reduced opacity */}
-        <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: 'linear-gradient(to right, hsl(217 91% 60% / 0.15) 1px, transparent 1px), linear-gradient(to bottom, hsl(217 91% 60% / 0.15) 1px, transparent 1px)',
-          backgroundSize: '80px 80px',
-          animation: 'mesh-move 20s ease-in-out infinite'
-        }} />
-
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-primary/10 to-transparent" />
-      </div>
 
       {/* Encryption Animation */}
       <EncryptionAnimation />
