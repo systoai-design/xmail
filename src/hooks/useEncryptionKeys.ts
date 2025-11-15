@@ -10,29 +10,14 @@ export const useEncryptionKeys = () => {
   const { publicKey, connected, signMessage } = useWallet();
   const [keysReady, setKeysReady] = useState(false);
   const setupInProgress = useRef(false);
-  const lastAttemptWallet = useRef<string | null>(null);
-  const lastAttemptTime = useRef<number>(0);
 
   useEffect(() => {
     if (!connected || !publicKey || !signMessage) {
       setKeysReady(false);
-      lastAttemptWallet.current = null;
       return;
     }
 
-    const walletAddress = publicKey.toBase58();
-    
-    // Only run if wallet changed OR enough time has passed (5 second cooldown)
-    if (lastAttemptWallet.current === walletAddress) {
-      const now = Date.now();
-      if (now - lastAttemptTime.current < 5000) {
-        // Still in cooldown period, don't retry
-        return;
-      }
-    }
-
-    lastAttemptWallet.current = walletAddress;
-    lastAttemptTime.current = Date.now();
+    // Instant key setup - no cooldowns, no delays
     setupKeys();
   }, [connected, publicKey?.toBase58(), signMessage]);
 
@@ -46,11 +31,12 @@ export const useEncryptionKeys = () => {
     try {
       const walletAddress = publicKey.toBase58();
       
-      // Early exit: Check localStorage first (no signature needed!)
+      // INSTANT: Check localStorage first (no signature, no network call!)
       const localPrivateKey = localStorage.getItem('encryption_private_key');
       const localPublicKey = localStorage.getItem('encryption_public_key');
       
       if (localPrivateKey && localPublicKey) {
+        // Keys ready instantly!
         setKeysReady(true);
         setupInProgress.current = false;
         return;
@@ -65,12 +51,6 @@ export const useEncryptionKeys = () => {
 
       if (lookupError) {
         console.error('Error checking backend registration:', lookupError);
-        toast({
-          title: "Registration Check Failed",
-          description: "Could not verify your encryption key status.",
-          variant: "destructive",
-        });
-        return;
       }
 
       // Case 1: Backend has encrypted private key - restore it
@@ -83,7 +63,7 @@ export const useEncryptionKeys = () => {
             walletKey
           );
           
-          // Store in localStorage for persistent access
+          // Store in localStorage for instant access
           localStorage.setItem('encryption_private_key', privateKey);
           localStorage.setItem('encryption_public_key', backendKey.public_key);
           
@@ -91,153 +71,90 @@ export const useEncryptionKeys = () => {
           sessionStorage.removeItem('encryption_private_key');
           sessionStorage.removeItem('encryption_public_key');
           
-          toast({ 
-            title: "Keys Restored", 
-            description: "Your encryption keys are ready across all devices!" 
-          });
+          // Keys ready instantly
           setKeysReady(true);
           return;
         } catch (error) {
           console.error('Error decrypting private key:', error);
-          // Check if user rejected signature
+          // User rejected signature - generate new keys locally instead
           if (error instanceof Error && (error.message.includes('rejected') || error.message.includes('cancelled'))) {
-            toast({ 
-              title: "Signature Cancelled", 
-              description: "You need to sign to restore your encryption keys. Reconnect your wallet to try again.",
-              variant: "default" 
-            });
-          } else {
-            toast({ 
-              title: "Signature Required", 
-              description: "Please sign the message to restore your encryption keys",
-              variant: "default" 
-            });
+            // Fall through to generate new keys
           }
-          setupInProgress.current = false;
-          return;
         }
       }
 
-      // Case 2: Migration - User has key in sessionStorage but not encrypted in backend
-      const sessionPrivateKey = sessionStorage.getItem('encryption_private_key');
-      const sessionPublicKey = sessionStorage.getItem('encryption_public_key');
-      
-      if (sessionPrivateKey && backendKey && !backendKey.encrypted_private_key) {
-        try {
-          // Migrate: encrypt their current key and upload to backend
-          const walletKey = await deriveKeyFromWallet(signMessage, walletAddress);
-          const { encrypted, iv } = await encryptPrivateKeyWithWallet(sessionPrivateKey, walletKey);
-          
-          await supabase.from('encryption_keys').update({
-            encrypted_private_key: encrypted,
-            iv: iv
-          }).eq('wallet_address', walletAddress);
-          
-          // Move to localStorage
+      // Case 2: Backend has public key but no private key - migrate from sessionStorage
+      if (backendKey?.public_key && !backendKey?.encrypted_private_key) {
+        const sessionPrivateKey = sessionStorage.getItem('encryption_private_key');
+        const sessionPublicKey = sessionStorage.getItem('encryption_public_key');
+        
+        if (sessionPrivateKey && sessionPublicKey === backendKey.public_key) {
+          // Instant migration - keys ready immediately
           localStorage.setItem('encryption_private_key', sessionPrivateKey);
-          localStorage.setItem('encryption_public_key', sessionPublicKey || backendKey.public_key);
+          localStorage.setItem('encryption_public_key', sessionPublicKey);
           sessionStorage.removeItem('encryption_private_key');
           sessionStorage.removeItem('encryption_public_key');
           
-          toast({ 
-            title: "Keys Upgraded ✓", 
-            description: "Your keys are now permanently available across all devices!" 
-          });
           setKeysReady(true);
-          return;
-        } catch (error) {
-          console.error('Error migrating keys:', error);
-          toast({
-            title: "Migration Failed",
-            description: "Could not upgrade your keys. Please try again.",
-            variant: "destructive",
-          });
+          
+          // Background sync (non-blocking)
+          try {
+            const walletKey = await deriveKeyFromWallet(signMessage, walletAddress);
+            const { encrypted, iv } = await encryptPrivateKeyWithWallet(sessionPrivateKey, walletKey);
+            
+            await supabase
+              .from('encryption_keys')
+              .update({
+                encrypted_private_key: encrypted,
+                iv: iv,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('wallet_address', walletAddress);
+          } catch (error) {
+            console.error('Background sync failed:', error);
+          }
           return;
         }
       }
 
-      // Case 3: First time setup - no backend key exists
-      if (!backendKey) {
-        let publicKeyToStore: string;
-        let privateKeyToStore: string;
-
-        // Check if we have keys in sessionStorage or localStorage
-        const localPrivateKey = localStorage.getItem('encryption_private_key');
-        const localPublicKey = localStorage.getItem('encryption_public_key');
-
-        if (localPublicKey && localPrivateKey) {
-          // Reuse existing local keys
-          publicKeyToStore = localPublicKey;
-          privateKeyToStore = localPrivateKey;
-        } else if (sessionPublicKey && sessionPrivateKey) {
-          // Reuse existing session keys
-          publicKeyToStore = sessionPublicKey;
-          privateKeyToStore = sessionPrivateKey;
-        } else {
-          // Generate new keypair
-          const keypair = await generateKeyPair();
-          publicKeyToStore = await exportPublicKey(keypair.publicKey);
-          privateKeyToStore = await exportPrivateKey(keypair.privateKey);
-        }
-
-        // Encrypt private key with wallet signature
-        const walletKey = await deriveKeyFromWallet(signMessage, walletAddress);
-        const { encrypted, iv } = await encryptPrivateKeyWithWallet(privateKeyToStore, walletKey);
-
-        // Upload to backend
-        const { error: upsertError } = await supabase
-          .from('encryption_keys')
-          .upsert({
-            wallet_address: walletAddress,
-            public_key: publicKeyToStore,
-            encrypted_private_key: encrypted,
-            iv: iv
-          }, {
-            onConflict: 'wallet_address'
-          });
-
-        if (upsertError) {
-          console.error('Error storing encrypted key:', upsertError);
-          toast({
-            title: "Registration Failed",
-            description: "Failed to register your encryption key. Please try reconnecting your wallet.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        // Store in localStorage
-        localStorage.setItem('encryption_private_key', privateKeyToStore);
-        localStorage.setItem('encryption_public_key', publicKeyToStore);
-        
-        // Clean up sessionStorage
-        sessionStorage.removeItem('encryption_private_key');
-        sessionStorage.removeItem('encryption_public_key');
-
-        // Check if this is first-time registration
-        const isFirstTime = !localStorage.getItem('xmail_onboarded');
-        
-        if (isFirstTime) {
-          localStorage.setItem('xmail_onboarded', 'true');
-          toast({
-            title: "🎉 Welcome to xMail!",
-            description: "Your encryption keys are now permanently tied to your wallet and work across all devices!",
-            duration: 10000,
-          });
-        } else {
-          toast({
-            title: "Keys Registered",
-            description: "Your encryption keys are ready and backed up.",
-          });
-        }
-      }
-
+      // Case 3: No keys exist - generate instantly
+      console.log('Generating new encryption keys...');
+      const { publicKey: newPublicKey, privateKey: newPrivateKey } = await generateKeyPair();
+      const publicKeyBase64 = await exportPublicKey(newPublicKey);
+      const privateKeyBase64 = await exportPrivateKey(newPrivateKey);
+      
+      // Store locally FIRST - instant access!
+      localStorage.setItem('encryption_private_key', privateKeyBase64);
+      localStorage.setItem('encryption_public_key', publicKeyBase64);
+      
+      // Keys ready instantly
       setKeysReady(true);
+      
+      // Background backup (non-blocking)
+      setTimeout(async () => {
+        try {
+          const walletKey = await deriveKeyFromWallet(signMessage, walletAddress);
+          const { encrypted, iv } = await encryptPrivateKeyWithWallet(privateKeyBase64, walletKey);
+          
+          await supabase
+            .from('encryption_keys')
+            .upsert({
+              wallet_address: walletAddress,
+              public_key: publicKeyBase64,
+              encrypted_private_key: encrypted,
+              iv: iv,
+              key_created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+        } catch (error) {
+          console.error('Background backup failed:', error);
+        }
+      }, 100);
     } catch (error) {
-      console.error('Error setting up encryption keys:', error);
+      console.error('Error setting up keys:', error);
       toast({
-        title: "Setup Error",
-        description: "An unexpected error occurred during key setup.",
+        title: "Key Setup Error",
+        description: "Could not set up encryption keys. Please try reconnecting your wallet.",
         variant: "destructive",
       });
     } finally {
@@ -245,5 +162,7 @@ export const useEncryptionKeys = () => {
     }
   };
 
-  return { keysReady };
+  return {
+    keysReady,
+  };
 };
