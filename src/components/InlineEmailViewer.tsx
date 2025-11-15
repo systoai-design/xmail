@@ -153,8 +153,10 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
         const { data: fileData } = await supabase.storage.from('email-attachments').download(attachment.storage_path);
         if (!fileData) continue;
 
+        const fileArrayBuffer = await fileData.arrayBuffer();
         const symmetricKey = await decryptAESKey(attachment.encrypted_symmetric_key, privateKey);
-        const decryptedBlob = await decryptFile(fileData, symmetricKey, attachment.iv);
+        const decryptedArrayBuffer = await decryptFile(fileArrayBuffer, symmetricKey, attachment.iv);
+        const decryptedBlob = new Blob([decryptedArrayBuffer], { type: attachment.mime_type });
         const imageUrl = URL.createObjectURL(decryptedBlob);
         
         setDecryptedImages(prev => ({ ...prev, [attachment.id]: imageUrl }));
@@ -195,8 +197,10 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
       const { data: fileData } = await supabase.storage.from('email-attachments').download(attachment.storage_path);
       if (!fileData) throw new Error('Failed to download file');
 
+      const fileArrayBuffer = await fileData.arrayBuffer();
       const symmetricKey = await decryptAESKey(attachment.encrypted_symmetric_key, privateKey);
-      const decryptedBlob = await decryptFile(fileData, symmetricKey, attachment.iv);
+      const decryptedArrayBuffer = await decryptFile(fileArrayBuffer, symmetricKey, attachment.iv);
+      const decryptedBlob = new Blob([decryptedArrayBuffer], { type: attachment.mime_type });
 
       const url = URL.createObjectURL(decryptedBlob);
       const a = document.createElement('a');
@@ -234,8 +238,10 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
           const { data: fileData } = await supabase.storage.from('email-attachments').download(attachment.storage_path);
           if (!fileData) continue;
 
+          const fileArrayBuffer = await fileData.arrayBuffer();
           const symmetricKey = await decryptAESKey(attachment.encrypted_symmetric_key, privateKey);
-          const decryptedBlob = await decryptFile(fileData, symmetricKey, attachment.iv);
+          const decryptedArrayBuffer = await decryptFile(fileArrayBuffer, symmetricKey, attachment.iv);
+          const decryptedBlob = new Blob([decryptedArrayBuffer], { type: attachment.mime_type });
           zip.file(attachment.file_name, decryptedBlob);
         } catch (error) {
           console.error(`Failed to process ${attachment.file_name}:`, error);
@@ -412,7 +418,7 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete }: InlineEmailVie
         )}
       </div>
 
-      <ConfirmDeleteDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog} onConfirm={handleDelete} title="Delete Email?" description="This action cannot be undone." confirmText="Delete" isDeleting={deleting} />
+      <ConfirmDeleteDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog} onConfirm={handleDelete} title="Delete Email?" description="This action cannot be undone." />
     </div>
   );
 };
