@@ -21,6 +21,7 @@ import { Logo } from '@/components/Logo';
 import { cn } from '@/lib/utils';
 
 interface GmailSidebarProps {
+  className?: string;
   unreadCount: number;
   sentCount: number;
   draftsCount: number;
@@ -30,6 +31,7 @@ interface GmailSidebarProps {
 }
 
 export const GmailSidebar = ({ 
+  className,
   unreadCount, 
   sentCount, 
   draftsCount,
