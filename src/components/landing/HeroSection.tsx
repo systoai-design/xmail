@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Shield, Lock, Zap } from 'lucide-react';
+import { Shield, Lock, Zap, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { WalletButton } from '@/components/WalletButton';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -14,6 +15,8 @@ import {
 export const HeroSection = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const navigate = useNavigate();
+  const { connected } = useWallet();
 
   useEffect(() => {
     setIsVisible(true);
@@ -35,9 +38,6 @@ export const HeroSection = () => {
       
       {/* Particle encryption animation */}
       <ParticleEncryption />
-      
-      {/* Encryption Animation */}
-      <EncryptionAnimation />
 
       {/* Main Content */}
       <div className={`max-w-6xl mx-auto text-center space-y-12 sm:space-y-16 relative z-10 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
