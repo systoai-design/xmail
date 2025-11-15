@@ -8,49 +8,56 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Premium Color Palette - Refined Security Theme */
-    --background: 220 15% 8%;
-    --background-darker: 220 18% 6%;
+    /* Deep Navy Blue Security Palette - Premium Design */
+    --background: 220 35% 8%;
+    --background-darker: 220 40% 6%;
+    --background-medium: 220 30% 12%;
+    --background-light: 220 25% 16%;
     --foreground: 0 0% 100%;
     
-    --card: 220 12% 12%;
+    --card: 220 30% 12%;
     --card-foreground: 0 0% 98%;
     
-    --popover: 220 10% 10%;
+    --popover: 220 30% 10%;
     --popover-foreground: 0 0% 98%;
     
-    --primary: 220 90% 60%;
+    --primary: 220 90% 56%;
     --primary-light: 220 85% 70%;
     --primary-dark: 220 95% 45%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 190 85% 55%;
+    --secondary: 190 100% 55%;
     --secondary-foreground: 0 0% 100%;
     
-    --muted: 220 10% 20%;
-    --muted-foreground: 220 10% 65%;
+    --muted: 220 25% 20%;
+    --muted-foreground: 220 15% 65%;
     
     --accent: 280 75% 65%;
     --accent-foreground: 0 0% 100%;
     
-    --success: 150 70% 50%;
+    --success: 160 85% 45%;
+    --secure: 160 85% 45%;
+    
+    --amber: 45 95% 55%;
+    --cyan: 190 100% 55%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
-    --border: 220 15% 18%;
-    --input: 220 12% 15%;
-    --ring: 220 90% 60%;
+    --border: 220 30% 18%;
+    --input: 220 30% 15%;
+    --ring: 220 90% 56%;
     --radius: 1rem;
     
-    /* Premium Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-light)));
-    --gradient-hero: linear-gradient(180deg, hsl(220 15% 8%) 0%, hsl(220 18% 10%) 30%, hsl(220 20% 9%) 70%, hsl(220 15% 8%) 100%);
-    --gradient-section: linear-gradient(180deg, hsl(220 15% 8%) 0%, hsl(220 18% 10%) 50%, hsl(220 15% 8%) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(220 12% 12%) 0%, hsl(220 15% 14%) 100%);
-    --gradient-button: linear-gradient(135deg, hsl(220 90% 60%), hsl(220 95% 55%));
-    --gradient-secure: linear-gradient(135deg, hsl(150 70% 50% / 0.2), hsl(150 70% 40% / 0.1));
-    --gradient-encrypted: linear-gradient(135deg, hsl(220 90% 60% / 0.2), hsl(190 85% 55% / 0.1));
+    /* Premium Gradients - Navy Theme */
+    --gradient-primary: linear-gradient(135deg, hsl(220 90% 56%), hsl(220 85% 70%));
+    --gradient-hero: linear-gradient(180deg, hsl(220 35% 8%) 0%, hsl(220 40% 10%) 30%, hsl(220 35% 9%) 70%, hsl(220 35% 8%) 100%);
+    --gradient-section: linear-gradient(180deg, hsl(220 35% 8%) 0%, hsl(220 30% 10%) 50%, hsl(220 35% 8%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(220 30% 12%) 0%, hsl(220 25% 14%) 100%);
+    --gradient-button: linear-gradient(135deg, hsl(220 90% 56%), hsl(220 95% 50%));
+    --gradient-secure: linear-gradient(135deg, hsl(160 85% 45% / 0.2), hsl(160 80% 40% / 0.1));
+    --gradient-encrypted: linear-gradient(135deg, hsl(220 90% 56% / 0.2), hsl(190 100% 55% / 0.1));
+    --gradient-subtle: linear-gradient(180deg, hsl(220 35% 8%), hsl(220 30% 10%));
     
     /* Premium Shadows */
     --shadow-glow: 0 0 40px rgba(74, 158, 255, 0.2), 0 0 80px rgba(74, 158, 255, 0.1);
@@ -83,7 +90,8 @@ All colors MUST be HSL.
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-black;
+    @apply font-display font-black tracking-tight;
+    letter-spacing: -0.02em;
   }
 
   /* Custom Cursor Styles */

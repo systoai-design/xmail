@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { WalletButton } from '@/components/WalletButton';
-import { Shield, Lock, Zap, Eye } from 'lucide-react';
+import { Shield, Lock, Eye } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { EncryptionAnimation } from './EncryptionAnimation';
 
@@ -73,57 +73,57 @@ export const HeroSection = () => {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="inline-flex items-center gap-3 glass-card px-6 py-3.5 rounded-xl border border-secondary/30 hover:border-secondary/50 transition-all cursor-hover hover:scale-105 shadow-[0_0_20px_rgba(0,212,255,0.1)] hover:shadow-[0_0_30px_rgba(0,212,255,0.2)]">
-                  <Zap className="w-5 h-5 text-secondary" />
-                  <span className="text-sm sm:text-base font-semibold">Gasless Payments</span>
+                <div className="inline-flex items-center gap-3 glass-card px-6 py-3.5 rounded-xl border border-primary/30 hover:border-primary/50 transition-all cursor-hover hover:scale-105 shadow-[0_0_20px_rgba(74,158,255,0.1)] hover:shadow-[0_0_30px_rgba(74,158,255,0.2)]">
+                  <Shield className="w-5 h-5 text-success" />
+                  <span className="text-sm sm:text-base font-semibold">Spam Protected</span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="glass-card border-secondary/30 max-w-sm">
-                <p className="text-sm">Send micropayments with every message. Recipients pay only $0.0001 to read</p>
+              <TooltipContent side="bottom" className="glass-card border-primary/30 max-w-sm">
+                <p className="text-sm">Minimal anti-spam fee (&lt; $0.0001) prevents unwanted messages while keeping communication virtually free</p>
               </TooltipContent>
             </Tooltip>
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="inline-flex items-center gap-3 glass-card px-6 py-3.5 rounded-xl border border-accent/30 hover:border-accent/50 transition-all cursor-hover hover:scale-105 shadow-[0_0_20px_rgba(139,92,246,0.1)] hover:shadow-[0_0_30px_rgba(139,92,246,0.2)]">
+                <div className="inline-flex items-center gap-3 glass-card px-6 py-3.5 rounded-xl border border-primary/30 hover:border-primary/50 transition-all cursor-hover hover:scale-105 shadow-[0_0_20px_rgba(74,158,255,0.1)] hover:shadow-[0_0_30px_rgba(74,158,255,0.2)]">
                   <Eye className="w-5 h-5 text-accent" />
                   <span className="text-sm sm:text-base font-semibold">Zero Knowledge</span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="glass-card border-accent/30 max-w-sm">
-                <p className="text-sm">Your privacy is absolute. Not even servers can access your encrypted communications</p>
+              <TooltipContent side="bottom" className="glass-card border-primary/30 max-w-sm">
+                <p className="text-sm">No email required, no tracking, no data collection. Complete privacy guaranteed</p>
               </TooltipContent>
             </Tooltip>
           </div>
         </TooltipProvider>
 
-        {/* Tagline - More Prominent */}
-        <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground/90 max-w-4xl mx-auto leading-relaxed animate-encrypt-reveal font-medium" style={{ animationDelay: '0.5s' }}>
-          No email servers. No intermediaries. Just pure, encrypted communication directly between Solana wallets. 
-          <span className="block mt-3 text-primary font-bold text-xl sm:text-2xl">Your data. Your control. Your privacy.</span>
+        {/* Tagline - Enhanced */}
+        <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground/90 max-w-2xl mx-auto leading-relaxed mt-3 font-bold animate-encrypt-reveal" style={{ animationDelay: '0.5s' }}>
+          Private messaging between wallets. No intermediaries, no tracking.
         </p>
 
-        {/* CTA Button - Larger & More Dramatic */}
-        <div className="flex flex-col items-center gap-6 animate-encrypt-reveal pt-4" style={{ animationDelay: '0.6s' }}>
-          <div className="relative group">
-            {/* Premium animated border */}
-            <div className="absolute -inset-2 bg-gradient-to-r from-primary via-secondary to-accent rounded-3xl opacity-75 group-hover:opacity-100 blur-xl transition-all duration-500 animate-gradient" />
-            <div className="absolute -inset-1 bg-gradient-to-r from-primary via-secondary to-accent rounded-3xl opacity-50 group-hover:opacity-75 transition-all duration-500" />
-            <div className="relative">
-              <WalletButton variant="full" />
-            </div>
+        {/* CTA Button - Premium with animated border */}
+        <div className="relative inline-block animate-encrypt-reveal" style={{ animationDelay: '0.6s' }}>
+          {/* Animated glow effect */}
+          <div className="absolute -inset-2 bg-gradient-to-r from-primary via-secondary to-primary rounded-3xl opacity-30 blur-xl animate-pulse" />
+          <div className="absolute -inset-1 bg-gradient-to-r from-primary via-secondary to-primary rounded-3xl opacity-50 blur-lg group-hover:opacity-75 transition-all duration-500" />
+          
+          <div className="relative">
+            <WalletButton variant="full" />
           </div>
+        </div>
 
-          {/* Trust indicators - More Prominent */}
-          <div className="flex flex-wrap items-center justify-center gap-8 text-sm sm:text-base text-muted-foreground font-medium">
-            <div className="flex items-center gap-2.5 glass-card px-5 py-2.5 rounded-lg border border-primary/20">
+        {/* Trust Indicators - Enhanced */}
+        <div className="animate-encrypt-reveal" style={{ animationDelay: '0.7s' }}>
+          <div className="flex flex-wrap items-center justify-center gap-8 mt-8">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Lock className="w-5 h-5 text-primary" />
-              <span className="font-mono font-semibold">256-bit Encryption</span>
+              <span className="font-mono font-semibold">AES-256-GCM</span>
             </div>
-            <div className="h-6 w-px bg-border/50" />
-            <div className="flex items-center gap-2.5 glass-card px-5 py-2.5 rounded-lg border border-secondary/20">
-              <Shield className="w-5 h-5 text-secondary" />
-              <span className="font-mono font-semibold">$0.0001 per message</span>
+            <div className="h-6 w-px bg-border" />
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Shield className="w-5 h-5 text-success" />
+              <span className="font-mono font-semibold">Spam Protected</span>
             </div>
           </div>
         </div>

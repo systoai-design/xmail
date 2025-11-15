@@ -39,14 +39,14 @@ export const FeaturesShowcase = () => {
       description: 'No email required. No tracking. No data collection. Complete anonymity guaranteed.'
     },
     {
-      icon: Coins,
-      title: 'Micropayments Built-In',
-      description: 'Send value with every message. Recipients pay only $0.0001 to decrypt and read.'
+      icon: Shield,
+      title: 'Spam Protection Built-In',
+      description: 'Minimal anti-spam fee (< $0.0001) prevents unwanted messages while keeping communication virtually free.'
     },
     {
-      icon: Shield,
-      title: 'Spam Protection',
-      description: 'Payment barrier eliminates spam while keeping costs negligible for legitimate users.'
+      icon: Coins,
+      title: 'Gasless Transactions',
+      description: 'Send unlimited messages with negligible fees. No transaction costs, no hidden charges.'
     },
     {
       icon: Globe,

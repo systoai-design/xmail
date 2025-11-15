@@ -29,8 +29,8 @@ export const TechnologySection = () => {
       color: 'text-primary',
     },
     {
-      name: 'x402 Protocol',
-      description: 'HTTP micropayments for spam-free communication',
+      name: 'X402 Protocol',
+      description: 'Spam protection layer with minimal anti-spam fees',
       color: 'text-secondary',
     },
     {
