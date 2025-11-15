@@ -1,8 +1,15 @@
-import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Shield, Lock, Zap } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { WalletButton } from '@/components/WalletButton';
-import { Shield, Lock, Eye } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { EncryptionAnimation } from './EncryptionAnimation';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { ParticleEncryption } from './ParticleEncryption';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export const HeroSection = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -26,8 +33,8 @@ export const HeroSection = () => {
       {/* Noise Texture */}
       <div className="absolute inset-0 noise-overlay" />
       
-      {/* Data Flow Particles */}
-      <div className="data-particles" />
+      {/* Particle encryption animation */}
+      <ParticleEncryption />
       
       {/* Encryption Animation */}
       <EncryptionAnimation />

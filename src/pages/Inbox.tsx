@@ -543,6 +543,7 @@ const Inbox = () => {
   return (
     <div className="min-h-screen bg-background flex w-full">
       <GmailSidebar
+        className={selectedEmailId ? "hidden md:flex" : ""}
         unreadCount={unreadCount}
         sentCount={sentEmails.length}
         draftsCount={drafts.length}
@@ -551,11 +552,8 @@ const Inbox = () => {
         onCompose={handleCompose}
       />
 
-      {/* Main Content - Email List */}
-      <main className={cn(
-        "flex-1 flex flex-col min-w-0",
-        selectedEmailId && "hidden md:flex md:max-w-xl lg:max-w-2xl"
-      )}>
+      {!selectedEmailId ? (
+        <main className="flex-1 flex flex-col min-w-0">
         {/* Missing Key Banner */}
         {showKeyBanner && (
           <div className="bg-yellow-500/10 border-b border-yellow-500/20 px-4 py-3">
@@ -713,10 +711,8 @@ const Inbox = () => {
           )}
         </div>
       </main>
-
-      {/* Inline Email Viewer */}
-      {selectedEmailId && (
-        <div className="flex-1 flex flex-col md:flex">
+      ) : (
+        <main className="flex-1 flex flex-col">
           <InlineEmailViewer
             emailId={selectedEmailId}
             onClose={() => setSelectedEmailId(null)}
@@ -726,7 +722,7 @@ const Inbox = () => {
               loadSentEmails();
             }}
           />
-        </div>
+        </main>
       )}
 
       {/* Delete Confirmation */}
