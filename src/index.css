@@ -79,10 +79,41 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    cursor: none;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-black;
+  }
+
+  /* Custom Cursor Styles */
+  .custom-cursor-dot {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    background: hsl(var(--primary));
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.15s ease-out;
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.5);
+  }
+
+  .custom-cursor-ring {
+    position: fixed;
+    width: 32px;
+    height: 32px;
+    border: 2px solid hsl(var(--primary));
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+  }
+
+  /* Magnetic button wrapper */
+  .magnetic-wrapper {
+    transition: transform 0.2s cubic-bezier(0.33, 1, 0.68, 1);
+    will-change: transform;
   }
 }
 

@@ -13,7 +13,7 @@ export const SocialLinks = ({ className = '' }: SocialLinksProps) => {
         href="https://x.com/xmail402"
         target="_blank"
         rel="noopener noreferrer"
-        className="opacity-70 hover:opacity-100 transition-all duration-300 hover:scale-110 hover:-rotate-6 active:scale-95 animate-slide-down-fade"
+        className="cursor-hover opacity-70 hover:opacity-100 transition-all duration-300 hover:scale-110 hover:-rotate-6 active:scale-95 animate-slide-down-fade"
         style={{ animationDelay: '0ms' }}
         aria-label="Follow us on X (Twitter)"
       >
@@ -25,7 +25,7 @@ export const SocialLinks = ({ className = '' }: SocialLinksProps) => {
         href="https://pump.fun/board"
         target="_blank"
         rel="noopener noreferrer"
-        className="opacity-70 hover:opacity-100 transition-all duration-300 hover:scale-110 hover:rotate-6 active:scale-95 animate-slide-down-fade"
+        className="cursor-hover opacity-70 hover:opacity-100 transition-all duration-300 hover:scale-110 hover:rotate-6 active:scale-95 animate-slide-down-fade"
         style={{ animationDelay: '100ms' }}
         aria-label="Visit Pumpfun"
       >

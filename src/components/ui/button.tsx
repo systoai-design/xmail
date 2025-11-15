@@ -39,8 +39,58 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const buttonRef = React.useRef<HTMLButtonElement>(null);
+    const magneticRef = React.useRef<HTMLDivElement>(null);
+
+    // Combine refs
+    React.useImperativeHandle(ref, () => buttonRef.current as HTMLButtonElement);
+
+    // Magnetic effect
+    React.useEffect(() => {
+      const wrapper = magneticRef.current;
+      if (!wrapper) return;
+
+      const handleMouseMove = (e: MouseEvent) => {
+        const rect = wrapper.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        const deltaX = e.clientX - centerX;
+        const deltaY = e.clientY - centerY;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        if (distance < 80) {
+          const offsetX = deltaX * 0.3;
+          const offsetY = deltaY * 0.3;
+          wrapper.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+        } else {
+          wrapper.style.transform = 'translate(0, 0)';
+        }
+      };
+
+      const handleMouseLeave = () => {
+        wrapper.style.transform = 'translate(0, 0)';
+      };
+
+      wrapper.addEventListener('mousemove', handleMouseMove);
+      wrapper.addEventListener('mouseleave', handleMouseLeave);
+
+      return () => {
+        wrapper.removeEventListener('mousemove', handleMouseMove);
+        wrapper.removeEventListener('mouseleave', handleMouseLeave);
+      };
+    }, []);
+
     const Comp = asChild ? Slot : "button";
-    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
+    return (
+      <div ref={magneticRef} className="magnetic-wrapper inline-block">
+        <Comp 
+          className={cn(buttonVariants({ variant, size, className }), "cursor-hover")} 
+          ref={buttonRef} 
+          {...props} 
+        />
+      </div>
+    );
   },
 );
 Button.displayName = "Button";
