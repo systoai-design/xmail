@@ -61,7 +61,7 @@ export const HeroSection = () => {
           <div className="flex flex-wrap items-center justify-center gap-5 sm:gap-6 animate-encrypt-reveal" style={{ animationDelay: '0.4s' }}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="inline-flex items-center gap-3 glass-card px-6 py-3.5 rounded-xl border border-primary/30 hover:border-primary/50 transition-all cursor-help hover:scale-105 shadow-[0_0_20px_rgba(74,158,255,0.1)] hover:shadow-[0_0_30px_rgba(74,158,255,0.2)]">
+                <div className="inline-flex items-center gap-3 glass-card px-6 py-3.5 rounded-xl border border-primary/30 hover:border-primary/50 transition-all cursor-hover hover:scale-105 shadow-[0_0_20px_rgba(74,158,255,0.1)] hover:shadow-[0_0_30px_rgba(74,158,255,0.2)]">
                   <Lock className="w-5 h-5 text-primary" />
                   <span className="text-sm sm:text-base font-semibold">End-to-End Encrypted</span>
                 </div>
@@ -73,7 +73,7 @@ export const HeroSection = () => {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="inline-flex items-center gap-3 glass-card px-6 py-3.5 rounded-xl border border-secondary/30 hover:border-secondary/50 transition-all cursor-help hover:scale-105 shadow-[0_0_20px_rgba(0,212,255,0.1)] hover:shadow-[0_0_30px_rgba(0,212,255,0.2)]">
+                <div className="inline-flex items-center gap-3 glass-card px-6 py-3.5 rounded-xl border border-secondary/30 hover:border-secondary/50 transition-all cursor-hover hover:scale-105 shadow-[0_0_20px_rgba(0,212,255,0.1)] hover:shadow-[0_0_30px_rgba(0,212,255,0.2)]">
                   <Zap className="w-5 h-5 text-secondary" />
                   <span className="text-sm sm:text-base font-semibold">Gasless Payments</span>
                 </div>
@@ -85,7 +85,7 @@ export const HeroSection = () => {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="inline-flex items-center gap-3 glass-card px-6 py-3.5 rounded-xl border border-accent/30 hover:border-accent/50 transition-all cursor-help hover:scale-105 shadow-[0_0_20px_rgba(139,92,246,0.1)] hover:shadow-[0_0_30px_rgba(139,92,246,0.2)]">
+                <div className="inline-flex items-center gap-3 glass-card px-6 py-3.5 rounded-xl border border-accent/30 hover:border-accent/50 transition-all cursor-hover hover:scale-105 shadow-[0_0_20px_rgba(139,92,246,0.1)] hover:shadow-[0_0_30px_rgba(139,92,246,0.2)]">
                   <Eye className="w-5 h-5 text-accent" />
                   <span className="text-sm sm:text-base font-semibold">Zero Knowledge</span>
                 </div>

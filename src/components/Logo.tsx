@@ -35,7 +35,7 @@ const revealMaxMap = {
 export const Logo = ({ size = 'medium', className = '' }: LogoProps) => {
   return (
     <div
-      className={`inline-flex items-center group ${className}`}
+      className={`inline-flex items-center group cursor-hover ${className}`}
       role="img"
       aria-label="xmail logo"
     >

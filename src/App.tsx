@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { WalletContextProvider } from "./contexts/WalletContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { KeyRegistrar } from "./components/KeyRegistrar";
+import { CustomCursor } from "@/components/CustomCursor";
 import Landing from "./pages/Landing";
 import Inbox from "./pages/Inbox";
 import Compose from "./pages/Compose";
@@ -20,6 +21,7 @@ const App = () => (
     <ErrorBoundary>
       <WalletContextProvider>
         <TooltipProvider>
+          <CustomCursor />
           <Toaster />
           <Sonner />
           <KeyRegistrar />
