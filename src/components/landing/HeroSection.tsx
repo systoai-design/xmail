@@ -11,6 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { FloatingSecurityBadges } from './FloatingSecurityBadges';
 
 export const HeroSection = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -38,6 +39,9 @@ export const HeroSection = () => {
       
       {/* Particle encryption animation */}
       <ParticleEncryption />
+      
+      {/* Floating Security Badges */}
+      <FloatingSecurityBadges />
 
       {/* Main Content */}
       <div className={`max-w-6xl mx-auto text-center space-y-12 sm:space-y-16 relative z-10 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
