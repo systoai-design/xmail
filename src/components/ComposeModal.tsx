@@ -144,9 +144,9 @@ export const ComposeModal = ({ isOpen, onClose, draftId, onSent, onSubjectChange
   }, [subject, onSubjectChange]);
 
   // Auto-save draft
-  const saveDraft = useCallback(async (showToast = false) => {
-    if (!publicKey || !signMessage || !keysReady) return;
-    if (!to && !subject && !body) return;
+  const saveDraft = useCallback(async (showToast = false): Promise<string | null> => {
+    if (!publicKey || !signMessage || !keysReady) return null;
+    if (!to && !subject && !body) return currentDraftId;
 
     setSaving(true);
     try {
@@ -156,7 +156,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, onSent, onSubjectChange
         .eq('wallet_address', publicKey.toBase58())
         .single();
 
-      if (!ownKeyData) return;
+      if (!ownKeyData) return null;
 
       const ownPublicKey = await importPublicKey(ownKeyData.public_key);
       const encryptedSubject = subject ? await encryptMessage(subject, ownPublicKey) : '';
@@ -174,6 +174,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, onSent, onSubjectChange
         signMessage
       );
 
+      const draftId = response.draftId || currentDraftId;
       if (response.draftId && !currentDraftId) {
         setCurrentDraftId(response.draftId);
       }
@@ -185,6 +186,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, onSent, onSubjectChange
           description: 'Your message has been saved',
         });
       }
+      return draftId;
     } catch (error) {
       console.error('Error saving draft:', error);
       if (showToast) {
@@ -194,6 +196,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, onSent, onSubjectChange
           variant: 'destructive',
         });
       }
+      return null;
     } finally {
       setSaving(false);
     }
@@ -700,45 +703,20 @@ export const ComposeModal = ({ isOpen, onClose, draftId, onSent, onSubjectChange
             Attachments
             <span className="text-xs text-muted-foreground font-normal">(Drag & drop files here)</span>
           </Label>
-          {currentDraftId ? (
-            <>
-              <AttachmentUpload
-                draftId={currentDraftId}
-                walletPublicKey={publicKey}
-                signMessage={signMessage}
-              />
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                className="hidden"
-              />
-            </>
-          ) : (
-            <div className="text-xs text-muted-foreground p-3 border border-dashed border-border rounded-lg">
-              💡 Save draft first to attach files
-            </div>
-          )}
+          <AttachmentUpload
+            draftId={currentDraftId}
+            walletPublicKey={publicKey}
+            signMessage={signMessage}
+            onDraftCreated={setCurrentDraftId}
+            autoSaveDraft={saveDraft}
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+          />
         </div>
-
-        {/* Payment/Admin notice */}
-        {userIsAdmin ? (
-          <div className="flex items-center gap-2 p-3 bg-accent/10 rounded-lg border border-accent/30">
-            <Shield className="w-5 h-5 text-accent" />
-            <span className="text-sm font-semibold text-accent">Admin - No Payment</span>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-secondary" />
-              <div className="text-sm">
-                <div className="font-semibold">Payment Required</div>
-                <div className="text-xs text-muted-foreground">Gasless Transaction</div>
-              </div>
-            </div>
-            <div className="text-lg font-black text-secondary">$0.01</div>
-          </div>
-        )}
 
         {/* Auto-save status */}
         {lastSaved && (
