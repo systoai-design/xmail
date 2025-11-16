@@ -28,6 +28,8 @@ interface GmailSidebarProps {
   starredCount: number;
   onDisconnect: () => void;
   onCompose: () => void;
+  mobileOpen?: boolean;
+  onMobileOpenChange?: (open: boolean) => void;
 }
 
 export const GmailSidebar = ({ 
@@ -37,13 +39,19 @@ export const GmailSidebar = ({
   draftsCount,
   starredCount,
   onDisconnect,
-  onCompose
+  onCompose,
+  mobileOpen: externalMobileOpen,
+  onMobileOpenChange
 }: GmailSidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { publicKey } = useWallet();
   const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [internalMobileOpen, setInternalMobileOpen] = useState(false);
+  
+  // Use external control if provided, otherwise use internal state
+  const mobileOpen = externalMobileOpen !== undefined ? externalMobileOpen : internalMobileOpen;
+  const setMobileOpen = onMobileOpenChange || setInternalMobileOpen;
 
   const getActiveTab = () => {
     const searchParams = new URLSearchParams(location.search);
@@ -221,34 +229,36 @@ export const GmailSidebar = ({
       <aside
         className={cn(
           "hidden md:flex flex-col bg-background border-r border-border transition-all duration-300",
-          collapsed ? "w-20" : "w-64"
+          collapsed ? "w-20" : "w-64",
+          className
         )}
       >
         {sidebarContent}
       </aside>
 
-      {/* Mobile Menu Button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setMobileOpen(!mobileOpen)}
-        className="md:hidden fixed top-4 left-4 z-50 glass"
-      >
-        <Menu className="w-5 h-5" />
-      </Button>
-
       {/* Mobile Sidebar Overlay */}
       {mobileOpen && (
         <>
           <div
-            className="md:hidden fixed inset-0 bg-black/60 z-40"
+            className="md:hidden fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="md:hidden fixed left-0 top-0 bottom-0 w-64 bg-background border-r border-border z-50">
+          <aside 
+            className={cn(
+              "md:hidden fixed left-0 top-0 bottom-0 w-72 bg-background border-r border-border z-[70]",
+              "animate-in slide-in-from-left duration-300"
+            )}
+          >
             {sidebarContent}
           </aside>
         </>
       )}
     </>
   );
+};
+
+// Export the mobile open state setter for external control
+export const useSidebarControl = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  return { isOpen, setIsOpen };
 };

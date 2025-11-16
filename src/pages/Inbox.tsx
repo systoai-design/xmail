@@ -1,7 +1,7 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
-import { Search, Loader2, X, RefreshCw, Trash2, Key, AlertCircle } from 'lucide-react';
+import { Search, Loader2, X, RefreshCw, Trash2, Key, AlertCircle, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -72,6 +72,7 @@ const Inbox = () => {
   // Inline email viewer state
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [showKeyBanner, setShowKeyBanner] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Check for missing key and show banner
   useEffect(() => {
@@ -541,7 +542,7 @@ const Inbox = () => {
                       starredEmails.length;
 
   return (
-    <div className="min-h-screen bg-background flex w-full">
+    <div className="min-h-screen bg-background flex w-full relative">
       <GmailSidebar
         className={selectedEmailId ? "hidden md:flex" : ""}
         unreadCount={unreadCount}
@@ -550,6 +551,8 @@ const Inbox = () => {
         starredCount={starredCount}
         onDisconnect={handleDisconnect}
         onCompose={handleCompose}
+        mobileOpen={mobileSidebarOpen}
+        onMobileOpenChange={setMobileSidebarOpen}
       />
 
       {!selectedEmailId ? (
@@ -590,6 +593,16 @@ const Inbox = () => {
         {/* Header */}
         <header className="border-b border-border bg-background sticky top-0 z-10">
           <div className="px-4 md:px-6 py-3 flex items-center gap-4">
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="md:hidden flex-shrink-0"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+
             {/* Search Bar */}
             <div className="flex-1 max-w-3xl relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
