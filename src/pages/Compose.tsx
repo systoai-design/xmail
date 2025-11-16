@@ -536,34 +536,15 @@ const Compose = () => {
             )}
           </div>
 
-          {/* Admin Badge or Payment Preview */}
-          {userIsAdmin ? (
-            <div className="glass p-4 md:p-6 rounded-lg md:rounded-xl border-2 border-accent/30">
-              <div className="flex items-center justify-center gap-2 md:gap-3">
-                <Shield className="w-6 h-6 md:w-8 md:h-8 text-accent" />
-                <div className="text-base md:text-xl font-bold text-accent text-center md:text-left">
-                  Admin Access - No Payment Required
-                </div>
+          {/* Security Badge */}
+          <div className="glass p-4 md:p-6 rounded-lg md:rounded-xl border-2 border-success/30">
+            <div className="flex items-center justify-center gap-2 md:gap-3">
+              <Shield className="w-6 h-6 md:w-8 md:h-8 text-success" />
+              <div className="text-base md:text-xl font-bold text-success text-center md:text-left">
+                End-to-End Encrypted • No Fees
               </div>
             </div>
-          ) : (
-            <div className="glass p-4 md:p-6 rounded-lg md:rounded-xl border-2 border-primary/30">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="flex items-center gap-2 md:gap-3">
-                  <DollarSign className="w-6 h-6 md:w-8 md:h-8 text-secondary" />
-                  <div>
-                    <div className="text-base md:text-lg font-bold">Payment Required</div>
-                    <div className="text-xs md:text-sm text-muted-foreground">
-                      xmail Protocol • Gasless Transaction
-                    </div>
-                  </div>
-                </div>
-                <div className="text-2xl md:text-3xl font-black text-secondary">
-                  $0.01 USDC
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
 
           {/* Auto-save status */}
           {lastSaved && (

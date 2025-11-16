@@ -7,16 +7,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { callSecureEndpoint } from '@/lib/secureApi';
 
 interface AttachmentUploadProps {
-  draftId?: string;
+  draftId?: string | null;
   onAttachmentAdded?: (attachment: any) => void;
   walletPublicKey: any;
   signMessage: any;
+  onDraftCreated?: (draftId: string) => void;
+  autoSaveDraft?: () => Promise<string | null>;
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_TOTAL_SIZE = 50 * 1024 * 1024; // 50MB
 
-export const AttachmentUpload = ({ draftId, onAttachmentAdded, walletPublicKey, signMessage }: AttachmentUploadProps) => {
+export const AttachmentUpload = ({ draftId, onAttachmentAdded, walletPublicKey, signMessage, onDraftCreated, autoSaveDraft }: AttachmentUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const [attachments, setAttachments] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -56,10 +58,10 @@ export const AttachmentUpload = ({ draftId, onAttachmentAdded, walletPublicKey, 
   };
 
   const uploadFile = async (file: File) => {
-    if (!draftId || !walletPublicKey) {
+    if (!walletPublicKey) {
       toast({
         title: "Error",
-        description: "Cannot upload attachment without draft and wallet",
+        description: "Please connect your wallet first",
         variant: "destructive",
       });
       return;
@@ -68,6 +70,18 @@ export const AttachmentUpload = ({ draftId, onAttachmentAdded, walletPublicKey, 
     setUploading(true);
 
     try {
+      // Auto-create draft if it doesn't exist
+      let activeDraftId = draftId;
+      if (!activeDraftId && autoSaveDraft) {
+        activeDraftId = await autoSaveDraft();
+        if (activeDraftId && onDraftCreated) {
+          onDraftCreated(activeDraftId);
+        }
+      }
+
+      if (!activeDraftId) {
+        throw new Error('Could not create draft for attachment');
+      }
       // Get recipient's public key from localStorage
       const recipientPubKeyBase64 = localStorage.getItem('encryption_public_key');
       if (!recipientPubKeyBase64) throw new Error('Encryption key not found');
@@ -89,7 +103,7 @@ export const AttachmentUpload = ({ draftId, onAttachmentAdded, walletPublicKey, 
       const response = await callSecureEndpoint(
         'upload_attachment',
         {
-          draftId,
+          draftId: activeDraftId,
           fileName: file.name,
           fileSize: file.size,
           mimeType: file.type,
