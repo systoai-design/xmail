@@ -4,7 +4,7 @@ import { SocialLinks } from '@/components/SocialLinks';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Presentation, FileText } from 'lucide-react';
 
 export const Header = () => {
   const { connected } = useWallet();
@@ -19,8 +19,29 @@ export const Header = () => {
 
           {/* Right side buttons */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Resource Links */}
+            <a
+              href="https://kylecabahug.com/xmail"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                <Presentation className="w-4 h-4" />
+                <span className="hidden sm:inline ml-1">Pitch Deck</span>
+              </Button>
+            </a>
+            <a
+              href="https://docs.google.com/document/d/1jTHDPLTCpJcOkgKAGNFAG11sPzA5TLXbT5XFyEVp_wk/edit?usp=sharing"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                <FileText className="w-4 h-4" />
+                <span className="hidden sm:inline ml-1">Docs</span>
+              </Button>
+            </a>
+            <div className="h-5 w-px bg-border/30 hidden sm:block" />
             <SocialLinks />
-            <div className="h-6 w-px bg-border/50 hidden sm:block" />
             {connected && (
               <Button
                 onClick={() => navigate('/inbox')}
