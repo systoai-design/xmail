@@ -21,7 +21,7 @@ export const Header = () => {
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Resource Links */}
             <a
-              href="https://kylecabahug.com/xmail"
+              href="https://www.canva.com/design/DAG8zmU9Cdk/gxXLOx31mM-Z3tg46MjstA/view?utm_content=DAG8zmU9Cdk&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h42eb789122"
               target="_blank"
               rel="noopener noreferrer"
             >
