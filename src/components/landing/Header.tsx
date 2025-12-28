@@ -4,7 +4,7 @@ import { SocialLinks } from '@/components/SocialLinks';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Presentation, FileText } from 'lucide-react';
+import { ArrowRight, Presentation, FileText, BookOpen } from 'lucide-react';
 
 export const Header = () => {
   const { connected } = useWallet();
@@ -38,6 +38,16 @@ export const Header = () => {
               <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
                 <FileText className="w-4 h-4" />
                 <span className="hidden sm:inline ml-1">Docs</span>
+              </Button>
+            </a>
+            <a
+              href="https://systo-ai.gitbook.io/xmail-protocol"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                <BookOpen className="w-4 h-4" />
+                <span className="hidden sm:inline ml-1">Gitbook</span>
               </Button>
             </a>
             <div className="h-5 w-px bg-border/30 hidden sm:block" />
