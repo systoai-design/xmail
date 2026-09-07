@@ -685,6 +685,19 @@
   flex-direction: column;
   overflow: hidden;
 }
+/* ReactQuill renders its OWN wrapper (.quill) between this container and the
+   toolbar/editor. It was not part of the flex chain, so it sized to its content
+   -- the editor never received a bounded height, never scrolled, and a long
+   message was simply clipped with no way to reach the rest of it. Every element
+   between the fixed-height panel and the scrolling area has to carry the
+   constraint down. */
+.rich-text-editor .quill {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
 .rich-text-editor .ql-container {
   order: 1;
   flex: 1;

@@ -63,7 +63,7 @@ export const GmailSidebar = ({
   const { address } = useWallet();
   const { keysReady } = useEncryptionKeys();
   const { balance } = useCredits();
-  const { registered, publishing, publish } = useOnChainKey();
+  const { registered, matches, publishing, publish } = useOnChainKey();
   const { wrongChain, switchToChain } = useWallet();
   const [collapsed, setCollapsed] = useState(false);
   const [internalMobileOpen, setInternalMobileOpen] = useState(false);
@@ -276,11 +276,32 @@ export const GmailSidebar = ({
                 </span>
               </button>
             )}
-            {keysReady && registered === true && (
+            {keysReady && registered === true && matches !== false && (
               <div className="mb-2 flex items-center gap-2 px-1 text-xs">
                 <Link2 className="h-3.5 w-3.5 text-[hsl(var(--verified))]" />
                 <span className="text-muted-foreground">Key published on-chain</span>
               </div>
+            )}
+
+            {/* Published, but not the key this browser holds. Senders check the
+                chain before encrypting, so until these agree nobody can write
+                to you. The registry supports rotation, so publishing again is
+                the fix -- and saying "published" here would be a lie. */}
+            {keysReady && registered === true && matches === false && (
+              <button
+                onClick={() => void publish()}
+                disabled={publishing}
+                className="mb-2 flex w-full items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-left text-xs transition-colors hover:bg-destructive/15 disabled:opacity-60"
+              >
+                {publishing ? (
+                  <Loader2 className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin" />
+                ) : (
+                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" />
+                )}
+                <span className="text-foreground">
+                  {publishing ? "Updating your on-chain key…" : "On-chain key is out of date — update it"}
+                </span>
+              </button>
             )}
 
             {/* This one IS a warning, and it is the reason it exists: a wallet
