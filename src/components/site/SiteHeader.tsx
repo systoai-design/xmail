@@ -43,7 +43,7 @@ export function SiteHeader({ onConnect }: { onConnect?: () => void }) {
         {/* The nav rides in its own pill rather than sitting loose on the page, so it stays legible over the light field behind it. */}
         <nav
           className={cn(
-            "pill absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 border p-1.5 transition-all duration-300 md:flex",
+            "pill absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 border p-1.5 transition-all duration-300 lg:flex",
             scrolled
               ? "border-white/10 bg-black/40 backdrop-blur-xl"
               : "border-white/[0.06] bg-white/[0.03] backdrop-blur-md",
@@ -62,7 +62,7 @@ export function SiteHeader({ onConnect }: { onConnect?: () => void }) {
 
         <div className="ml-auto flex items-center gap-3">
           {/* Written months ago and rendered nowhere until now. */}
-          <SocialLinks className="hidden sm:flex" />
+          <SocialLinks className="hidden lg:flex" />
           <GlowButton
             onClick={onConnect}
             className="hidden !min-h-[40px] !px-5 !py-2 sm:inline-flex"
@@ -74,7 +74,7 @@ export function SiteHeader({ onConnect }: { onConnect?: () => void }) {
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
-            className="text-l3 flex h-10 w-10 items-center justify-center rounded-xl transition-colors hover:bg-white/[0.06] md:hidden"
+            className="text-l3 flex h-10 w-10 items-center justify-center rounded-xl transition-colors hover:bg-white/[0.06] lg:hidden"
           >
             {menuOpen ? (
               <X className="h-4 w-4" />
@@ -86,7 +86,7 @@ export function SiteHeader({ onConnect }: { onConnect?: () => void }) {
       </div>
 
       {menuOpen && (
-        <div className="glass border-y border-white/10 md:hidden">
+        <div className="glass border-y border-white/10 lg:hidden">
           <nav className="container mx-auto flex flex-col gap-1 px-6 py-4">
             {NAV.map((item) => (
               <a
@@ -101,6 +101,7 @@ export function SiteHeader({ onConnect }: { onConnect?: () => void }) {
             <Button size="sm" className="pill mt-2 h-10" onClick={onConnect}>
               Get started
             </Button>
+            <SocialLinks className="mt-3 justify-center" />
           </nav>
         </div>
       )}
