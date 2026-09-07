@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { ACTIVE_CHAIN, explorerTx } from '@/config/chain';
 import { messageCommitment, verifyAnchor, verifyRelayedAnchor } from '@/lib/chainClient';
+import { useSelfAnchor } from '@/hooks/useSelfAnchor';
 import { useToast } from '@/hooks/use-toast';
 import { decryptMessage, importPrivateKey, decryptAESKey, decryptFile } from '@/lib/encryption';
 import { callSecureEndpoint } from '@/lib/secureApi';
@@ -68,6 +69,8 @@ interface InlineEmailViewerProps {
 export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply, onForward }: InlineEmailViewerProps) => {
   const { address, signMessage } = useWallet();
   const { toast } = useToast();
+  const { anchorMessage } = useSelfAnchor();
+  const [anchoringNow, setAnchoringNow] = useState(false);
   const [email, setEmail] = useState<EmailData | null>(null);
   const [decryptedSubject, setDecryptedSubject] = useState('');
   const [decryptedBody, setDecryptedBody] = useState('');
@@ -562,6 +565,43 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply, onForwa
                   This message is end-to-end encrypted, but no integrity anchor was
                   recorded for it, so there is nothing to verify against.
                 </p>
+
+                {/* Anchoring happens after sending, so a declined signature, an
+                    empty wallet or a busy chain leaves a message delivered and
+                    unproven. Without this it stayed that way permanently. Only
+                    the sender can do it: the commitment names them. */}
+                {address && email.from_wallet.toLowerCase() === address.toLowerCase() && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-3"
+                    disabled={anchoringNow}
+                    onClick={async () => {
+                      setAnchoringNow(true);
+                      const ok = await anchorMessage(email.id, email.encrypted_body, email.to_wallet);
+                      setAnchoringNow(false);
+                      if (ok) {
+                        toast({ title: 'Anchored on-chain' });
+                        await loadEmail();
+                      } else {
+                        toast({
+                          title: 'Not anchored',
+                          description: 'The transaction did not go through. The message itself is unaffected.',
+                          variant: 'destructive',
+                        });
+                      }
+                    }}
+                  >
+                    {anchoringNow ? (
+                      <>
+                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                        Anchoring
+                      </>
+                    ) : (
+                      'Anchor it now'
+                    )}
+                  </Button>
+                )}
               </div>
             )}
 
