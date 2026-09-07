@@ -34,7 +34,7 @@ function base64ToHex(b64: string): `0x${string}` {
 }
 
 export function useOnChainKey() {
-  const { address, wrongChain, switchToChain } = useWallet();
+  const { address, ensureChain } = useWallet();
   const { toast } = useToast();
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
@@ -73,10 +73,11 @@ export function useOnChainKey() {
       toast({ title: "No key to publish yet", variant: "destructive" });
       return false;
     }
-    if (wrongChain && !(await switchToChain())) return false;
-
     setPublishing(true);
     try {
+      // Throws if the wallet is not on Robinhood Chain. Nothing below this line
+      // can run on the wrong network.
+      await ensureChain();
       const hash = await writeContractAsync({
         address: keyRegistryAddress,
         abi: KEY_REGISTRY_ABI,
@@ -103,7 +104,7 @@ export function useOnChainKey() {
     } finally {
       setPublishing(false);
     }
-  }, [address, wrongChain, switchToChain, writeContractAsync, publicClient, refresh, toast]);
+  }, [address, ensureChain, writeContractAsync, publicClient, refresh, toast]);
 
   return { registered, matches, publishing, publish, refresh };
 }

@@ -30,7 +30,7 @@ import { isDeployed } from "@/config/chain";
  * or an empty wallet leaves the mail delivered and simply unanchored.
  */
 export function useSelfAnchor() {
-  const { address, signMessage, wrongChain, switchToChain } = useWallet();
+  const { address, signMessage, ensureChain } = useWallet();
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
 
@@ -39,7 +39,9 @@ export function useSelfAnchor() {
       if (!isDeployed || !address) return false;
 
       try {
-        if (wrongChain && !(await switchToChain())) return false;
+        // Throws rather than returning false: anchoring on the wrong chain
+        // would spend real gas and produce an anchor nothing can verify.
+        await ensureChain();
 
         const from = address as `0x${string}`;
         const to = toWallet.toLowerCase() as `0x${string}`;
@@ -80,7 +82,7 @@ export function useSelfAnchor() {
         return false;
       }
     },
-    [address, wrongChain, switchToChain, writeContractAsync, publicClient, signMessage],
+    [address, ensureChain, writeContractAsync, publicClient, signMessage],
   );
 
   return { anchorMessage };

@@ -19,6 +19,7 @@ import {
   Clock,
   Link2,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { KeyManagement } from "@/components/KeyManagement";
@@ -27,6 +28,7 @@ import { Logo } from "@/components/Logo";
 import { useEncryptionKeys } from "@/hooks/useEncryptionKeys";
 import { useCredits } from "@/hooks/useCredits";
 import { useOnChainKey } from "@/hooks/useOnChainKey";
+import { ACTIVE_CHAIN } from "@/config/chain";
 import { BuyCredits } from "@/components/BuyCredits";
 import { cn } from "@/lib/utils";
 
@@ -62,6 +64,7 @@ export const GmailSidebar = ({
   const { keysReady } = useEncryptionKeys();
   const { balance } = useCredits();
   const { registered, publishing, publish } = useOnChainKey();
+  const { wrongChain, switchToChain } = useWallet();
   const [collapsed, setCollapsed] = useState(false);
   const [internalMobileOpen, setInternalMobileOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -264,16 +267,19 @@ export const GmailSidebar = ({
             {/* Publishing the key is what makes the database checkable: if we
                 ever served a different key for you, the chain would disagree
                 and the sender's browser would catch it. */}
+            {/* Achromatic, like everything else here. An amber call-out for a
+                one-off optional action read as a warning about something being
+                wrong, which it is not. */}
             {keysReady && registered === false && (
               <button
                 onClick={() => void publish()}
                 disabled={publishing}
-                className="mb-2 flex w-full items-center gap-2 rounded-lg border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.08)] px-3 py-2 text-left text-xs"
+                className="mb-2 flex w-full items-center gap-2 rounded-lg border border-border/70 bg-white/[0.03] px-3 py-2 text-left text-xs transition-colors hover:bg-white/[0.06] disabled:opacity-60"
               >
                 {publishing ? (
-                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" />
                 ) : (
-                  <Link2 className="h-3.5 w-3.5 shrink-0 text-[hsl(var(--warning))]" />
+                  <Link2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 )}
                 <span className="text-muted-foreground">
                   {publishing ? "Publishing your key…" : "Publish your key on-chain"}
@@ -285,6 +291,18 @@ export const GmailSidebar = ({
                 <Link2 className="h-3.5 w-3.5 text-[hsl(var(--verified))]" />
                 <span className="text-muted-foreground">Key published on-chain</span>
               </div>
+            )}
+
+            {/* This one IS a warning, and it is the reason it exists: a wallet
+                on another network will sign transactions there, with real gas. */}
+            {wrongChain && (
+              <button
+                onClick={() => void switchToChain()}
+                className="mb-2 flex w-full items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-left text-xs transition-colors hover:bg-destructive/15"
+              >
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" />
+                <span className="text-foreground">Wrong network — switch to {ACTIVE_CHAIN.shortName}</span>
+              </button>
             )}
 
             <button

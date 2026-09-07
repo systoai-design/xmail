@@ -50,7 +50,7 @@ interface Quote {
 }
 
 export function BuyCredits({ trigger }: { trigger?: React.ReactNode }) {
-  const { address, signMessage, wrongChain, switchToChain } = useWallet();
+  const { address, signMessage, wrongChain, ensureChain } = useWallet();
   const { toast } = useToast();
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
@@ -77,12 +77,11 @@ export function BuyCredits({ trigger }: { trigger?: React.ReactNode }) {
 
   const buy = async () => {
     if (!quote || !address) return;
-    if (wrongChain && !(await switchToChain())) {
-      toast({ title: `Switch to ${ACTIVE_CHAIN.name} to pay`, variant: "destructive" });
-      return;
-    }
-
     try {
+      // Throws if the wallet is elsewhere. Paying on the wrong network would
+      // send real ETH to an address that holds no contract on that chain.
+      await ensureChain();
+
       setStage("paying");
       const txHash = await writeContractAsync({
         address: quote.contract,
