@@ -5,6 +5,24 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+// Vite inlines these at BUILD time, so a host that is missing them produces a
+// bundle where they are simply undefined. createClient then throws while this
+// module is still loading, React never mounts, and the deploy serves a white
+// page with nothing in it to explain why. Naming the missing variables here is
+// the difference between a five-minute fix and an afternoon.
+const missing = [
+  !SUPABASE_URL && 'VITE_SUPABASE_URL',
+  !SUPABASE_PUBLISHABLE_KEY && 'VITE_SUPABASE_PUBLISHABLE_KEY',
+].filter(Boolean);
+
+if (missing.length > 0) {
+  throw new Error(
+    `Missing build-time environment variable${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}. ` +
+      'Set them in your host (Vercel: Settings -> Environment Variables) and redeploy. ' +
+      'They are read when the bundle is built, not at runtime, so a redeploy is required.',
+  );
+}
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
