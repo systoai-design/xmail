@@ -25,11 +25,18 @@ interface Pending {
 let pending: Pending | null = null;
 
 /**
- * Holds `perform` for the undo window, then runs it. Returns a cancel function.
+ * Holds `perform` for the undo window, then runs it.
+ *
+ * The returned function reports whether it ACTUALLY cancelled. It used to
+ * return void, so callers could not tell a real undo from a no-op after the
+ * window had closed -- and the toast cheerfully reported "Send undone" for a
+ * message that had already gone out. A cancel that cannot fail is a cancel
+ * whose callers will lie on its behalf.
+ *
  * Only one send is ever in flight; scheduling a second commits the first
  * immediately rather than dropping it on the floor.
  */
-export function scheduleSend(perform: () => Promise<void>): () => void {
+export function scheduleSend(perform: () => Promise<void>): () => boolean {
   if (pending) flushPendingSend();
 
   const entry: Pending = {
@@ -42,9 +49,10 @@ export function scheduleSend(perform: () => Promise<void>): () => void {
   pending = entry;
 
   return () => {
-    if (pending !== entry) return; // already sent; too late to undo
+    if (pending !== entry) return false; // already sent; too late to undo
     clearTimeout(entry.timer);
     pending = null;
+    return true;
   };
 }
 

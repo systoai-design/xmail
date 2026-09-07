@@ -19,6 +19,7 @@ import { ComposeModal } from '@/components/ComposeModal';
 import { ComposeTabSwitcher, ComposeWindow } from '@/components/ComposeTabSwitcher';
 import { InlineEmailViewer } from '@/components/InlineEmailViewer';
 import { ParkedList } from '@/components/ParkedList';
+import { UnanchoredNotice } from '@/components/UnanchoredNotice';
 import { cn } from '@/lib/utils';
 import { openKeyManagement, onKeyImported, onMailChanged } from '@/lib/events';
 

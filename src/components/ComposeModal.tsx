@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { AttachmentUpload, AttachmentUploadHandle } from '@/components/AttachmentUpload';
 import { ACCEPTED_SUMMARY } from '@/lib/attachmentTypes';
+import { isDeployed } from '@/config/chain';
 import { creditCost, ciphertextBytes, describeCost } from '@/lib/credits';
 import { ContactAutocomplete } from '@/components/ContactAutocomplete';
 import { RichTextEditor } from '@/components/RichTextEditor';
@@ -54,7 +55,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
   const { address, signMessage } = useWallet();
   const { toast } = useToast();
   const { keysReady } = useEncryptionKeys();
-  const { anchorMessage } = useSelfAnchor();
+  const { anchorCiphertext } = useSelfAnchor();
   
   // Seeded once, not synced: after this the field belongs to the user, and a
   // prop-driven reset would wipe a recipient they had just corrected.
@@ -440,6 +441,35 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
       const draftIdAtSend = currentDraftId;
       const performSend = async () => {
         try {
+          // ---- 1. Anchor FIRST -------------------------------------------
+          // A message that goes out unproven is a message that does not do what
+          // xmail says it does, so the proof is a precondition of sending
+          // rather than a follow-up. Decline the wallet prompt and nothing is
+          // sent, nothing is charged, and the draft is untouched.
+          //
+          // Safe to order this way because every message uses a fresh AES key
+          // and IV: a resend produces different ciphertext and a different
+          // hash, so an anchor orphaned by a failed send blocks nothing.
+          let anchorTxHash: string | undefined;
+          if (isDeployed) {
+            try {
+              anchorTxHash = await anchorCiphertext(encryptedBody, recipient);
+            } catch (err) {
+              const message = (err as { message?: string })?.message ?? '';
+              const declined = /rejected|denied|User rejected/i.test(message);
+              toast({
+                title: declined ? 'Not sent' : 'Could not anchor',
+                description: declined
+                  ? 'You cancelled the on-chain proof, so nothing was sent. Your message is in Drafts.'
+                  : 'The proof could not be written, so nothing was sent. Your message is in Drafts.',
+                variant: 'destructive',
+              });
+              emitMailChanged();
+              return;
+            }
+          }
+
+          // ---- 2. Then store it ------------------------------------------
           const sendResult = await callSecureEndpoint(
             'send_email',
             {
@@ -451,6 +481,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
               sender_encrypted_body: senderEncryptedBody,
               sender_signature: signatureBase64,
               attachment_count: attachmentCount,
+              anchor_tx_hash: anchorTxHash,
             },
             address,
             signMessage
@@ -467,18 +498,8 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
           emitCreditsChanged(sendResult?.balance);
           emitMailChanged();
 
-          // Anchored from the sender's own wallet, so the chain records them
-          // rather than a relayer. Deliberately after the send and never fatal:
-          // a declined signature leaves the mail delivered and unanchored,
-          // which is far better than mail that fails because a chain was busy.
-          if (sendResult?.emailId) {
-            void anchorMessage(sendResult.emailId, encryptedBody, recipient).then((ok) => {
-              if (ok) emitMailChanged();
-            });
-          }
-
           toast({
-            title: 'Sent',
+            title: anchorTxHash ? 'Sent and anchored' : 'Sent',
             description:
               typeof sendResult?.cost === 'number'
                 ? `${describeCost(sendResult.cost)} used · ${sendResult.balance} remaining`
@@ -505,17 +526,31 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
 
       toast({
         title: 'Sending…',
-        description: `Undo within ${Math.round(UNDO_WINDOW_MS / 1000)} seconds.`,
+        description: `Undo within ${Math.round(UNDO_WINDOW_MS / 1000)} seconds. Your wallet will then ask you to sign the on-chain proof.`,
+        // Toasts here default to a ~16 minute lifetime, so the Undo button sat
+        // on screen long after it could do anything. It now disappears with the
+        // window it belongs to.
+        duration: UNDO_WINDOW_MS,
         action: (
           <ToastAction
             altText="Undo send"
             onClick={() => {
-              cancel();
-              emitMailChanged();
-              toast({
-                title: 'Send undone',
-                description: 'Nothing was sent and no credits were used. It is in your drafts.',
-              });
+              // cancel() returns false once the send has already gone out.
+              // Reporting success regardless is how a message that was
+              // definitely sent got announced as undone.
+              if (cancel()) {
+                emitMailChanged();
+                toast({
+                  title: 'Send undone',
+                  description: 'Nothing was sent and no credits were used. It is in your drafts.',
+                });
+              } else {
+                toast({
+                  title: 'Too late to undo',
+                  description: 'That message has already gone out.',
+                  variant: 'destructive',
+                });
+              }
             }}
           >
             Undo

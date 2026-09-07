@@ -34,56 +34,68 @@ export function useSelfAnchor() {
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
 
+  /**
+   * Anchors a commitment and returns the transaction hash.
+   *
+   * Called BEFORE the message is stored, so it cannot reference an email that
+   * does not exist yet. The server recomputes the same commitment from the
+   * ciphertext it receives and refuses to store anything unless this
+   * transaction really anchored it.
+   *
+   * Throws rather than returning null: the caller must not be able to treat a
+   * failed anchor as a successful one and send anyway.
+   */
+  const anchorCiphertext = useCallback(
+    async (ciphertext: string, toWallet: string): Promise<`0x${string}`> => {
+      if (!address) throw new Error("Connect a wallet first.");
+      await ensureChain();
+
+      const from = address as `0x${string}`;
+      const to = toWallet.toLowerCase() as `0x${string}`;
+      const messageHash = messageCommitment(ciphertext, from, to);
+
+      const txHash = await writeContractAsync({
+        address: messageAnchorAddress,
+        abi: MESSAGE_ANCHOR_ABI,
+        functionName: "anchor",
+        args: [messageHash, to],
+        chain: robinhoodChain,
+        account: from,
+      });
+
+      // The server checks the receipt itself, but waiting here means the send
+      // does not race a transaction that has not been mined.
+      await publicClient?.waitForTransactionReceipt({ hash: txHash, timeout: 90_000 });
+      return txHash;
+    },
+    [address, ensureChain, writeContractAsync, publicClient],
+  );
+
+  /**
+   * Anchors a message that was stored before anchoring came first. Kept for
+   * mail sent under the old ordering; new mail is anchored before it exists.
+   */
   const anchorMessage = useCallback(
     async (emailId: string, ciphertext: string, toWallet: string): Promise<boolean> => {
       if (!isDeployed || !address) return false;
-
       try {
-        // Throws rather than returning false: anchoring on the wrong chain
-        // would spend real gas and produce an anchor nothing can verify.
-        await ensureChain();
-
+        const txHash = await anchorCiphertext(ciphertext, toWallet);
         const from = address as `0x${string}`;
         const to = toWallet.toLowerCase() as `0x${string}`;
-        const messageHash = messageCommitment(ciphertext, from, to);
-
-        const txHash = await writeContractAsync({
-          address: messageAnchorAddress,
-          abi: MESSAGE_ANCHOR_ABI,
-          functionName: "anchor",
-          args: [messageHash, to],
-          chain: robinhoodChain,
-          account: from,
-        });
-
-        const receipt = await publicClient?.waitForTransactionReceipt({
-          hash: txHash,
-          timeout: 90_000,
-        });
-
-        // The server re-reads the transaction rather than taking our word for
-        // it, so a client cannot mark its own mail as anchored.
         await callSecureEndpoint(
           "record_anchor",
-          {
-            emailId,
-            txHash,
-            messageHash,
-            blockNumber: receipt ? Number(receipt.blockNumber) : null,
-          },
+          { emailId, txHash, messageHash: messageCommitment(ciphertext, from, to) },
           address,
           signMessage,
         );
-
         return true;
       } catch (err) {
-        // Includes the user simply declining. The mail is already sent.
         console.warn("Message not anchored:", err);
         return false;
       }
     },
-    [address, ensureChain, writeContractAsync, publicClient, signMessage],
+    [address, anchorCiphertext, signMessage],
   );
 
-  return { anchorMessage };
+  return { anchorCiphertext, anchorMessage };
 }

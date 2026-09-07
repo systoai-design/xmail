@@ -43,6 +43,7 @@ const SESSION_ACTIONS = [
   'toggle_star',
   'get_credit_quote',
   'record_anchor',
+  'get_unanchored',
   'get_parked',
   'count_parked',
   'get_deliverable_parked',

@@ -1,0 +1,1937 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      /* =====================================================================
+         xmail explainer
+         Structure is a 1:1 replica of the supplied Workly/Solair template.
+         Palette is xmail's own, lifted from src/index.css: warm paper ground,
+         ink primary, and the verified green as the single accent. The accent
+         is withheld until scene 3 on purpose -- the chaos beats are
+         monochrome, and the green arrives with the product.
+         ===================================================================== */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #fdfcfb;
+      }
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      :root {
+        --paper: #fdfcfb;
+        --paper-warm: #f4f2ee;
+        --sunken: #f7f5f1;
+        --ink: #131318;
+        --ink-2: #2a2a33;
+        --ink-soft: #55555f;
+        --ink-faint: #6d6d74;
+        --verified: #487a68;
+        --verified-bright: #55a088;
+        --verified-pale: #d9e7e1;
+        --warning: #e8850c;
+        --border: #e3e3e8;
+        --white: #ffffff;
+      }
+
+      .display {
+        font-family: "Space Grotesk", "Inter", sans-serif;
+        letter-spacing: -0.035em;
+        line-height: 1;
+      }
+      .mono {
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      /* Every scene is a full-bleed layer. Clips are shown/hidden by the
+         framework; nothing here fights that. */
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+      }
+      .fill {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* --- scene 1+2: the chaos ground ---------------------------------- */
+      .ground-warm {
+        background: linear-gradient(180deg, #f1efec 0%, #eceae6 100%);
+      }
+      .ground-paper {
+        background: var(--paper);
+      }
+      /* The template's ground is not flat -- it carries very low-contrast
+         horizontal banding that keeps a plain white frame from reading as
+         an empty render. */
+      .ground-banded {
+        background:
+          repeating-linear-gradient(
+            180deg,
+            rgba(19, 19, 24, 0.012) 0px,
+            rgba(19, 19, 24, 0.012) 1px,
+            transparent 1px,
+            transparent 46px
+          ),
+          var(--paper);
+      }
+      .ground-cool {
+        background:
+          radial-gradient(
+            ellipse 70% 80% at 12% 22%,
+            rgba(72, 122, 104, 0.14),
+            transparent 62%
+          ),
+          radial-gradient(
+            ellipse 60% 70% at 92% 82%,
+            rgba(72, 122, 104, 0.12),
+            transparent 60%
+          ),
+          linear-gradient(140deg, #f6f5f2 0%, #eef1ef 55%, #f4f3f0 100%);
+      }
+
+      /* --- pills (scene 1) ---------------------------------------------- */
+      .pill {
+        position: absolute;
+        display: block;
+        border-radius: 300px;
+        padding: 30px 52px;
+        font-size: 40px;
+        font-weight: 600;
+        letter-spacing: -0.022em;
+        white-space: nowrap;
+        font-family: "Space Grotesk", sans-serif;
+      }
+      .pill-ink {
+        background: var(--ink);
+        color: #f6f5f3;
+      }
+      .pill-ink-2 {
+        background: var(--ink-2);
+        color: #f2f1ef;
+      }
+      .pill-light {
+        background: var(--white);
+        color: var(--ink);
+        box-shadow: 0 4px 8px rgba(19, 19, 24, 0.04),
+          0 12px 28px rgba(19, 19, 24, 0.07);
+      }
+      .accent-dot {
+        position: absolute;
+        display: block;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: var(--verified-bright);
+      }
+
+      /* --- headline typography ------------------------------------------ */
+      .headline {
+        position: absolute;
+        display: block;
+        width: 1920px;
+        text-align: center;
+        font-family: "Space Grotesk", sans-serif;
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        line-height: 1;
+        color: var(--ink);
+      }
+      /* A word wrapper whose overflow hides the word until it slides up.
+         Height is explicit so the mask never depends on line-box guessing. */
+      .word-mask {
+        display: inline-block;
+        overflow: hidden;
+        vertical-align: bottom;
+      }
+      .word-mask > span {
+        display: inline-block;
+      }
+      .tail {
+        color: var(--verified);
+      }
+      .tail-2 {
+        color: var(--verified-bright);
+      }
+    </style>
+    <style>
+      /* --- scene 4: the envelope and its cards -------------------------- */
+      .env-stage {
+        position: absolute;
+        display: block;
+        left: 660px;
+        top: 250px;
+        width: 600px;
+        height: 580px;
+      }
+      .env-back {
+        position: absolute;
+        display: block;
+        left: 0;
+        top: 120px;
+        width: 600px;
+        height: 400px;
+        border-radius: 26px;
+        background: linear-gradient(160deg, var(--ink) 0%, #23232c 100%);
+      }
+      .env-front {
+        position: absolute;
+        display: block;
+        left: 0;
+        top: 250px;
+        width: 600px;
+        height: 270px;
+        border-radius: 26px;
+        /* The template's front flap is a frosted slab, not a solid one --
+           the cards behind it stay faintly visible through the glass. */
+        background: linear-gradient(
+          170deg,
+          rgba(40, 40, 50, 0.86) 0%,
+          rgba(19, 19, 24, 0.94) 100%
+        );
+        backdrop-filter: blur(9px);
+        box-shadow: 0 -2px 0 rgba(255, 255, 255, 0.07) inset;
+        overflow: hidden;
+      }
+      .env-label {
+        position: absolute;
+        display: block;
+        left: 34px;
+        bottom: 34px;
+        color: #f3f2f0;
+        font-size: 27px;
+        font-weight: 600;
+        line-height: 1.28;
+        letter-spacing: -0.015em;
+      }
+      .env-label .sub {
+        display: block;
+        color: rgba(243, 242, 240, 0.55);
+        font-size: 21px;
+        font-weight: 500;
+      }
+      .msg-card {
+        position: absolute;
+        display: block;
+        width: 330px;
+        height: 300px;
+        border-radius: 18px;
+        background: var(--white);
+        border: 1px solid var(--border);
+        padding: 22px 24px;
+        box-shadow: 0 8px 16px rgba(19, 19, 24, 0.05),
+          0 24px 56px rgba(19, 19, 24, 0.1);
+      }
+      .msg-card .ttl {
+        display: block;
+        font-size: 19px;
+        font-weight: 600;
+        color: var(--ink);
+        letter-spacing: -0.01em;
+      }
+      .msg-line {
+        display: block;
+        height: 9px;
+        border-radius: 5px;
+        background: #e9e8e4;
+        margin-top: 13px;
+      }
+      .cursor-hand {
+        position: absolute;
+        display: block;
+        left: 300px;
+        top: 470px;
+        width: 54px;
+        height: 62px;
+      }
+
+      /* --- the app window (scenes 4, 5, 9) ------------------------------ */
+      .app-wrap {
+        position: absolute;
+        display: block;
+      }
+      /* Static CSS perspective lives on its own node. GSAP never touches
+         this element, so there is no transform conflict. */
+      .tilt {
+        transform: perspective(2400px) rotateX(9deg) rotateY(-11deg)
+          rotate(1.2deg);
+        transform-origin: 50% 40%;
+      }
+      .app {
+        width: 1500px;
+        height: 940px;
+        border-radius: 22px;
+        background: var(--white);
+        border: 1px solid var(--border);
+        overflow: hidden;
+        box-shadow: 0 8px 16px rgba(19, 19, 24, 0.05),
+          0 40px 90px rgba(19, 19, 24, 0.13);
+        display: flex;
+        flex-direction: column;
+      }
+      .app-chrome {
+        height: 58px;
+        flex: 0 0 58px;
+        background: var(--sunken);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        gap: 9px;
+      }
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--border);
+      }
+      .chrome-pill {
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 6px 14px;
+        font-size: 15px;
+        color: var(--ink-soft);
+      }
+      .app-body {
+        flex: 1;
+        display: flex;
+        min-height: 0;
+      }
+      .app-side {
+        width: 280px;
+        flex: 0 0 280px;
+        border-right: 1px solid var(--border);
+        background: #fbfaf8;
+        padding: 22px 16px;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        padding: 13px 15px;
+        border-radius: 11px;
+        font-size: 18px;
+        color: var(--ink-soft);
+        font-weight: 500;
+      }
+      .nav-item.on {
+        background: rgba(19, 19, 24, 0.055);
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .nav-ico {
+        width: 20px;
+        height: 20px;
+        flex: 0 0 20px;
+        color: currentColor;
+      }
+      .app-main {
+        flex: 1;
+        min-width: 0;
+        padding: 26px 30px;
+      }
+      .main-head {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        padding-bottom: 20px;
+      }
+      .main-head h3 {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 30px;
+        font-weight: 600;
+        color: var(--ink);
+        letter-spacing: -0.025em;
+      }
+      .count {
+        font-size: 17px;
+        color: var(--ink-faint);
+      }
+
+      /* one inbox row -- the shape of the real EmailRow component */
+      .mail {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 19px 16px;
+        border-top: 1px solid var(--border);
+      }
+      .mail.unread {
+        background: rgba(19, 19, 24, 0.028);
+      }
+      .avatar {
+        width: 46px;
+        height: 46px;
+        flex: 0 0 46px;
+        border-radius: 50%;
+        background: #efedea;
+        color: var(--ink-soft);
+        font-size: 18px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .mail-body {
+        flex: 1;
+        min-width: 0;
+      }
+      .mail-top {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+      }
+      .mail-from {
+        font-size: 19px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .mail-addr {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 14px;
+        color: var(--ink-faint);
+      }
+      .badge-ver {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: var(--verified-pale);
+        /* Darker than --verified: at 13px on the pale fill the token itself
+           only reaches 3.9:1, and a verification badge is the one label in
+           this film that must never be marginal to read. */
+        color: #35604f;
+        border-radius: 300px;
+        padding: 3px 10px 3px 7px;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+      .mail-subj {
+        display: block;
+        font-size: 18px;
+        color: var(--ink);
+        margin-top: 5px;
+        font-weight: 500;
+      }
+      .mail-prev {
+        display: block;
+        font-size: 16px;
+        color: var(--ink-soft);
+        margin-top: 3px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .mail-time {
+        font-size: 15px;
+        color: var(--ink-faint);
+        flex: 0 0 auto;
+        padding-top: 3px;
+      }
+      .dropzone {
+        position: absolute;
+        display: block;
+        border: 2px dashed rgba(19, 19, 24, 0.22);
+        border-radius: 18px;
+      }
+    </style>
+    <style>
+      /* --- scene 6/7: the phone and its ribbons ------------------------- */
+      .blob {
+        position: absolute;
+        display: block;
+        border-radius: 50%;
+      }
+      .ribbon {
+        position: absolute;
+        display: block;
+      }
+      .phone {
+        position: absolute;
+        display: block;
+        width: 470px;
+        height: 950px;
+        border-radius: 62px;
+        background: #16161c;
+        padding: 13px;
+        box-shadow: 0 30px 90px rgba(19, 19, 24, 0.32),
+          0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+      }
+      .screen {
+        width: 100%;
+        height: 100%;
+        border-radius: 50px;
+        background: var(--paper);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .ph-bar {
+        flex: 0 0 92px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding-bottom: 14px;
+        background: var(--sunken);
+        font-size: 19px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .ph-who {
+        flex: 0 0 84px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 22px;
+        border-bottom: 1px solid var(--border);
+      }
+      .ph-thread {
+        flex: 1;
+        padding: 22px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-height: 0;
+      }
+      .bub {
+        display: block;
+        max-width: 300px;
+        border-radius: 20px;
+        padding: 15px 19px;
+        font-size: 18px;
+        line-height: 1.35;
+      }
+      .bub-them {
+        background: #ecebe7;
+        color: var(--ink);
+        align-self: flex-start;
+        border-bottom-left-radius: 7px;
+      }
+      .bub-me {
+        background: var(--ink);
+        color: #f5f4f2;
+        align-self: flex-end;
+        border-bottom-right-radius: 7px;
+      }
+      .typing {
+        display: flex;
+        align-self: flex-end;
+        gap: 7px;
+        background: var(--ink);
+        border-radius: 20px;
+        padding: 19px 21px;
+      }
+      .typing i {
+        display: block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(245, 244, 242, 0.75);
+      }
+      .ph-compose {
+        flex: 0 0 86px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 0 22px;
+        color: var(--ink-faint);
+        font-size: 18px;
+      }
+      .ph-foot {
+        flex: 0 0 46px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        background: var(--sunken);
+        font-size: 14px;
+        color: var(--verified);
+        font-weight: 600;
+      }
+
+      /* --- scene 7: the cascading lines --------------------------------- */
+      .cascade {
+        position: absolute;
+        display: block;
+        font-family: "Space Grotesk", sans-serif;
+        font-weight: 700;
+        font-size: 116px;
+        line-height: 1.02;
+        letter-spacing: -0.045em;
+        color: var(--ink);
+      }
+      .cascade span {
+        display: block;
+        overflow: hidden;
+      }
+      .cascade span > b {
+        display: block;
+        font-weight: 700;
+      }
+
+      /* --- scene 8: circle outlines ------------------------------------- */
+      .ring {
+        position: absolute;
+        display: block;
+        border-radius: 50%;
+        border: 3px solid rgba(72, 122, 104, 0.42);
+      }
+
+      /* --- scene 9: notification toasts --------------------------------- */
+      .toast {
+        position: absolute;
+        display: block;
+        width: 560px;
+        border-radius: 16px;
+        background: var(--white);
+        padding: 22px 26px;
+        display: flex;
+        align-items: flex-start;
+        gap: 18px;
+        box-shadow: 0 6px 14px rgba(19, 19, 24, 0.06),
+          0 22px 50px rgba(19, 19, 24, 0.11);
+      }
+      .toast-ico {
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
+        color: var(--verified);
+      }
+      .toast-txt {
+        flex: 1;
+      }
+      .toast-txt b {
+        display: block;
+        font-size: 19px;
+        font-weight: 700;
+        color: var(--ink);
+        letter-spacing: -0.01em;
+      }
+      .toast-txt span {
+        display: block;
+        font-size: 19px;
+        color: var(--ink-2);
+        margin-top: 3px;
+      }
+      /* The blurred product screens the toasts sit on top of. */
+      .bg-blur {
+        position: absolute;
+        display: block;
+        filter: blur(3px);
+        opacity: 0.5;
+      }
+
+      /* --- scene 10: end card ------------------------------------------- */
+      .lockup {
+        position: absolute;
+        display: block;
+        width: 1920px;
+        text-align: center;
+      }
+      .mark-tile {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 104px;
+        height: 104px;
+        border-radius: 30px;
+        background: var(--ink);
+      }
+      .mark-dot {
+        position: absolute;
+        display: block;
+        right: -6px;
+        top: -6px;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--verified-bright);
+        box-shadow: 0 0 0 7px var(--paper);
+      }
+      .wordmark {
+        display: block;
+        font-family: "Space Grotesk", sans-serif;
+        font-weight: 700;
+        font-size: 132px;
+        letter-spacing: -0.055em;
+        color: var(--ink);
+        line-height: 1;
+      }
+      .tagline {
+        display: block;
+        font-size: 34px;
+        font-weight: 600;
+        color: var(--ink-soft);
+        letter-spacing: -0.012em;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="28.6"
+      data-width="1920"
+      data-height="1080"
+    >
+      <!-- ================================================================
+           SCENE 1 -- the noise. Spam and spoof subject lines fly in from
+           off-frame and stack, rotated, exactly as the template's chat
+           pills do. Deliberately monochrome: the accent belongs to xmail.
+           ================================================================ -->
+      <div
+        id="s1"
+        class="clip scene ground-warm"
+        data-start="0"
+        data-duration="3.7"
+        data-track-index="1"
+      >
+        <span id="s1-p5" data-layout-allow-overflow class="pill pill-ink-2" style="left: 150px; top: 392px"
+          >Claim your airdrop &mdash; expires today</span
+        >
+        <span id="s1-p6" data-layout-allow-overflow class="pill pill-light" style="left: 1010px; top: 384px"
+          >Your account will be suspended</span
+        >
+        <span id="s1-p3" data-layout-allow-overflow class="pill pill-light" style="left: 336px; top: 596px"
+          >Re: Re: Re: partnership??</span
+        >
+        <span id="s1-p4" data-layout-allow-overflow class="pill pill-ink" style="left: 1128px; top: 608px"
+          >support@s0Iana-team.io</span
+        >
+        <span id="s1-p1" data-layout-allow-overflow class="pill pill-ink" style="left: 58px; top: 806px"
+          >URGENT: verify your wallet</span
+        >
+        <span id="s1-p2" data-layout-allow-overflow class="pill pill-ink-2" style="left: 902px; top: 832px"
+          >You&rsquo;ve been selected for 5 SOL</span
+        >
+        <span
+          id="s1-dot"
+          class="accent-dot"
+          style="left: 892px; top: 350px; background: #e8850c"
+        ></span>
+      </div>
+
+      <!-- ================================================================
+           SCENE 2 -- the question. Template beat: "Can't keep up?"
+           ================================================================ -->
+      <div
+        id="s2"
+        class="clip scene ground-banded"
+        data-start="3.5"
+        data-duration="2.2"
+        data-track-index="2"
+      >
+        <span
+          id="s2-h"
+          class="headline"
+          style="top: 476px; font-size: 118px; height: 140px"
+          >Who actually sent that?</span
+        >
+        <span
+          id="s2-dot"
+          class="accent-dot"
+          style="left: 1636px; top: 626px; background: #e8850c"
+        ></span>
+      </div>
+
+      <!-- ================================================================
+           SCENE 3 -- the answer. Template beat: "Meet your new AI
+           workspace", with the tail words carrying the accent. This is
+           where xmail's verified green enters the film for the first time.
+           ================================================================ -->
+      <div
+        id="s3"
+        class="clip scene ground-banded"
+        data-start="5.5"
+        data-duration="3.2"
+        data-track-index="3"
+      >
+        <span
+          id="s3-h"
+          class="headline"
+          style="top: 486px; font-size: 96px; height: 124px"
+        >
+          <span class="word-mask" style="height: 120px"
+            ><span class="w">Meet&nbsp;</span></span
+          ><span class="word-mask" style="height: 120px"
+            ><span class="w tail">wallet-to-wallet&nbsp;</span></span
+          ><span class="word-mask" style="height: 120px"
+            ><span class="w tail-2">email</span></span
+          >
+        </span>
+      </div>
+      <!-- ================================================================
+           SCENE 4 -- the object. Template beat: a folder full of cards,
+           grabbed by a cursor, that shrinks into a drop zone inside a
+           tilted app window. Here the folder is an xmail envelope, the
+           cards are messages, and the flap seals with a lock.
+           ================================================================ -->
+      <div
+        id="s4"
+        class="clip scene ground-paper"
+        data-start="8.5"
+        data-duration="5.2"
+        data-track-index="4"
+      >
+        <span
+          id="s4-app"
+          data-layout-allow-overflow
+          class="app-wrap"
+          style="left: 210px; top: 100px; width: 1500px; height: 940px"
+        >
+          <span class="tilt" style="display: block">
+            <span class="app" data-layout-allow-overflow style="display: flex">
+              <span class="app-chrome" style="display: flex">
+                <span class="dot"></span><span class="dot"></span
+                ><span class="dot"></span>
+                <span class="chrome-pill">
+                  <svg
+                    class="nav-ico"
+                    style="width: 15px; height: 15px; flex: 0 0 15px"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  xmail &mdash; Inbox
+                </span>
+              </span>
+              <span class="app-body" style="display: flex">
+                <span class="app-side" data-layout-allow-overflow style="display: block">
+                  <span class="nav-item on"
+                    ><svg
+                      class="nav-ico"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <rect x="2" y="4" width="20" height="16" rx="2" />
+                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                    </svg>
+                    Inbox</span
+                  >
+                  <span class="nav-item"
+                    ><svg
+                      class="nav-ico"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="m22 2-7 20-4-9-9-4Z" />
+                    </svg>
+                    Sent</span
+                  >
+                  <span class="nav-item"
+                    ><svg
+                      class="nav-ico"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M12 7v5l3 2" />
+                    </svg>
+                    Parked</span
+                  >
+                  <span class="nav-item"
+                    ><svg
+                      class="nav-ico"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M16 21v-2a4 4 0 0 0-8 0v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    Contacts</span
+                  >
+                  <span class="nav-item"
+                    ><svg
+                      class="nav-ico"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <circle cx="7.5" cy="15.5" r="4" />
+                      <path d="m21 2-9.6 9.6M15.5 7.5l3 3" />
+                    </svg>
+                    Keys</span
+                  >
+                </span>
+                <span class="app-main" style="display: block"></span>
+              </span>
+            </span>
+          </span>
+        </span>
+
+        <span
+          id="s4-drop"
+          class="dropzone"
+          style="left: 730px; top: 480px; width: 420px; height: 300px"
+        ></span>
+
+        <span id="s4-env" class="env-stage">
+          <span class="env-back"></span>
+
+          <span id="s4-c3" class="msg-card" data-layout-allow-overlap data-layout-allow-occlusion style="left: 262px; top: 26px">
+            <span class="msg-line" style="width: 46%; margin-top: 4px"></span>
+            <span class="msg-line" style="width: 88%"></span>
+            <span class="msg-line" style="width: 72%"></span>
+            <span class="msg-line" style="width: 80%"></span>
+          </span>
+          <span id="s4-c2" class="msg-card" data-layout-allow-overlap data-layout-allow-occlusion style="left: 176px; top: -4px">
+            <span class="msg-line" style="width: 52%; margin-top: 4px"></span>
+            <span class="msg-line" style="width: 84%"></span>
+            <span class="msg-line" style="width: 66%"></span>
+            <span class="msg-line" style="width: 78%"></span>
+          </span>
+          <span id="s4-c1" class="msg-card" data-layout-allow-overlap data-layout-allow-occlusion style="left: 62px; top: 10px">
+            <span class="ttl" data-layout-allow-overlap data-layout-allow-occlusion>Series A term sheet &mdash; final</span>
+            <span class="msg-line" style="width: 90%"></span>
+            <span class="msg-line" style="width: 74%"></span>
+            <span class="msg-line" style="width: 86%"></span>
+            <span class="msg-line" style="width: 58%"></span>
+          </span>
+
+          <span class="env-front">
+            <span class="env-label"
+              >Encrypted in your browser
+              <span class="sub">4 messages &middot; sealed to their key</span>
+            </span>
+            <span
+              id="s4-lock"
+              style="
+                position: absolute;
+                display: block;
+                right: 38px;
+                bottom: 44px;
+                width: 46px;
+                height: 46px;
+                color: #55a088;
+              "
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                style="width: 46px; height: 46px"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </span>
+          </span>
+
+          <span id="s4-cur" class="cursor-hand">
+            <svg
+              viewBox="0 0 32 36"
+              style="width: 54px; height: 62px"
+              fill="#ffffff"
+              stroke="#131318"
+              stroke-width="1.7"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M8 2.5a2.2 2.2 0 0 1 4.4 0v11.6h1.1V5.8a2.2 2.2 0 0 1 4.4 0v8.3h1.1V8.4a2.2 2.2 0 0 1 4.4 0v5.7h1.1v-2.6a2.2 2.2 0 0 1 4.4 0v11c0 5.6-3.8 10.4-9.6 10.4h-3.1C10.6 32.9 7 28.6 5.4 23L3 16.4a2.2 2.2 0 0 1 3.9-1.9L8 16.5Z"
+              />
+            </svg>
+          </span>
+        </span>
+      </div>
+      <!-- ================================================================
+           SCENE 5 -- the feature. Template beat: a product name types in
+           letter by letter, then the product itself rises beneath it.
+           The inbox rows are the real data from the site's Hero component.
+           ================================================================ -->
+      <div
+        id="s5"
+        class="clip scene ground-cool"
+        data-start="13.5"
+        data-duration="4.4"
+        data-track-index="5"
+      >
+        <span
+          id="s5-h"
+          class="headline"
+          style="top: 92px; font-size: 104px; height: 132px; color: #487a68"
+        >
+          <span class="ltr">V</span><span class="ltr">e</span><span class="ltr">r</span><span class="ltr">i</span><span class="ltr">f</span><span class="ltr">i</span><span class="ltr">e</span><span class="ltr">d</span><span class="ltr" style="width:0.30em">&nbsp;</span><span class="ltr">o</span><span class="ltr">n</span><span class="ltr">-</span><span class="ltr">c</span><span class="ltr">h</span><span class="ltr">a</span><span class="ltr">i</span><span class="ltr">n</span>
+        </span>
+
+        <span
+          id="s5-app"
+          data-layout-allow-overflow
+          class="app-wrap"
+          style="left: 210px; top: 296px; width: 1500px; height: 940px"
+        >
+          <span class="tilt" style="display: block">
+            <span class="app" data-layout-allow-overflow style="display: flex">
+              <span class="app-chrome" style="display: flex">
+                <span class="dot"></span><span class="dot"></span
+                ><span class="dot"></span>
+                <span class="chrome-pill">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px">
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  xmail &mdash; Inbox
+                </span>
+              </span>
+              <span class="app-body" style="display: flex">
+                <span class="app-side" data-layout-allow-overflow style="display: block">
+                  <span class="nav-item on"
+                    ><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    Inbox</span
+                  >
+                  <span class="nav-item"
+                    ><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/></svg>
+                    Sent</span
+                  >
+                  <span class="nav-item"
+                    ><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                    Parked</span
+                  >
+                  <span class="nav-item"
+                    ><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-8 0v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Contacts</span
+                  >
+                  <span class="nav-item"
+                    ><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7.5" cy="15.5" r="4"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3"/></svg>
+                    Keys</span
+                  >
+                </span>
+                <span class="app-main" style="display: block">
+                  <span class="main-head" style="display: flex">
+                    <h3>Inbox</h3>
+                    <span class="count">2 unread &middot; every sender key-checked on Solana</span>
+                  </span>
+          <span class="mail unread" style="display:flex">
+            <span class="avatar" style="display:flex">D</span>
+            <span class="mail-body" style="display:block">
+              <span class="mail-top" style="display:flex">
+                <span class="mail-from">Dana Okafor</span>
+                <span class="mail-addr">0x7f3a&hellip;c19d</span>
+                <span class="badge-ver"
+                  ><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:13px;height:13px"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                  Verified</span
+                >
+              </span>
+              <span class="mail-subj">Series A term sheet &mdash; final</span>
+              <span class="mail-prev">Redlines attached. Everything below clause 7 is agreed.</span>
+            </span>
+            <span class="mail-time">09:41</span>
+          </span>
+          <span class="mail unread" style="display:flex">
+            <span class="avatar" style="display:flex">M</span>
+            <span class="mail-body" style="display:block">
+              <span class="mail-top" style="display:flex">
+                <span class="mail-from">Marcus Webb</span>
+                <span class="mail-addr">0x2b8e&hellip;4a70</span>
+                <span class="badge-ver"
+                  ><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:13px;height:13px"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                  Verified</span
+                >
+              </span>
+              <span class="mail-subj">Re: audit scope</span>
+              <span class="mail-prev">Confirmed for the 14th. Sending the engagement letter.</span>
+            </span>
+            <span class="mail-time">08:12</span>
+          </span>
+          <span class="mail " style="display:flex">
+            <span class="avatar" style="display:flex">P</span>
+            <span class="mail-body" style="display:block">
+              <span class="mail-top" style="display:flex">
+                <span class="mail-from">Priya Raman</span>
+                <span class="mail-addr">0x9d41&hellip;8fe2</span>
+                <span class="badge-ver"
+                  ><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:13px;height:13px"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                  Verified</span
+                >
+              </span>
+              <span class="mail-subj">Board deck v4</span>
+              <span class="mail-prev">Updated the cohort chart on slide 12 as discussed.</span>
+            </span>
+            <span class="mail-time">Yesterday</span>
+          </span>
+          <span class="mail " style="display:flex">
+            <span class="avatar" style="display:flex">T</span>
+            <span class="mail-body" style="display:block">
+              <span class="mail-top" style="display:flex">
+                <span class="mail-from">Tom Alvarez</span>
+                <span class="mail-addr">0x4c67&hellip;21ab</span>
+                <span class="badge-ver"
+                  ><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:13px;height:13px"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                  Verified</span
+                >
+              </span>
+              <span class="mail-subj">Payroll keys rotated</span>
+              <span class="mail-prev">New key is registered. Old one expires Friday.</span>
+            </span>
+            <span class="mail-time">Yesterday</span>
+          </span>
+          <span class="mail " style="display:flex">
+            <span class="avatar" style="display:flex">A</span>
+            <span class="mail-body" style="display:block">
+              <span class="mail-top" style="display:flex">
+                <span class="mail-from">Ana Costa</span>
+                <span class="mail-addr">0x5e12&hellip;7b39</span>
+                <span class="badge-ver"
+                  ><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:13px;height:13px"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                  Verified</span
+                >
+              </span>
+              <span class="mail-subj">Q3 vendor contracts</span>
+              <span class="mail-prev">Signed and countersigned. Copies attached.</span>
+            </span>
+            <span class="mail-time">Mon</span>
+          </span>
+          <span class="mail " style="display:flex">
+            <span class="avatar" style="display:flex">R</span>
+            <span class="mail-body" style="display:block">
+              <span class="mail-top" style="display:flex">
+                <span class="mail-from">Ravi Menon</span>
+                <span class="mail-addr">0x8a04&hellip;c5d1</span>
+                <span class="badge-ver"
+                  ><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:13px;height:13px"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+                  Verified</span
+                >
+              </span>
+              <span class="mail-subj">Key rotation reminder</span>
+              <span class="mail-prev">Your registered key expires in 14 days.</span>
+            </span>
+            <span class="mail-time">Mon</span>
+          </span>
+                </span>
+              </span>
+            </span>
+          </span>
+        </span>
+      </div>
+      <!-- ================================================================
+           SCENE 6 -- the device. Template beat: a phone floating among
+           ribbon swooshes, a reply arriving after a typing indicator, then
+           the phone slides right while a three-line headline cascades in.
+           One continuous shot, as in the template.
+           ================================================================ -->
+      <div
+        id="s6"
+        class="clip scene ground-cool"
+        data-start="17.7"
+        data-duration="5.7"
+        data-track-index="6"
+      >
+        <span
+          id="s6-b1"
+          class="blob"
+          style="
+            left: -300px;
+            top: 470px;
+            width: 900px;
+            height: 900px;
+            background: radial-gradient(
+              circle at 40% 35%,
+              rgba(72, 122, 104, 0.3),
+              rgba(72, 122, 104, 0.1) 70%
+            );
+          "
+        ></span>
+        <span
+          id="s6-b2"
+          class="blob"
+          style="
+            left: 1500px;
+            top: 560px;
+            width: 760px;
+            height: 760px;
+            background: radial-gradient(
+              circle at 45% 40%,
+              rgba(72, 122, 104, 0.22),
+              rgba(72, 122, 104, 0.06) 72%
+            );
+          "
+        ></span>
+
+        <span id="s6-r1" class="ribbon" style="left: 210px; top: 108px">
+          <svg width="520" height="330" viewBox="0 0 300 190" fill="none">
+            <defs>
+              <linearGradient id="rg1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#131318" />
+                <stop offset="1" stop-color="#3c4a45" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M0,60 C80,-4 200,124 300,42 L300,112 C200,194 80,66 0,130 Z"
+              fill="url(#rg1)"
+            />
+          </svg>
+        </span>
+        <span id="s6-r2" class="ribbon" style="left: 1170px; top: 176px">
+          <svg width="620" height="360" viewBox="0 0 300 190" fill="none">
+            <defs>
+              <linearGradient id="rg2" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#487a68" />
+                <stop offset="1" stop-color="#7fb3a0" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M0,44 C90,132 190,-10 300,68 L300,140 C190,62 90,204 0,116 Z"
+              fill="url(#rg2)"
+            />
+          </svg>
+        </span>
+        <span id="s6-r3" class="ribbon" style="left: 96px; top: 528px">
+          <svg width="560" height="320" viewBox="0 0 300 190" fill="none">
+            <defs>
+              <linearGradient id="rg3" x1="0" y1="1" x2="1" y2="0">
+                <stop offset="0" stop-color="#1d2a25" />
+                <stop offset="1" stop-color="#487a68" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M0,96 C100,10 190,150 300,58 L300,126 C190,218 100,78 0,164 Z"
+              fill="url(#rg3)"
+            />
+          </svg>
+        </span>
+        <span id="s6-r4" class="ribbon" style="left: 1230px; top: 636px">
+          <svg width="480" height="290" viewBox="0 0 300 190" fill="none">
+            <path
+              d="M0,58 C90,140 200,4 300,80 L300,146 C200,70 90,206 0,124 Z"
+              fill="#e8e6e1"
+            />
+          </svg>
+        </span>
+
+        <span id="s6-phone" class="phone" style="left: 725px; top: 66px">
+          <span class="screen" style="display: flex">
+            <span class="ph-bar" style="display: flex">xmail</span>
+            <span class="ph-who" style="display: flex">
+              <span
+                class="avatar"
+                style="
+                  display: flex;
+                  width: 42px;
+                  height: 42px;
+                  flex: 0 0 42px;
+                  font-size: 16px;
+                "
+                >D</span
+              >
+              <span style="display: block; flex: 1; min-width: 0">
+                <span
+                  style="
+                    display: block;
+                    font-size: 19px;
+                    font-weight: 600;
+                    color: #131318;
+                  "
+                  >Dana Okafor</span
+                >
+                <span
+                  class="mono"
+                  style="display: block; font-size: 14px; color: #6d6d74"
+                  >0x7f3a&hellip;c19d</span
+                >
+              </span>
+              <span class="badge-ver"
+                ><svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.4"
+                  style="width: 13px; height: 13px"
+                >
+                  <path
+                    d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+                  />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
+                Verified</span
+              >
+            </span>
+            <span class="ph-thread" style="display: flex">
+              <span id="s6-bb1" class="bub bub-them"
+                >Series A term sheet is attached.</span
+              >
+              <span id="s6-typ" class="typing"
+                ><i></i><i></i><i></i
+              ></span>
+              <span id="s6-bb2" class="bub bub-me"
+                >Sealed to your wallet key. Nobody else can open it.</span
+              >
+              <span id="s6-bb3" class="bub bub-them">Opened. Thank you.</span>
+            </span>
+            <span class="ph-compose" style="display: flex">
+              <span style="flex: 1">Write a message</span>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#131318"
+                stroke-width="2"
+                style="width: 24px; height: 24px"
+              >
+                <path d="m22 2-7 20-4-9-9-4Z" />
+              </svg>
+            </span>
+            <span class="ph-foot" style="display: flex">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                style="width: 13px; height: 13px"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              End-to-end encrypted
+            </span>
+          </span>
+        </span>
+
+        <span id="s6-cas" class="cascade" style="left: 128px; top: 352px">
+          <span style="height: 128px"><b id="s6-l1">Only</b></span>
+          <span style="height: 128px; padding-left: 64px"
+            ><b id="s6-l2">They Can</b></span
+          >
+          <span style="height: 128px; padding-left: 142px"
+            ><b id="s6-l3">Read It</b></span
+          >
+        </span>
+      </div>
+      <!-- ================================================================
+           SCENE 8 -- the turn. Template beat: "No more chaos." set in three
+           differently coloured words over drifting circle outlines.
+           ================================================================ -->
+      <div
+        id="s8"
+        class="clip scene ground-warm"
+        data-start="23.2"
+        data-duration="1.8"
+        data-track-index="7"
+      >
+        <span
+          id="s8-r1"
+          data-layout-allow-overflow
+          class="ring"
+          style="left: 1210px; top: -540px; width: 1040px; height: 1040px"
+        ></span>
+        <span
+          id="s8-r2"
+          data-layout-allow-overflow
+          class="ring"
+          style="left: -420px; top: 620px; width: 1120px; height: 1120px"
+        ></span>
+        <span
+          id="s8-h"
+          class="headline"
+          style="top: 480px; font-size: 118px; height: 140px"
+          ><span id="s8-w1" style="display: inline-block; color: #2d4f43"
+            >No&nbsp;</span
+          ><span id="s8-w2" style="display: inline-block; color: #55a088"
+            >more&nbsp;</span
+          ><span id="s8-w3" style="display: inline-block">spoofing.</span></span
+        >
+      </div>
+
+      <!-- ================================================================
+           SCENE 9 -- the payoff. Template beat: notification toasts drift
+           in over blurred product screens.
+           ================================================================ -->
+      <div
+        id="s9"
+        class="clip scene ground-cool"
+        data-start="24.8"
+        data-duration="2.2"
+        data-track-index="8"
+      >
+        <span
+          class="bg-blur"
+          style="
+            left: -60px;
+            top: -40px;
+            width: 620px;
+            height: 620px;
+            border-radius: 20px;
+            background: #ffffff;
+            border: 1px solid #e3e3e8;
+          "
+        ><span style="position:absolute;display:block;left:34px;top:40px;width:58%;height:14px;border-radius:7px;background:#e6e5e1"></span><span style="position:absolute;display:block;left:34px;top:74px;width:74%;height:14px;border-radius:7px;background:#e6e5e1"></span><span style="position:absolute;display:block;left:34px;top:108px;width:40%;height:14px;border-radius:7px;background:#e6e5e1"></span><span style="position:absolute;display:block;left:34px;top:142px;width:66%;height:14px;border-radius:7px;background:#e6e5e1"></span><span style="position:absolute;display:block;left:34px;top:176px;width:52%;height:14px;border-radius:7px;background:#e6e5e1"></span><span style="position:absolute;display:block;left:34px;top:210px;width:70%;height:14px;border-radius:7px;background:#e6e5e1"></span><span style="position:absolute;display:block;left:34px;top:244px;width:36%;height:14px;border-radius:7px;background:#e6e5e1"></span></span>
+        <span
+          class="bg-blur"
+          style="
+            left: 830px;
+            top: -70px;
+            width: 760px;
+            height: 260px;
+            border-radius: 20px;
+            background: #ffffff;
+            border: 1px solid #e3e3e8;
+          "
+        ><span style="position:absolute;display:block;left:34px;top:38px;width:46%;height:14px;border-radius:7px;background:#e6e5e1"></span><span style="position:absolute;display:block;left:34px;top:72px;width:68%;height:14px;border-radius:7px;background:#e6e5e1"></span><span style="position:absolute;display:block;left:34px;top:106px;width:32%;height:14px;border-radius:7px;background:#e6e5e1"></span></span>
+        <span
+          class="bg-blur"
+          style="
+            left: 1380px;
+            top: 470px;
+            width: 620px;
+            height: 300px;
+            border-radius: 20px;
+            background: #ffffff;
+            border: 1px solid #e3e3e8;
+          "
+        ><span style="position:absolute;display:block;left:34px;top:42px;width:54%;height:14px;border-radius:7px;background:#e6e5e1"></span><span style="position:absolute;display:block;left:34px;top:76px;width:38%;height:14px;border-radius:7px;background:#e6e5e1"></span><span style="position:absolute;display:block;left:34px;top:110px;width:70%;height:14px;border-radius:7px;background:#e6e5e1"></span></span>
+        <span
+          class="bg-blur"
+          style="
+            left: -80px;
+            top: 800px;
+            width: 1180px;
+            height: 420px;
+            border-radius: 20px;
+            background: #ffffff;
+            border: 1px solid #e3e3e8;
+          "
+        ><span style="position:absolute;display:block;left:34px;top:44px;width:30%;height:14px;border-radius:7px;background:#e6e5e1"></span><span style="position:absolute;display:block;left:34px;top:78px;width:62%;height:14px;border-radius:7px;background:#e6e5e1"></span><span style="position:absolute;display:block;left:34px;top:112px;width:48%;height:14px;border-radius:7px;background:#e6e5e1"></span><span style="position:absolute;display:block;left:34px;top:146px;width:72%;height:14px;border-radius:7px;background:#e6e5e1"></span><span style="position:absolute;display:block;left:34px;top:180px;width:40%;height:14px;border-radius:7px;background:#e6e5e1"></span></span>
+
+        <span class="toast" id="s9-t1" style="left: 46px; top: 148px">
+          <svg
+            class="toast-ico"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.9"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
+          <span class="toast-txt" style="display: block"
+            ><b>Verified sender</b
+            ><span>Their key matches their wallet on-chain.</span></span
+          >
+        </span>
+
+        <span class="toast" id="s9-t2" style="left: 950px; top: 186px">
+          <svg
+            class="toast-ico"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.9"
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          <span class="toast-txt" style="display: block"
+            ><b>Encrypted</b
+            ><span>Sealed in your browser, never on a server.</span></span
+          >
+        </span>
+
+        <span class="toast" id="s9-t3" style="left: 214px; top: 608px">
+          <svg
+            class="toast-ico"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.9"
+          >
+            <path d="m22 2-7 20-4-9-9-4Z" />
+          </svg>
+          <span class="toast-txt" style="display: block"
+            ><b>Delivered</b><span>0.001 SOL paid over x402.</span></span
+          >
+        </span>
+
+        <span class="toast" id="s9-t4" style="left: 1012px; top: 730px">
+          <svg
+            class="toast-ico"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.9"
+          >
+            <path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6Z" />
+            <path d="M12 8v5" />
+            <path d="M12 16.5v.5" />
+          </svg>
+          <span class="toast-txt" style="display: block"
+            ><b>Tamper-proof</b
+            ><span>A proof of what you sent is on the chain.</span></span
+          >
+        </span>
+      </div>
+
+      <!-- ================================================================
+           SCENE 10 -- the end card. Template beat: the logo scales in, then
+           the tagline fades up beneath it. The mark is the product's own:
+           an envelope whose flap folds into an X, with the accent dot
+           breaking the tile's corner.
+           ================================================================ -->
+      <div
+        id="s10"
+        class="clip scene ground-cool"
+        data-start="26.8"
+        data-duration="1.8"
+        data-track-index="9"
+      >
+        <span id="s10-lock" class="lockup" style="top: 400px">
+          <span
+            style="
+              display: inline-flex;
+              align-items: center;
+              gap: 30px;
+              vertical-align: middle;
+            "
+          >
+            <span class="mark-tile">
+              <svg
+                viewBox="0 0 24 24"
+                style="width: 54px; height: 54px"
+                fill="none"
+                stroke="#fdfcfb"
+              >
+                <path
+                  d="M3.2 6.4a1.6 1.6 0 0 1 1.6-1.6h14.4a1.6 1.6 0 0 1 1.6 1.6v11.2a1.6 1.6 0 0 1-1.6 1.6H4.8a1.6 1.6 0 0 1-1.6-1.6V6.4Z"
+                  stroke-width="1.7"
+                />
+                <path
+                  d="M3.9 6 12 12.6 20.1 6M3.9 18l6.2-5.1M20.1 18l-6.2-5.1"
+                  stroke-width="1.9"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <span class="mark-dot"></span>
+            </span>
+            <span class="wordmark">xmail</span>
+          </span>
+        </span>
+        <span id="s10-tag" class="lockup tagline" style="top: 604px"
+          >Email, addressed to a wallet.</span
+        >
+      </div>
+    </div>
+
+    <style>
+      /* Letter cells for the scene-5 type-on. Inline-block so GSAP can move
+         them individually without touching layout width. */
+      .ltr {
+        display: inline-block;
+      }
+    </style>
+    <style>
+      /* The typing indicator overlays the slot its reply will occupy, so the
+         reply lands exactly where the dots were instead of below them. */
+      .ph-thread {
+        position: relative;
+      }
+      .typing {
+        position: absolute;
+        right: 20px;
+        top: 118px;
+      }
+    </style>
+
+    <script>
+      /* ===================================================================
+         Timeline. One paused GSAP timeline, absolute positions throughout,
+         so every frame is reachable by seek. Scene clips overlap their
+         neighbour by 0.2s and cross-fade on plain opacity -- the framework
+         still owns their visibility windows.
+         =================================================================== */
+      const tl = gsap.timeline({ paused: true });
+
+      const OUT = "power3.out";
+      const INOUT = "power3.inOut";
+
+      // Cross-fade helper. `s` is the clip's data-start, `d` its duration.
+      function crossfade(sel, s, d, fadeIn, fadeOut) {
+        const fi = fadeIn === undefined ? 0.25 : fadeIn;
+        const fo = fadeOut === undefined ? 0.2 : fadeOut;
+        tl.fromTo(sel, { opacity: 0 }, { opacity: 1, duration: fi, ease: "none" }, s);
+        tl.to(sel, { opacity: 0, duration: fo, ease: "none" }, s + d - fo);
+      }
+
+      /* --- SCENE 1 : the noise (0 -> 3.7) ----------------------------- */
+      const S1 = 0;
+      tl.set("#s1", { opacity: 1 }, S1);
+      // Each pill flies in from the side it rests on and settles at a small
+      // angle -- the template's pills are never axis-aligned.
+      const pills = [
+        ["#s1-p1", -1240, -2.5, 0.15],
+        ["#s1-p2", 1240, 1.8, 0.42],
+        ["#s1-p3", -1240, -1.4, 0.69],
+        ["#s1-p4", 1240, 2.2, 0.96],
+        ["#s1-p5", -1240, 2.6, 1.23],
+        ["#s1-p6", 1240, -2.0, 1.5],
+      ];
+      pills.forEach(function (p) {
+        tl.fromTo(
+          p[0],
+          { x: p[1], y: 76, rotation: p[1] < 0 ? -7 : 7, opacity: 0 },
+          {
+            x: 0,
+            y: 0,
+            rotation: p[2],
+            opacity: 1,
+            duration: 0.82,
+            ease: OUT,
+          },
+          S1 + p[3],
+        );
+      });
+      tl.fromTo(
+        "#s1-dot",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(2.4)" },
+        S1 + 1.86,
+      );
+      // The pile keeps creeping upward under its own weight.
+      tl.to("#s1 .pill", { y: -30, duration: 0.9, ease: "sine.inOut" }, S1 + 2.1);
+      tl.to("#s1-dot", { y: -46, duration: 0.9, ease: "sine.inOut" }, S1 + 2.1);
+      tl.to(
+        "#s1 .pill",
+        { y: -150, opacity: 0, duration: 0.55, stagger: 0.035, ease: "power2.in" },
+        S1 + 3.02,
+      );
+      tl.to("#s1-dot", { scale: 0, opacity: 0, duration: 0.3 }, S1 + 3.05);
+      crossfade("#s1", 0, 3.7, 0.01, 0.2);
+
+      /* --- SCENE 2 : the question (3.5 -> 5.7) ------------------------ */
+      const S2 = 3.5;
+      crossfade("#s2", S2, 2.2);
+      tl.fromTo(
+        "#s2-h",
+        { scale: 0.88, y: 26, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.82, ease: OUT },
+        S2 + 0.12,
+      );
+      tl.fromTo(
+        "#s2-dot",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.42, ease: "back.out(2.4)" },
+        S2 + 0.5,
+      );
+      tl.to("#s2-dot", { x: -120, y: -180, scale: 0.5, duration: 0.5, ease: INOUT }, S2 + 1.2);
+      tl.to("#s2-h", { scale: 0.965, opacity: 0, duration: 0.42, ease: "power2.in" }, S2 + 1.62);
+      tl.to("#s2-dot", { scale: 0, opacity: 0, duration: 0.28 }, S2 + 1.7);
+      tl.set("#s2-h", { opacity: 0 }, S2 + 2.0);
+      tl.set("#s2-dot", { opacity: 0 }, S2 + 2.0);
+
+      /* --- SCENE 3 : the answer (5.5 -> 8.7) -------------------------- */
+      const S3 = 5.5;
+      crossfade("#s3", S3, 3.2);
+      // Word-by-word rise out of a fixed-height mask.
+      tl.fromTo(
+        "#s3-h .w",
+        { yPercent: 106 },
+        { yPercent: 0, duration: 0.78, stagger: 0.14, ease: "power4.out" },
+        S3 + 0.18,
+      );
+      tl.to("#s3-h", { y: -26, duration: 1.5, ease: "sine.out" }, S3 + 1.3);
+      tl.to("#s3-h .w", { yPercent: -106, duration: 0.5, stagger: 0.06, ease: "power2.in" }, S3 + 2.5);
+
+      /* --- SCENE 4 : the object (8.5 -> 13.7) ------------------------- */
+      const S4 = 8.5;
+      crossfade("#s4", S4, 5.2);
+      tl.fromTo(
+        "#s4-env",
+        { scale: 0.84, y: 44, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.85, ease: OUT },
+        S4 + 0.1,
+      );
+      // The messages rise out of the envelope, opaque only once clear of the flap.
+      const cards = [
+        ["#s4-c3", 13],
+        ["#s4-c2", 5],
+        ["#s4-c1", -4],
+      ];
+      cards.forEach(function (c, i) {
+        tl.fromTo(
+          c[0],
+          { y: 236, rotation: 0 },
+          { y: 0, rotation: c[1], duration: 0.86, ease: OUT },
+          S4 + 0.5 + i * 0.1,
+        );
+        // Opaque well before they clear the flap, so no frame shows three
+        // translucent cards reading through one another.
+        tl.fromTo(
+          c[0],
+          { opacity: 0 },
+          { opacity: 1, duration: 0.2, ease: "none" },
+          S4 + 0.58 + i * 0.1,
+        );
+      });
+      tl.fromTo(
+        "#s4-cur",
+        { x: 130, y: 96, opacity: 0 },
+        { x: 0, y: 0, opacity: 1, duration: 0.55, ease: OUT },
+        S4 + 1.5,
+      );
+      tl.to("#s4-cur", { scale: 0.86, duration: 0.14, ease: "power2.in" }, S4 + 2.18);
+      tl.to("#s4-cur", { scale: 1, duration: 0.24, ease: "back.out(3)" }, S4 + 2.32);
+      tl.fromTo(
+        "#s4-lock",
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(2.6)" },
+        S4 + 2.3,
+      );
+      // Pull back: the workspace resolves behind the envelope, which shrinks
+      // into the drop zone.
+      tl.fromTo(
+        "#s4-app",
+        { scale: 1.16, y: 46, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 1.15, ease: OUT },
+        S4 + 2.5,
+      );
+      tl.fromTo(
+        "#s4-drop",
+        { scale: 0.9, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: OUT },
+        S4 + 2.9,
+      );
+      tl.to(
+        "#s4-env",
+        { scale: 0.3, x: -20, y: 90, duration: 1.25, ease: INOUT },
+        S4 + 2.72,
+      );
+      tl.to("#s4-cur", { opacity: 0, duration: 0.3 }, S4 + 3.62);
+      // It lands: the zone confirms in the verified green, then clears.
+      tl.to(
+        "#s4-drop",
+        { borderColor: "rgba(85,160,136,0.95)", scale: 1.05, duration: 0.22, ease: "power2.out" },
+        S4 + 3.97,
+      );
+      tl.to("#s4-drop", { opacity: 0, scale: 1, duration: 0.42, ease: "power2.out" }, S4 + 4.22);
+      tl.to("#s4-env", { scale: 0.26, opacity: 0, duration: 0.4, ease: "power2.in" }, S4 + 4.42);
+      tl.to("#s4-app", { scale: 1.03, duration: 0.9, ease: "sine.inOut" }, S4 + 4.1);
+
+      /* --- SCENE 5 : the feature (13.5 -> 17.9) ----------------------- */
+      const S5 = 13.5;
+      crossfade("#s5", S5, 4.4);
+      tl.fromTo(
+        "#s5-h .ltr",
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.44, stagger: 0.042, ease: "power2.out" },
+        S5 + 0.16,
+      );
+      tl.fromTo(
+        "#s5-app",
+        { y: 640, opacity: 0 },
+        { y: 0, opacity: 1, duration: 1.2, ease: OUT },
+        S5 + 0.78,
+      );
+      tl.fromTo(
+        "#s5 .mail",
+        { opacity: 0, x: 46 },
+        { opacity: 1, x: 0, duration: 0.52, stagger: 0.1, ease: OUT },
+        S5 + 1.55,
+      );
+      tl.to("#s5-h", { y: -20, duration: 1.6, ease: "sine.out" }, S5 + 2.5);
+      tl.to("#s5-app", { y: -34, duration: 1.6, ease: "sine.out" }, S5 + 2.5);
+
+      /* --- SCENE 6 : the device (17.7 -> 23.4) ------------------------ */
+      const S6 = 17.7;
+      crossfade("#s6", S6, 5.7);
+      tl.fromTo(
+        "#s6-b1, #s6-b2",
+        { scale: 0.86, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 1.4, ease: OUT },
+        S6 + 0.05,
+      );
+      const ribbons = [
+        ["#s6-r1", -8, -18],
+        ["#s6-r2", 6, 16],
+        ["#s6-r3", 4, -14],
+        ["#s6-r4", -10, 14],
+      ];
+      ribbons.forEach(function (r, i) {
+        tl.fromTo(
+          r[0],
+          { opacity: 0, scale: 0.7, rotation: r[2] },
+          { opacity: 1, scale: 1, rotation: r[1], duration: 0.95, ease: OUT },
+          S6 + 0.1 + i * 0.1,
+        );
+        // A slow finite drift so the ribbons never freeze on a held frame.
+        tl.to(
+          r[0],
+          { rotation: r[1] + (i % 2 ? -5 : 5), y: i % 2 ? 24 : -24, duration: 4.4, ease: "sine.inOut" },
+          S6 + 1.1,
+        );
+      });
+      tl.fromTo(
+        "#s6-phone",
+        { y: 130, opacity: 0, scale: 0.94, rotation: 3.2 },
+        { y: 0, opacity: 1, scale: 1, rotation: -3, duration: 1.05, ease: OUT },
+        S6 + 0.22,
+      );
+      tl.fromTo(
+        "#s6-bb1",
+        { opacity: 0, y: 22, scale: 0.92 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.42, ease: "back.out(1.7)" },
+        S6 + 1.1,
+      );
+      tl.fromTo(
+        "#s6-typ",
+        { opacity: 0, scale: 0.8 },
+        { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" },
+        S6 + 1.65,
+      );
+      // Three dots, cycling a finite number of times.
+      tl.fromTo(
+        "#s6-typ i",
+        { y: 0, opacity: 0.45 },
+        {
+          y: -7,
+          opacity: 1,
+          duration: 0.28,
+          stagger: 0.11,
+          ease: "sine.inOut",
+          repeat: 3,
+          yoyo: true,
+        },
+        S6 + 1.8,
+      );
+      tl.to("#s6-typ", { opacity: 0, scale: 0.7, duration: 0.2, ease: "power2.in" }, S6 + 2.5);
+      tl.fromTo(
+        "#s6-bb2",
+        { opacity: 0, y: 22, scale: 0.92 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.44, ease: "back.out(1.7)" },
+        S6 + 2.6,
+      );
+      tl.fromTo(
+        "#s6-bb3",
+        { opacity: 0, y: 22, scale: 0.92 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.42, ease: "back.out(1.7)" },
+        S6 + 3.25,
+      );
+      // The phone clears the left third; the headline cascades into it.
+      tl.to(
+        "#s6-phone",
+        { x: 486, rotation: 0, duration: 1.15, ease: INOUT },
+        S6 + 3.6,
+      );
+      tl.fromTo(
+        "#s6-cas b",
+        { yPercent: 112 },
+        { yPercent: 0, duration: 0.72, stagger: 0.13, ease: "power4.out" },
+        S6 + 3.92,
+      );
+      tl.to("#s6-cas", { y: -18, duration: 1.2, ease: "sine.out" }, S6 + 4.4);
+
+      /* --- SCENE 8 : the turn (23.2 -> 25.0) -------------------------- */
+      const S8 = 23.2;
+      crossfade("#s8", S8, 1.8, 0.22, 0.2);
+      tl.fromTo(
+        "#s8-r1",
+        { scale: 0.82, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 1.0, ease: OUT },
+        S8 + 0.02,
+      );
+      tl.fromTo(
+        "#s8-r2",
+        { scale: 0.82, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 1.0, ease: OUT },
+        S8 + 0.1,
+      );
+      tl.to("#s8-r1", { x: 34, y: 22, duration: 1.5, ease: "sine.inOut" }, S8 + 0.6);
+      tl.to("#s8-r2", { x: -34, y: -22, duration: 1.5, ease: "sine.inOut" }, S8 + 0.6);
+      tl.fromTo(
+        "#s8-w1, #s8-w2, #s8-w3",
+        { opacity: 0, y: 36 },
+        { opacity: 1, y: 0, duration: 0.56, stagger: 0.1, ease: OUT },
+        S8 + 0.16,
+      );
+      tl.to(
+        "#s8-w1, #s8-w2, #s8-w3",
+        { opacity: 0, y: -24, duration: 0.34, stagger: 0.05, ease: "power2.in" },
+        S8 + 1.4,
+      );
+
+      /* --- SCENE 9 : the payoff (24.8 -> 27.0) ------------------------ */
+      const S9 = 24.8;
+      crossfade("#s9", S9, 2.2, 0.22, 0.2);
+      tl.fromTo(
+        "#s9 .bg-blur",
+        { opacity: 0 },
+        { opacity: 0.5, duration: 0.6, ease: "none" },
+        S9 + 0.05,
+      );
+      tl.fromTo(
+        "#s9-t1, #s9-t2, #s9-t3, #s9-t4",
+        { opacity: 0, y: 50, scale: 0.96 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.62, stagger: 0.16, ease: OUT },
+        S9 + 0.2,
+      );
+      tl.to(
+        "#s9-t1, #s9-t2, #s9-t3, #s9-t4",
+        { y: -28, duration: 1.2, stagger: 0.04, ease: "sine.out" },
+        S9 + 1.28,
+      );
+
+      /* --- SCENE 10 : the end card (26.8 -> 28.6) --------------------- */
+      const S10 = 26.8;
+      tl.fromTo("#s10", { opacity: 0 }, { opacity: 1, duration: 0.22, ease: "none" }, S10);
+      tl.fromTo(
+        "#s10-lock",
+        { scale: 0.82, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.72, ease: "back.out(1.5)" },
+        S10 + 0.1,
+      );
+      tl.fromTo(
+        "#s10-tag",
+        { opacity: 0, y: 28 },
+        { opacity: 1, y: 0, duration: 0.6, ease: OUT },
+        S10 + 0.66,
+      );
+      // The lockup settles rather than freezing dead on the last frame.
+      tl.to("#s10-lock", { y: -10, duration: 0.86, ease: "sine.out" }, S10 + 0.86);
+      tl.to("#s10-tag", { y: -10, duration: 0.86, ease: "sine.out" }, S10 + 1.28);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

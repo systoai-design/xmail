@@ -324,6 +324,73 @@ serve(async (req) => {
         const attachmentCount = Number(data.attachment_count ?? 0);
         const cost = 1 + Math.floor(storedBytes / BYTES_PER_CREDIT) + attachmentCount;
 
+        // The anchor must already exist on-chain before a message is stored.
+        //
+        // This is the point of the product: a message that goes out unproven is
+        // a message that does not do what xmail says it does. So the sender
+        // signs the anchor first, and this verifies it against the chain --
+        // independently recomputing the commitment from the ciphertext in this
+        // request, and requiring the Anchored event to name the sender.
+        //
+        // Ordering it this way is safe because every message is encrypted under
+        // a fresh AES key and IV: a resend produces different ciphertext and
+        // therefore a different hash, so an anchor orphaned by a failed send
+        // costs a fraction of a cent in gas and blocks nothing.
+        let anchorFields: Record<string, unknown> = {};
+        if (data.anchor_tx_hash) {
+          const expectedHash = messageCommitment(
+            data.encrypted_body ?? '',
+            verifiedWallet as `0x${string}`,
+            String(data.to_wallet).toLowerCase() as `0x${string}`,
+          );
+
+          const publicClient = createPublicClient({ chain: robinhood, transport: http(RPC_URL) });
+          let receipt;
+          try {
+            receipt = await publicClient.getTransactionReceipt({
+              hash: data.anchor_tx_hash as `0x${string}`,
+            });
+          } catch {
+            return new Response(
+              JSON.stringify({ error: 'ANCHOR_NOT_FOUND', message: 'The anchor transaction is not on the chain yet.' }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+
+          if (receipt.status !== 'success') {
+            return new Response(
+              JSON.stringify({ error: 'ANCHOR_FAILED', message: 'The anchor transaction failed, so nothing was sent.' }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+
+          const anchoredEvents = parseEventLogs({
+            abi: ANCHORED_EVENT_ABI,
+            logs: receipt.logs,
+            eventName: 'Anchored',
+          }).filter((l: any) => l.address.toLowerCase() === String(MESSAGE_ANCHOR_ADDRESS).toLowerCase());
+
+          const good = anchoredEvents.find(
+            (l: any) =>
+              String(l.args.messageHash).toLowerCase() === expectedHash.toLowerCase() &&
+              String(l.args.from).toLowerCase() === verifiedWallet.toLowerCase(),
+          );
+
+          if (!good) {
+            return new Response(
+              JSON.stringify({ error: 'ANCHOR_MISMATCH', message: 'That anchor does not match this message.' }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+
+          anchorFields = {
+            message_hash: expectedHash,
+            anchor_tx_hash: String(data.anchor_tx_hash).toLowerCase(),
+            anchor_block: Number(receipt.blockNumber),
+            anchored_at: new Date().toISOString(),
+          };
+        }
+
         // Debit and insert are one transaction. Two round trips would leave a
         // window where a send is charged but never stored, or the reverse.
         const { data: result, error: debitError } = await supabaseAdmin.rpc('send_email_debit', {
@@ -354,7 +421,12 @@ serve(async (req) => {
         }
 
         const row = Array.isArray(result) ? result[0] : result;
-        console.log(`Email sent, ${cost} credit(s) charged`);
+
+        if (Object.keys(anchorFields).length > 0 && row?.email_id) {
+          await supabaseAdmin.from('encrypted_emails').update(anchorFields).eq('id', row.email_id);
+        }
+
+        console.log(`Email sent, ${cost} credit(s) charged${data.anchor_tx_hash ? ', anchored' : ''}`);
 
         // Anchoring is NOT done here any more. The sender signs it themselves
         // from the browser, so the contract records them rather than a shared
@@ -687,6 +759,23 @@ serve(async (req) => {
       // Anchored event must name this wallet as the sender, and the hash must
       // match what the stored ciphertext actually commits to. A client cannot
       // mark its own mail as anchored.
+      // Sent mail with no anchor, so the UI can offer to finish the job rather
+      // than leaving it to the user to notice one message at a time.
+      case 'get_unanchored': {
+        const { data: rows, error: unErr } = await supabaseAdmin
+          .from('encrypted_emails')
+          .select('id, encrypted_body, to_wallet, timestamp')
+          .eq('from_wallet', verifiedWallet)
+          .is('anchor_tx_hash', null)
+          .order('timestamp', { ascending: true })
+          .limit(25);
+        if (unErr) throw unErr;
+        return new Response(
+          JSON.stringify({ messages: rows || [] }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       case 'record_anchor': {
         const { emailId, txHash, messageHash } = data;
         if (!/^0x[0-9a-fA-F]{64}$/.test(String(txHash ?? ''))) {
