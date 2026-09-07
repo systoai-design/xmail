@@ -118,6 +118,7 @@ export function LiveChainProof() {
       className="relative overflow-hidden py-24 sm:py-32"
       aria-labelledby="verify-heading"
     >
+      <SectionField variant="top" />
       <SectionField variant="right" />
       <div className="container mx-auto px-6">
         <div className="mx-auto max-w-2xl text-center">

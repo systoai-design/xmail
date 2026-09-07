@@ -52,7 +52,7 @@ export function Stats() {
   ];
   return (
     <section
-      className="border-y border-border/60 py-12"
+      className="py-12"
       aria-label="Key metrics"
     >
       <div className="container mx-auto px-6">

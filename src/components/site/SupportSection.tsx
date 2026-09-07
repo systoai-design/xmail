@@ -13,10 +13,10 @@ import { SectionField } from "./SectionField";
 export function SupportSection() {
   return (
     <section
-      className="relative overflow-hidden py-20 sm:py-24"
+      className="relative py-20 sm:py-24"
       aria-labelledby="support-heading"
     >
-      <SectionField variant="center" />
+      <SectionField variant="center" bleed />
 
       <div className="container relative mx-auto px-6">
         <div className="mx-auto flex max-w-3xl flex-col items-center text-center">

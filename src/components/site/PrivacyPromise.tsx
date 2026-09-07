@@ -339,6 +339,7 @@ export function PrivacyPromise() {
           two surfaces this close in tone reads as a stray rule. A corner radius
           ends the surface without drawing a line. */}
       <section className="relative py-14 sm:py-20" aria-label="Encryption proof">
+        <SectionField variant="bottom" />
         <div className="container mx-auto px-4 sm:px-6">
           <div className="relative overflow-hidden rounded-[28px] bg-[hsl(var(--surface-sunken))] px-5 py-16 sm:rounded-[36px] sm:px-10 sm:py-20">
             <SectionField variant="right" />

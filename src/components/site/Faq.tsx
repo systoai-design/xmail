@@ -34,7 +34,7 @@ export function Faq() {
   return (
     <section
       id="faq"
-      className="relative overflow-hidden border-y border-white/[0.06] py-24 sm:py-32"
+      className="relative py-24 sm:py-32"
       aria-labelledby="faq-heading"
     >
       <SectionField variant="left" />

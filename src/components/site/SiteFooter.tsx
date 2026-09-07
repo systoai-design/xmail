@@ -6,7 +6,14 @@ import {
 } from "@/config/chain";
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border bg-[hsl(var(--surface-sunken))]">
+    <footer className="relative bg-[hsl(var(--surface-sunken))]">
+      {/* background and surface-sunken are one percentage point of lightness
+          apart, so nothing here needed a 17%-lightness rule to separate it --
+          that line WAS the seam. A ramp above the edge carries the step. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 -top-24 h-24 bg-gradient-to-b from-transparent to-[hsl(var(--surface-sunken))]"
+      />
       <div className="container mx-auto px-6 py-12">
         <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-xs">
@@ -54,7 +61,7 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col gap-2 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-10 flex flex-col gap-2 border-t border-white/[0.06] pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} xmail</p>
           <p>
             {isDeployed ? (

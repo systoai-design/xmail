@@ -82,7 +82,7 @@ export function Features() {
   return (
     <section
       id="security"
-      className="relative overflow-hidden border-y border-white/[0.06] py-24 sm:py-32"
+      className="relative overflow-hidden py-24 sm:py-32"
       aria-labelledby="features-heading"
     >
       <SectionField variant="top" />
