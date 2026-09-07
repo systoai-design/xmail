@@ -6,7 +6,7 @@ export function CallToAction({ onConnect }: { onConnect?: () => void }) {
     <section className="relative py-24 sm:py-32">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 -inset-y-24 bg-[radial-gradient(ellipse_60%_50%_at_50%_85%,hsl(var(--primary)/0.12),transparent_70%)]"
+        className="pointer-events-none absolute inset-x-0 -inset-y-32 [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,#000_128px,#000_calc(100%-128px),transparent_100%)] [mask-image:linear-gradient(to_bottom,transparent_0,#000_128px,#000_calc(100%-128px),transparent_100%)] bg-[radial-gradient(ellipse_60%_50%_at_50%_85%,hsl(var(--primary)/0.12),transparent_70%)]"
       />
       <div className="container relative mx-auto px-6">
         <div className="mx-auto max-w-xl text-center">

@@ -30,6 +30,11 @@ export function SectionField({
    * indistinguishable from a rule drawn across the page. Bleeding lets adjacent
    * fields overlap and sum, so the light ramps through the boundary instead of
    * stopping at it. The section must not clip its overflow for this to work.
+   *
+   * The bleed box is masked to zero alpha across the bleed itself. Extending
+   * the box alone just moves the cut: a radial that has not reached transparent
+   * by the box's edge is still guillotined there, 128px lower down. Ramping
+   * alpha is the only version of this that provably ends at nothing.
    */
   bleed?: boolean;
 }) {
@@ -42,7 +47,9 @@ export function SectionField({
     <div
       aria-hidden="true"
       className={`pointer-events-none absolute inset-x-0 ${
-        bleed ? "-inset-y-24 sm:-inset-y-32" : "inset-y-0"
+        bleed
+          ? "-inset-y-32 [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,#000_128px,#000_calc(100%-128px),transparent_100%)] [mask-image:linear-gradient(to_bottom,transparent_0,#000_128px,#000_calc(100%-128px),transparent_100%)]"
+          : "inset-y-0"
       } ${FIELDS[variant]}`}
     />
   );

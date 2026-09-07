@@ -4,6 +4,7 @@ import { openConnect } from "@/lib/events";
 import { useNavigate } from "react-router-dom";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { Hero } from "@/components/site/Hero";
+import { ExplainerVideo } from "@/components/site/ExplainerVideo";
 import { EncryptionLayers } from "@/components/site/EncryptionLayers";
 import { LiveChainProof } from "@/components/site/LiveChainProof";
 import { PrivacyPromise } from "@/components/site/PrivacyPromise";
@@ -54,6 +55,7 @@ const Landing = () => {
       <main>
         <Hero onConnect={openWallet} />
         <Stats />
+        <ExplainerVideo />
         <div id="layers">
           <EncryptionLayers />
         </div>
