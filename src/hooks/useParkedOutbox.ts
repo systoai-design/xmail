@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@/hooks/useWallet";
 import { callSecureEndpoint } from "@/lib/secureApi";
 import { useEncryptionKeys } from "@/hooks/useEncryptionKeys";
 import { useToast } from "@/hooks/use-toast";
@@ -25,7 +25,7 @@ import {
  * thing the product promises it does not have.
  */
 export function useParkedOutbox(onDelivered?: () => void) {
-  const { publicKey, signMessage } = useWallet();
+  const { address, signMessage } = useWallet();
   const { keysReady } = useEncryptionKeys();
   const { toast } = useToast();
   const [parkedCount, setParkedCount] = useState(0);
@@ -42,17 +42,17 @@ export function useParkedOutbox(onDelivered?: () => void) {
   onDeliveredRef.current = onDelivered;
 
   const refreshCount = useCallback(async () => {
-    if (!publicKey || !signMessage) return;
+    if (!address || !signMessage) return;
     try {
-      const res = await callSecureEndpoint("count_parked", {}, publicKey, signMessage);
+      const res = await callSecureEndpoint("count_parked", {}, address, signMessage);
       setParkedCount(res.count ?? 0);
     } catch (err) {
       console.error("Could not count parked mail:", err);
     }
-  }, [publicKey, signMessage]);
+  }, [address, signMessage]);
 
   const flush = useCallback(async () => {
-    if (!publicKey || !signMessage || flushing.current) return;
+    if (!address || !signMessage || flushing.current) return;
     const privateKeyBase64 = localStorage.getItem("encryption_private_key");
     if (!privateKeyBase64) return;
 
@@ -63,7 +63,7 @@ export function useParkedOutbox(onDelivered?: () => void) {
       const res = await callSecureEndpoint(
         "get_deliverable_parked",
         {},
-        publicKey,
+        address,
         signMessage,
       );
       const deliverable = res.parked ?? [];
@@ -92,15 +92,12 @@ export function useParkedOutbox(onDelivered?: () => void) {
           const senderEncryptedSubject = await encryptMessage(subject, ownPublicKey);
           const senderEncryptedBody = await encryptMessage(body, ownPublicKey);
 
-          const signature = await signMessage(
-            new TextEncoder().encode(`${subject}${body}`),
-          );
-          const signatureBase64 = btoa(String.fromCharCode(...signature));
+          const signatureBase64 = await signMessage(`${subject}${body}`);
 
           await callSecureEndpoint(
             "send_email",
             {
-              from_wallet: publicKey.toBase58(),
+              from_wallet: address,
               to_wallet: item.to_wallet,
               encrypted_subject: encryptedSubject,
               encrypted_body: encryptedBody,
@@ -109,7 +106,7 @@ export function useParkedOutbox(onDelivered?: () => void) {
               sender_signature: signatureBase64,
               attachment_count: 0,
             },
-            publicKey,
+            address,
             signMessage,
           );
 
@@ -118,7 +115,7 @@ export function useParkedOutbox(onDelivered?: () => void) {
           await callSecureEndpoint(
             "delete_parked",
             { parkedId: item.id },
-            publicKey,
+            address,
             signMessage,
           );
           delivered += 1;
@@ -141,18 +138,18 @@ export function useParkedOutbox(onDelivered?: () => void) {
     } finally {
       flushing.current = false;
     }
-  }, [publicKey, signMessage, toast]);
+  }, [address, signMessage, toast]);
 
   useEffect(() => {
-    if (!keysReady || !publicKey) return;
+    if (!keysReady || !address) return;
     // Once per wallet per mount. Parked mail becomes deliverable when someone
     // else registers, which is not an event this tab can observe, so re-running
     // on every render bought nothing and cost everything.
-    const key = publicKey.toBase58();
+    const key = address;
     if (flushedFor.current === key) return;
     flushedFor.current = key;
     void flush();
-  }, [keysReady, publicKey, flush]);
+  }, [keysReady, address, flush]);
 
   return { parkedCount, flush, refreshCount };
 }

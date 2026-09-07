@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@/hooks/useWallet';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export const useKeyHealthMonitor = () => {
-  const { publicKey, connected } = useWallet();
+  const { address, connected } = useWallet();
   const { toast } = useToast();
   const [keyAge, setKeyAge] = useState<number>(0);
   const [shouldRotate, setShouldRotate] = useState(false);
   
   useEffect(() => {
-    if (!connected || !publicKey) {
+    if (!connected || !address) {
       setKeyAge(0);
       setShouldRotate(false);
       return;
@@ -21,16 +21,16 @@ export const useKeyHealthMonitor = () => {
     // Check every hour
     const interval = setInterval(checkKeyAge, 60 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [connected, publicKey]);
+  }, [connected, address]);
   
   const checkKeyAge = async () => {
-    if (!publicKey) return;
+    if (!address) return;
     
     try {
       const { data } = await supabase
         .from('encryption_keys')
         .select('key_created_at, created_at')
-        .eq('wallet_address', publicKey.toBase58())
+        .eq('wallet_address', address)
         .maybeSingle();
       
       if (!data) return;

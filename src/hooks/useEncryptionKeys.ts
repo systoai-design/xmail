@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@/hooks/useWallet";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -30,7 +30,7 @@ import {
  * button.
  */
 export const useEncryptionKeys = () => {
-  const { publicKey, connected, signMessage } = useWallet();
+  const { address, connected, signMessage } = useWallet();
   const { toast } = useToast();
 
   const [keysReady, setKeysReady] = useState(false);
@@ -38,7 +38,7 @@ export const useEncryptionKeys = () => {
   const [unlocking, setUnlocking] = useState(false);
   const setupInProgress = useRef(false);
 
-  const walletAddress = publicKey?.toBase58() ?? null;
+  const walletAddress = address;
 
   useEffect(() => {
     if (!connected || !walletAddress) {

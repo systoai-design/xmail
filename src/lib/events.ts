@@ -34,6 +34,19 @@ export function onMailChanged(callback: () => void) {
   return () => document.removeEventListener(MAIL_CHANGED, handler);
 }
 
+/** Any CTA can ask for the wallet dialog without owning its state. */
+const OPEN_CONNECT = 'xmail:openConnect';
+
+export function openConnect() {
+  document.dispatchEvent(new CustomEvent(OPEN_CONNECT));
+}
+
+export function onOpenConnect(callback: () => void) {
+  const handler = () => callback();
+  document.addEventListener(OPEN_CONNECT, handler);
+  return () => document.removeEventListener(OPEN_CONNECT, handler);
+}
+
 export function onCreditsChanged(callback: (balance?: number) => void) {
   const handler = (e: Event) => callback((e as CustomEvent).detail?.balance);
   document.addEventListener(CREDITS_CHANGED, handler);

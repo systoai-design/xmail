@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@/hooks/useWallet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -25,7 +25,7 @@ import { ScheduleSelector } from '@/components/ScheduleSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { encryptMessage, decryptMessage, importPublicKey, importPrivateKey } from '@/lib/encryption';
-import { PublicKey } from '@solana/web3.js';
+import { isAddress } from 'viem';
 import { useEncryptionKeys } from '@/hooks/useEncryptionKeys';
 import { isAdmin } from '@/lib/userRoles';
 import { callSecureEndpoint } from '@/lib/secureApi';
@@ -49,7 +49,7 @@ interface ComposeModalProps {
 }
 
 export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubject, initialBody, onSent, onSubjectChange, onCreditsChanged }: ComposeModalProps) => {
-  const { publicKey, signMessage } = useWallet();
+  const { address, signMessage } = useWallet();
   const { toast } = useToast();
   const { keysReady } = useEncryptionKeys();
   
@@ -76,15 +76,15 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
 
   // Check admin status
   useEffect(() => {
-    if (publicKey) {
-      isAdmin(publicKey.toBase58()).then(setUserIsAdmin);
+    if (address) {
+      isAdmin(address).then(setUserIsAdmin);
     }
-  }, [publicKey]);
+  }, [address]);
 
   // Load draft if provided
   useEffect(() => {
     const loadDraft = async () => {
-      if (!draftId || !publicKey || !signMessage || !keysReady) return;
+      if (!draftId || !address || !signMessage || !keysReady) return;
 
       const privateKeyBase64 = localStorage.getItem('encryption_private_key');
       if (!privateKeyBase64) {
@@ -100,7 +100,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
         const response = await callSecureEndpoint(
           'get_draft',
           { draftId },
-          publicKey,
+          address,
           signMessage
         );
 
@@ -133,7 +133,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
     };
 
     loadDraft();
-  }, [draftId, publicKey, signMessage, keysReady, toast]);
+  }, [draftId, address, signMessage, keysReady, toast]);
 
   // Notify parent of subject changes
   useEffect(() => {
@@ -142,7 +142,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
 
   // Auto-save draft
   const saveDraft = useCallback(async (showToast = false, force = false): Promise<string | null> => {
-    if (!publicKey || !signMessage || !keysReady) return null;
+    if (!address || !signMessage || !keysReady) return null;
     // An attachment has to hang off a draft row, so attaching to an untouched
     // compose still needs one created. Without `force` this returned the null
     // currentDraftId and the first attachment always failed with
@@ -154,7 +154,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
       const { data: ownKeyData } = await supabase
         .from('encryption_keys')
         .select('public_key')
-        .eq('wallet_address', publicKey.toBase58())
+        .eq('wallet_address', address)
         .single();
 
       if (!ownKeyData) {
@@ -182,7 +182,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
           encrypted_subject: encryptedSubject,
           encrypted_body: encryptedBody,
         },
-        publicKey,
+        address,
         signMessage
       );
 
@@ -212,7 +212,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
     } finally {
       setSaving(false);
     }
-  }, [publicKey, signMessage, keysReady, to, subject, body, currentDraftId, toast]);
+  }, [address, signMessage, keysReady, to, subject, body, currentDraftId, toast]);
 
   // Auto-save timer
   useEffect(() => {
@@ -247,7 +247,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
       setValidationStatus('checking');
       
       try {
-        new PublicKey(trimmed);
+        if (!isAddress(trimmed)) throw new Error('invalid');
         
         const { data, error } = await supabase
           .from('encryption_keys')
@@ -282,7 +282,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
   }, [to]);
 
   const handleSend = async () => {
-    if (!publicKey || !signMessage) {
+    if (!address || !signMessage) {
       toast({
         title: 'Wallet not connected',
         description: 'Please connect your wallet first',
@@ -302,12 +302,10 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
 
     const recipient = to.trim();
     
-    try {
-      new PublicKey(recipient);
-    } catch {
+    if (!isAddress(recipient)) {
       toast({
         title: 'Invalid wallet address',
-        description: 'Please enter a valid Solana wallet address',
+        description: 'Enter a valid 0x wallet address',
         variant: 'destructive',
       });
       return;
@@ -338,7 +336,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
         const { data: ownKey } = await supabase
           .from('encryption_keys')
           .select('public_key')
-          .eq('wallet_address', publicKey.toBase58())
+          .eq('wallet_address', address)
           .single();
 
         if (!ownKey) {
@@ -355,18 +353,18 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
         await callSecureEndpoint(
           'park_email',
           {
-            from_wallet: publicKey.toBase58(),
+            from_wallet: address,
             to_wallet: recipient,
             sender_encrypted_subject: await encryptMessage(subject, ownPub),
             sender_encrypted_body: await encryptMessage(body, ownPub),
           },
-          publicKey,
+          address,
           signMessage
         );
 
         if (currentDraftId) {
           try {
-            await callSecureEndpoint('delete_draft', { draftId: currentDraftId }, publicKey, signMessage);
+            await callSecureEndpoint('delete_draft', { draftId: currentDraftId }, address, signMessage);
           } catch (err) {
             console.error('Error deleting draft:', err);
           }
@@ -397,16 +395,16 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
       const { data: senderKeyData } = await supabase
         .from('encryption_keys')
         .select('public_key')
-        .eq('wallet_address', publicKey.toBase58())
+        .eq('wallet_address', address)
         .single();
 
       const senderPublicKey = await importPublicKey(senderKeyData.public_key);
       const senderEncryptedSubject = await encryptMessage(subject, senderPublicKey);
       const senderEncryptedBody = await encryptMessage(body, senderPublicKey);
 
-      const message = new TextEncoder().encode(`${subject}${body}`);
-      const signature = await signMessage(message);
-      const signatureBase64 = btoa(String.fromCharCode(...signature));
+      // EIP-191 over the plaintext the sender is attesting to. The signature
+      // is already a 0x string, so there is nothing to re-encode.
+      const signatureBase64 = await signMessage(`${subject}${body}`);
 
       // payment_tx_signature used to be `'mock_' + Math.random()`, a fabricated
       // receipt for a payment that never happened. Sends are now charged in
@@ -422,7 +420,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
           const sendResult = await callSecureEndpoint(
             'send_email',
             {
-              from_wallet: publicKey.toBase58(),
+              from_wallet: address,
               to_wallet: recipient,
               encrypted_subject: encryptedSubject,
               encrypted_body: encryptedBody,
@@ -431,13 +429,13 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
               sender_signature: signatureBase64,
               attachment_count: attachmentCount,
             },
-            publicKey,
+            address,
             signMessage
           );
 
           if (draftIdAtSend) {
             try {
-              await callSecureEndpoint('delete_draft', { draftId: draftIdAtSend }, publicKey, signMessage);
+              await callSecureEndpoint('delete_draft', { draftId: draftIdAtSend }, address, signMessage);
             } catch (err) {
               console.error('Error deleting draft:', err);
             }
@@ -525,7 +523,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
   };
 
   const handleSchedule = async (scheduledDate: Date) => {
-    if (!publicKey || !signMessage) {
+    if (!address || !signMessage) {
       toast({
         title: 'Wallet not connected',
         description: 'Please connect your wallet first',
@@ -545,12 +543,10 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
 
     const recipient = to.trim();
     
-    try {
-      new PublicKey(recipient);
-    } catch {
+    if (!isAddress(recipient)) {
       toast({
         title: 'Invalid wallet address',
-        description: 'Please enter a valid Solana wallet address',
+        description: 'Enter a valid 0x wallet address',
         variant: 'destructive',
       });
       return;
@@ -581,7 +577,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
         const { data: ownKey } = await supabase
           .from('encryption_keys')
           .select('public_key')
-          .eq('wallet_address', publicKey.toBase58())
+          .eq('wallet_address', address)
           .single();
 
         if (!ownKey) {
@@ -598,18 +594,18 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
         await callSecureEndpoint(
           'park_email',
           {
-            from_wallet: publicKey.toBase58(),
+            from_wallet: address,
             to_wallet: recipient,
             sender_encrypted_subject: await encryptMessage(subject, ownPub),
             sender_encrypted_body: await encryptMessage(body, ownPub),
           },
-          publicKey,
+          address,
           signMessage
         );
 
         if (currentDraftId) {
           try {
-            await callSecureEndpoint('delete_draft', { draftId: currentDraftId }, publicKey, signMessage);
+            await callSecureEndpoint('delete_draft', { draftId: currentDraftId }, address, signMessage);
           } catch (err) {
             console.error('Error deleting draft:', err);
           }
@@ -635,9 +631,9 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
       const encryptedSubject = await encryptMessage(subject, recipientPublicKey);
       const encryptedBody = await encryptMessage(body, recipientPublicKey);
 
-      const message = new TextEncoder().encode(`${subject}${body}`);
-      const signature = await signMessage(message);
-      const signatureBase64 = btoa(String.fromCharCode(...signature));
+      // EIP-191 over the plaintext the sender is attesting to. The signature
+      // is already a 0x string, so there is nothing to re-encode.
+      const signatureBase64 = await signMessage(`${subject}${body}`);
 
       await callSecureEndpoint(
         'schedule_email',
@@ -649,7 +645,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
           scheduled_for: scheduledDate.toISOString(),
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
-        publicKey,
+        address,
         signMessage
       );
 
@@ -659,7 +655,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
           await callSecureEndpoint(
             'delete_draft',
             { draftId: currentDraftId },
-            publicKey,
+            address,
             signMessage
           );
         } catch (error) {
@@ -705,7 +701,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
    */
   const handleClose = async () => {
     const hasContent = Boolean(to.trim() || subject.trim() || body.trim());
-    if (!hasContent || !publicKey || !signMessage) {
+    if (!hasContent || !address || !signMessage) {
       onClose();
       return;
     }
@@ -936,7 +932,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
         <AttachmentUpload
           ref={attachRef}
           draftId={currentDraftId}
-          walletPublicKey={publicKey}
+          walletPublicKey={address}
           signMessage={signMessage}
           onDraftCreated={setCurrentDraftId}
           autoSaveDraft={() => saveDraft(false, true)}

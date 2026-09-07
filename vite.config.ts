@@ -29,7 +29,17 @@ export default defineConfig(({ mode }) => ({
         manualChunks(id) {
           if (!id.includes("node_modules")) return;
           if (id.includes("/three/") || id.includes("@react-three")) return "three";
-          if (id.includes("@solana") || id.includes("@walletconnect") || id.includes("@reown")) {
+          // Was @solana. The wallet stack is wagmi + connectors now, and it is
+          // still worth its own chunk: a visitor reading the landing page has
+          // no reason to parse it before they click Connect.
+          if (
+            id.includes("/wagmi/") ||
+            id.includes("@wagmi/") ||
+            id.includes("@walletconnect") ||
+            id.includes("@coinbase") ||
+            id.includes("@metamask") ||
+            id.includes("@reown")
+          ) {
             return "wallet";
           }
           if (id.includes("/viem/") || id.includes("/ox/") || id.includes("@noble") || id.includes("@scure")) {

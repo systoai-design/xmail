@@ -1,4 +1,4 @@
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@/hooks/useWallet';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
 import { Search, Loader2, X, RefreshCw, Trash2, Key, AlertCircle, Menu } from 'lucide-react';
@@ -45,7 +45,7 @@ interface Draft {
 }
 
 const Inbox = () => {
-  const { connected, publicKey, disconnect, signMessage } = useWallet();
+  const { connected, address, disconnect, signMessage } = useWallet();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { keysReady, needsUnlock, unlocking, unlock } = useEncryptionKeys();
@@ -82,11 +82,11 @@ const Inbox = () => {
 
   // Check for missing key and show banner
   useEffect(() => {
-    if (keysReady && connected && publicKey) {
+    if (keysReady && connected && address) {
       const hasPrivateKey = !!localStorage.getItem('encryption_private_key');
       setShowKeyBanner(!hasPrivateKey);
     }
-  }, [keysReady, connected, publicKey]);
+  }, [keysReady, connected, address]);
 
   // Listen for key imports to hide banner
   useEffect(() => {
@@ -135,13 +135,13 @@ const Inbox = () => {
     loadEmails();
     loadSentEmails();
     loadDrafts();
-  }, [connected, keysReady, navigate, publicKey]);
+  }, [connected, keysReady, navigate, address]);
 
   // Set up Realtime listener for new emails
   useEffect(() => {
-    if (!connected || !publicKey || !keysReady) return;
+    if (!connected || !address || !keysReady) return;
 
-    console.log('Setting up realtime listener for:', publicKey.toBase58());
+    console.log('Setting up realtime listener for:', address);
 
     const channel = supabase
       .channel('inbox-updates')
@@ -151,7 +151,7 @@ const Inbox = () => {
           event: 'INSERT',
           schema: 'public',
           table: 'encrypted_emails',
-          filter: `to_wallet=eq.${publicKey.toBase58()}`
+          filter: `to_wallet=eq.${address}`
         },
         (payload) => {
           console.log('New email received:', payload);
@@ -182,16 +182,16 @@ const Inbox = () => {
       console.log('Cleaning up realtime listener');
       supabase.removeChannel(channel);
     };
-  }, [connected, publicKey, keysReady, notificationPermission, toast]);
+  }, [connected, address, keysReady, notificationPermission, toast]);
 
   const loadEmails = async () => {
-    if (!publicKey || !signMessage) return;
+    if (!address || !signMessage) return;
 
     try {
       const response = await callSecureEndpoint(
         'get_inbox',
         {},
-        publicKey,
+        address,
         signMessage
       );
       setEmails(response.emails || []);
@@ -208,13 +208,13 @@ const Inbox = () => {
   };
 
   const loadSentEmails = async () => {
-    if (!publicKey || !signMessage) return;
+    if (!address || !signMessage) return;
 
     try {
       const response = await callSecureEndpoint(
         'get_sent',
         {},
-        publicKey,
+        address,
         signMessage
       );
       setSentEmails(response.emails || []);
@@ -229,13 +229,13 @@ const Inbox = () => {
   };
 
   const loadDrafts = async () => {
-    if (!publicKey || !signMessage) return;
+    if (!address || !signMessage) return;
 
     try {
       const response = await callSecureEndpoint(
         'get_drafts',
         {},
-        publicKey,
+        address,
         signMessage
       );
       setDrafts(response.drafts || []);
@@ -273,7 +273,7 @@ const Inbox = () => {
       const response = await callSecureEndpoint(
         'toggle_star',
         { emailId, starred: !currentStarred },
-        publicKey,
+        address,
         signMessage
       );
 
@@ -303,7 +303,7 @@ const Inbox = () => {
   };
 
   const handleBulkDelete = async () => {
-    if (!publicKey || !signMessage) return;
+    if (!address || !signMessage) return;
 
     setDeleting(true);
     try {
@@ -312,7 +312,7 @@ const Inbox = () => {
           callSecureEndpoint(
             'delete_draft',
             { draftId },
-            publicKey,
+            address,
             signMessage
           )
         );
@@ -324,7 +324,7 @@ const Inbox = () => {
           callSecureEndpoint(
             'delete_email',
             { emailId },
-            publicKey,
+            address,
             signMessage
           )
         );

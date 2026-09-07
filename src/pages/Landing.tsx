@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { useWallet } from "@/hooks/useWallet";
+import { openConnect } from "@/lib/events";
 import { useNavigate } from "react-router-dom";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { Hero } from "@/components/site/Hero";
@@ -15,7 +15,6 @@ import { Faq } from "@/components/site/Faq";
 import { SiteFooter } from "@/components/site/SiteFooter";
 const Landing = () => {
   const { connected } = useWallet();
-  const { setVisible } = useWalletModal();
   const navigate = useNavigate();
   // Read once, at mount. The previous version read this flag inside the same
   // effect that performed the redirect, and cleared it there too -- so arriving
@@ -45,7 +44,7 @@ const Landing = () => {
     if (connected) {
       navigate("/inbox");
     } else {
-      setVisible(true);
+      openConnect();
     }
   };
   return (

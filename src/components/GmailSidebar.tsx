@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@/hooks/useWallet";
 import {
   Menu,
   X,
@@ -54,7 +54,7 @@ export const GmailSidebar = ({
 }: GmailSidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { publicKey } = useWallet();
+  const { address } = useWallet();
   const { keysReady } = useEncryptionKeys();
   const { balance } = useCredits();
   const [collapsed, setCollapsed] = useState(false);
@@ -65,7 +65,7 @@ export const GmailSidebar = ({
   const setMobileOpen = onMobileOpenChange || setInternalMobileOpen;
 
   const activeTab = new URLSearchParams(location.search).get("tab") || "inbox";
-  const address = publicKey?.toBase58() ?? "";
+
 
   const navItems = [
     { label: "Inbox", icon: Inbox, value: "inbox", badge: unreadCount },
@@ -199,7 +199,7 @@ export const GmailSidebar = ({
 
       {/* --- identity ----------------------------------------------------- */}
       <div className="border-t border-border/60 p-3">
-        {!collapsed && publicKey && (
+        {!collapsed && address && (
           <>
             {/* Credits. Sending is the only thing that spends them, so the
                 number lives next to Compose rather than buried in settings. */}

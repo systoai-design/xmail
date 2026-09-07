@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@/hooks/useWallet";
 import { Clock, Trash2, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { callSecureEndpoint } from "@/lib/secureApi";
@@ -25,7 +25,7 @@ interface Parked {
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-6)}`;
 
 export function ParkedList({ onFlush }: { onFlush?: () => void }) {
-  const { publicKey, signMessage } = useWallet();
+  const { address, signMessage } = useWallet();
   const { toast } = useToast();
   const [rows, setRows] = useState<Parked[]>([]);
   const [subjects, setSubjects] = useState<Record<string, string>>({});
@@ -33,10 +33,10 @@ export function ParkedList({ onFlush }: { onFlush?: () => void }) {
   const [deleting, setDeleting] = useState<string | null>(null);
 
   const load = async () => {
-    if (!publicKey || !signMessage) return;
+    if (!address || !signMessage) return;
     setLoading(true);
     try {
-      const res = await callSecureEndpoint("get_parked", {}, publicKey, signMessage);
+      const res = await callSecureEndpoint("get_parked", {}, address, signMessage);
       const parked: Parked[] = res.parked ?? [];
       setRows(parked);
 
@@ -66,13 +66,13 @@ export function ParkedList({ onFlush }: { onFlush?: () => void }) {
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publicKey]);
+  }, [address]);
 
   const discard = async (id: string) => {
-    if (!publicKey || !signMessage) return;
+    if (!address || !signMessage) return;
     setDeleting(id);
     try {
-      await callSecureEndpoint("delete_parked", { parkedId: id }, publicKey, signMessage);
+      await callSecureEndpoint("delete_parked", { parkedId: id }, address, signMessage);
       setRows((r) => r.filter((x) => x.id !== id));
       emitMailChanged();
       toast({ title: "Parked message discarded" });

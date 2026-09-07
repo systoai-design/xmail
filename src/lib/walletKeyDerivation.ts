@@ -1,7 +1,17 @@
 /**
- * Wallet-based key derivation utilities
- * Derives encryption keys from Solana wallet signatures to enable
- * permanent, cross-device encryption key storage
+ * Wallet-derived key material.
+ *
+ * The encrypted backup of your private key is locked with a key derived from a
+ * wallet signature, so only that wallet can unlock it and nothing has to be
+ * remembered or stored anywhere.
+ *
+ * This depends on the wallet signing deterministically: the same message and
+ * key must always yield the same signature, or the derived key changes and the
+ * backup stops opening. Ethereum wallets use RFC 6979 deterministic ECDSA, so
+ * this holds -- but it is a real assumption, not an incidental one.
+ *
+ * Versioned v2 because the scheme changed with the move from Solana to EVM.
+ * v1 backups were made by Solana wallets whose addresses no longer exist here.
  */
 
 /**
@@ -9,17 +19,26 @@
  * This message will always be the same, so signature is deterministic
  */
 export async function deriveKeyFromWallet(
-  signMessage: (message: Uint8Array) => Promise<Uint8Array>,
+  signMessage: (message: string) => Promise<string>,
   walletAddress: string
 ): Promise<CryptoKey> {
-  const message = `xMail Key Encryption v1\nWallet: ${walletAddress}`;
-  const messageBytes = new TextEncoder().encode(message);
-  
-  // Sign the message with Solana wallet
-  const signature = await signMessage(messageBytes);
-  
-  // Use signature as key material for AES-256-GCM
-  const signatureBuffer = signature.slice(0, 32).buffer as ArrayBuffer; // Use first 32 bytes
+  // Versioned v2 because the scheme changed with the move from Solana to EVM,
+  // and lowercased because the same wallet must never derive two different keys
+  // depending on how the address happened to be cased.
+  const message = `xmail Key Encryption v2\nWallet: ${walletAddress.toLowerCase()}`;
+
+  // personal_sign returns a 0x-prefixed 65-byte signature. This relies on the
+  // wallet signing deterministically -- Ethereum wallets use RFC 6979, so the
+  // same message and key always give the same signature. If that stopped
+  // holding, the derived key would change and the backup would stop opening.
+  const signatureHex = await signMessage(message);
+  const hex = signatureHex.startsWith("0x") ? signatureHex.slice(2) : signatureHex;
+  const signature = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < signature.length; i++) {
+    signature[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  }
+
+  const signatureBuffer = signature.slice(0, 32).buffer as ArrayBuffer;
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
     signatureBuffer,

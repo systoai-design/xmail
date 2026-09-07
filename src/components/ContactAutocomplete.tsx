@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@/hooks/useWallet';
 import { supabase } from '@/integrations/supabase/client';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -26,7 +26,7 @@ export const ContactAutocomplete = ({
   placeholder,
   className,
 }: ContactAutocompleteProps) => {
-  const { publicKey } = useWallet();
+  const { address } = useWallet();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value);
@@ -36,18 +36,18 @@ export const ContactAutocomplete = ({
   }, [value]);
 
   useEffect(() => {
-    if (publicKey && open) {
+    if (address && open) {
       loadContacts();
     }
-  }, [publicKey, open]);
+  }, [address, open]);
 
   const loadContacts = async () => {
-    if (!publicKey) return;
+    if (!address) return;
 
     const { data } = await supabase
       .from('contacts')
       .select('*')
-      .eq('owner_wallet', publicKey.toBase58())
+      .eq('owner_wallet', address)
       .order('nickname');
 
     setContacts(data || []);

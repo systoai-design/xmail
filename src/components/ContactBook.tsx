@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@/hooks/useWallet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,7 +13,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Users, Plus, Trash2 } from 'lucide-react';
-import { PublicKey } from '@solana/web3.js';
+import { isAddress } from 'viem';
 
 interface Contact {
   id: string;
@@ -22,7 +22,7 @@ interface Contact {
 }
 
 export const ContactBook = () => {
-  const { publicKey } = useWallet();
+  const { address } = useWallet();
   const { toast } = useToast();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -31,18 +31,18 @@ export const ContactBook = () => {
   const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
-    if (isOpen && publicKey) {
+    if (isOpen && address) {
       loadContacts();
     }
-  }, [isOpen, publicKey]);
+  }, [isOpen, address]);
 
   const loadContacts = async () => {
-    if (!publicKey) return;
+    if (!address) return;
 
     const { data, error } = await supabase
       .from('contacts')
       .select('*')
-      .eq('owner_wallet', publicKey.toBase58())
+      .eq('owner_wallet', address)
       .order('nickname');
 
     if (error) {
@@ -54,7 +54,7 @@ export const ContactBook = () => {
   };
 
   const addContact = async () => {
-    if (!publicKey || !newNickname || !newWallet) {
+    if (!address || !newNickname || !newWallet) {
       toast({
         title: 'Missing fields',
         description: 'Please enter both nickname and wallet address',
@@ -64,12 +64,10 @@ export const ContactBook = () => {
     }
 
     // Validate wallet address
-    try {
-      new PublicKey(newWallet.trim());
-    } catch {
+    if (!isAddress(newWallet.trim())) {
       toast({
         title: 'Invalid wallet address',
-        description: 'Please enter a valid Solana wallet address',
+        description: 'Enter a valid 0x wallet address',
         variant: 'destructive',
       });
       return;
@@ -79,7 +77,7 @@ export const ContactBook = () => {
 
     try {
       const { error } = await supabase.from('contacts').insert({
-        owner_wallet: publicKey.toBase58(),
+        owner_wallet: address,
         wallet_address: newWallet.trim(),
         nickname: newNickname.trim(),
       });

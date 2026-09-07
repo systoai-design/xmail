@@ -9,8 +9,6 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { KeyRegistrar } from "./components/KeyRegistrar";
 import Landing from "./pages/Landing";
 import Inbox from "./pages/Inbox";
-import Compose from "./pages/Compose";
-import Scheduled from "./pages/Scheduled";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,8 +30,6 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/inbox" element={<Inbox />} />
-                <Route path="/compose" element={<Compose />} />
-                <Route path="/scheduled" element={<Scheduled />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

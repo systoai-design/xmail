@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@/hooks/useWallet';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -21,7 +21,7 @@ interface KeyManagementProps {
 }
 
 export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
-  const { publicKey } = useWallet();
+  const { address } = useWallet();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [importKeyValue, setImportKeyValue] = useState('');
@@ -57,16 +57,16 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
       // Fetch last backup timestamp
       fetchBackupStatus();
     }
-  }, [open, publicKey]);
+  }, [open, address]);
 
   const fetchBackupStatus = async () => {
-    if (!publicKey) return;
+    if (!address) return;
     
     try {
       const { data, error } = await supabase
         .from('encryption_keys')
         .select('updated_at, encrypted_private_key')
-        .eq('wallet_address', publicKey.toBase58())
+        .eq('wallet_address', address)
         .maybeSingle();
       
       if (error) throw error;
@@ -144,11 +144,11 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
 
       const privateKey = await importPrivateKey(keyValue);
 
-      if (publicKey) {
+      if (address) {
         const { data: sentEmails } = await supabase
           .from('encrypted_emails')
           .select('encrypted_subject')
-          .eq('from_wallet', publicKey.toBase58())
+          .eq('from_wallet', address)
           .limit(1)
           .maybeSingle();
 
@@ -194,7 +194,7 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
       localStorage.setItem('encryption_private_key', privateKeyStr);
       
       // Update backend with new public key (encrypted private key will be updated by useEncryptionKeys hook)
-      if (publicKey) {
+      if (address) {
         await supabase
           .from('encryption_keys')
           .update({
@@ -202,7 +202,7 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
             encrypted_private_key: null, // Clear old encrypted key, will be regenerated
             iv: null
           })
-          .eq('wallet_address', publicKey.toBase58());
+          .eq('wallet_address', address);
       }
       
       toast({ 
@@ -220,7 +220,7 @@ export const KeyManagement = ({ compact = false }: KeyManagementProps) => {
   };
 
   const handleForceResync = async () => {
-    if (!publicKey) return;
+    if (!address) return;
     
     setResyncing(true);
     try {

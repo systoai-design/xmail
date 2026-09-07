@@ -1,11 +1,9 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import nacl from 'https://esm.sh/tweetnacl@1.0.3';
-import bs58 from 'https://esm.sh/bs58@5.0.0';
 import * as djwt from 'https://deno.land/x/djwt@v3.0.1/mod.ts';
 import {
   createWalletClient, createPublicClient, http, defineChain,
-  keccak256, encodePacked,
+  keccak256, encodePacked, verifyMessage, isAddress,
 } from 'https://esm.sh/viem@2.21.54';
 import { privateKeyToAccount } from 'https://esm.sh/viem@2.21.54/accounts';
 
@@ -69,15 +67,6 @@ const ANCHOR_ABI = [
   },
 ] as const;
 
-/**
- * Solana public key -> EVM address. Duplicated from src/lib/walletAddress.ts;
- * the two MUST agree or every anchor verifies as absent. Change one, change both.
- */
-function walletToEvmAddress(base58Address: string): `0x${string}` {
-  const bytes = bs58.decode(base58Address);
-  return `0x${keccak256(bytes).slice(-40)}` as `0x${string}`;
-}
-
 /** Must stay byte-identical to messageCommitment() in src/lib/chainClient.ts. */
 function messageCommitment(ciphertext: string, from: `0x${string}`, to: `0x${string}`) {
   return keccak256(encodePacked(['string', 'address', 'address'], [ciphertext, from, to]));
@@ -90,8 +79,11 @@ async function anchorMessage(ciphertext: string, fromWallet: string, toWallet: s
     return null;
   }
   try {
-    const from = walletToEvmAddress(fromWallet);
-    const to = walletToEvmAddress(toWallet);
+    // Wallet addresses ARE EVM addresses now. The keccak derivation that used
+    // to bridge Solana addresses onto this chain is gone, and with it a whole
+    // class of "the two sides derived differently" bug.
+    const from = fromWallet as `0x${string}`;
+    const to = toWallet as `0x${string}`;
     const messageHash = messageCommitment(ciphertext, from, to);
 
     const account = privateKeyToAccount(key as `0x${string}`);
@@ -193,22 +185,26 @@ serve(async (req) => {
         throw new Error('Authentication required');
       }
 
-      const messageBytes = new TextEncoder().encode(JSON.stringify(data));
-      const signatureBytes = bs58.decode(signature);
-      const publicKeyBytes = bs58.decode(walletPublicKey);
-      
-      const verified = nacl.sign.detached.verify(
-        messageBytes,
-        signatureBytes,
-        publicKeyBytes
-      );
+      if (!isAddress(walletPublicKey)) {
+        throw new Error('Invalid wallet address');
+      }
+
+      // EIP-191. verifyMessage recovers the signer and compares, so a request
+      // cannot claim an address it does not hold the key for.
+      const verified = await verifyMessage({
+        address: walletPublicKey as `0x${string}`,
+        message: JSON.stringify(data),
+        signature: signature as `0x${string}`,
+      });
 
       if (!verified) {
         console.error('Signature verification failed');
         throw new Error('Invalid signature');
       }
 
-      verifiedWallet = walletPublicKey;
+      // Lowercased at the boundary. Wallets send checksummed addresses and every
+      // column stores lowercase; one mismatched comparison is an empty mailbox.
+      verifiedWallet = walletPublicKey.toLowerCase();
       console.log('Signature verified successfully');
     }
 

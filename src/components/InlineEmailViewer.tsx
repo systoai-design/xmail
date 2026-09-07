@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@/hooks/useWallet';
 import { Button } from '@/components/ui/button';
 import {
   X,
@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import { ACTIVE_CHAIN, explorerTx } from '@/config/chain';
 import { messageCommitment, verifyRelayedAnchor } from '@/lib/chainClient';
-import { walletToEvmAddress } from '@/lib/walletAddress';
 import { useToast } from '@/hooks/use-toast';
 import { decryptMessage, importPrivateKey, decryptAESKey, decryptFile } from '@/lib/encryption';
 import { callSecureEndpoint } from '@/lib/secureApi';
@@ -67,7 +66,7 @@ interface InlineEmailViewerProps {
 }
 
 export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply, onForward }: InlineEmailViewerProps) => {
-  const { publicKey, signMessage } = useWallet();
+  const { address, signMessage } = useWallet();
   const { toast } = useToast();
   const [email, setEmail] = useState<EmailData | null>(null);
   const [decryptedSubject, setDecryptedSubject] = useState('');
@@ -99,8 +98,9 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply, onForwa
     try {
       // 1. Recompute the commitment from the ciphertext sitting in front of us.
       //    This is what binds the message to its sender and recipient.
-      const from = walletToEvmAddress(email.from_wallet);
-      const to = walletToEvmAddress(email.to_wallet);
+      // Wallet addresses are EVM addresses now, so there is nothing to derive.
+      const from = email.from_wallet as `0x${string}`;
+      const to = email.to_wallet as `0x${string}`;
       const recomputed = messageCommitment(email.encrypted_body, from, to);
 
       // 2. It must match what was recorded. A mismatch means the stored
@@ -141,10 +141,10 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply, onForwa
   }, [emailId]);
 
   const loadEmail = async () => {
-    if (!emailId || !publicKey || !signMessage) return;
+    if (!emailId || !address || !signMessage) return;
 
     try {
-      const response = await callSecureEndpoint('get_email', { emailId }, publicKey, signMessage);
+      const response = await callSecureEndpoint('get_email', { emailId }, address, signMessage);
       const data = response.email;
 
       if (!data) {
@@ -156,8 +156,8 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply, onForwa
       setEmail(data);
       setAttachments(response.attachments || []);
 
-      if (data.to_wallet === publicKey.toBase58()) {
-        await callSecureEndpoint('mark_read', { emailId }, publicKey, signMessage);
+      if (data.to_wallet === address) {
+        await callSecureEndpoint('mark_read', { emailId }, address, signMessage);
       }
 
       await handleDecrypt(data);
@@ -170,7 +170,7 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply, onForwa
   };
 
   const handleDecrypt = async (emailData: EmailData) => {
-    if (!publicKey) return;
+    if (!address) return;
 
     try {
       setDecrypting(true);
@@ -184,7 +184,7 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply, onForwa
       }
 
       const privateKey = await importPrivateKey(privateKeyBase64);
-      const isSender = emailData.from_wallet === publicKey.toBase58();
+      const isSender = emailData.from_wallet === address;
 
       const subjectToDecrypt = isSender && emailData.sender_encrypted_subject 
         ? emailData.sender_encrypted_subject 
@@ -234,11 +234,11 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply, onForwa
   };
 
   const handleDelete = async () => {
-    if (!publicKey || !signMessage || !email) return;
+    if (!address || !signMessage || !email) return;
 
     setDeleting(true);
     try {
-      await callSecureEndpoint('delete_email', { emailId: email.id }, publicKey, signMessage);
+      await callSecureEndpoint('delete_email', { emailId: email.id }, address, signMessage);
       toast({ title: 'Email deleted' });
       onDelete?.();
       onClose();
@@ -250,7 +250,7 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply, onForwa
   };
 
   const handleDownloadAttachment = async (attachment: Attachment) => {
-    if (!publicKey) return;
+    if (!address) return;
     setDownloadingAttachments(prev => ({ ...prev, [attachment.id]: true }));
 
     try {
@@ -287,7 +287,7 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply, onForwa
   };
 
   const handleDownloadAllAttachments = async () => {
-    if (!publicKey || attachments.length === 0) return;
+    if (!address || attachments.length === 0) return;
     setDownloadingAll(true);
 
     try {
@@ -462,7 +462,7 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply, onForwa
               <div className="min-w-0 flex-1">
                 <div className="font-mono text-sm">{shortAddress(email.from_wallet)}</div>
                 <div className="mt-0.5 truncate text-xs text-muted-foreground">
-                  to {publicKey ? shortAddress(publicKey.toBase58()) : 'you'}
+                  to {address ? shortAddress(address) : 'you'}
                 </div>
               </div>
               <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/[0.06] px-2.5 py-1 text-[11px] text-muted-foreground">

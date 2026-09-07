@@ -1,5 +1,4 @@
 import { supabase } from '@/integrations/supabase/client';
-import bs58 from 'bs58';
 import { createSingleFlight } from '@/lib/singleFlight';
 
 const SESSION_TOKEN_KEY = 'xmail_session_token';
@@ -98,19 +97,21 @@ function clearSession() {
 
 async function authenticateAndGetToken(
   data: any,
-  walletPublicKey: any,
-  signMessage: any
+  walletAddress: string,
+  signMessage: (message: string) => Promise<string>
 ): Promise<string> {
-  const messageBytes = new TextEncoder().encode(JSON.stringify(data));
-  const signature = await signMessage(messageBytes);
-  const signatureBase58 = bs58.encode(signature);
+  // EIP-191 personal_sign over the exact JSON the server will verify. The
+  // wallet shows the user what they are signing, and the server recovers the
+  // signer from the signature rather than being told who it is.
+  const message = JSON.stringify(data);
+  const signature = await signMessage(message);
 
   const { data: response, error } = await supabase.functions.invoke('secure-email', {
     body: {
       action: 'authenticate',
       data,
-      signature: signatureBase58,
-      walletPublicKey: walletPublicKey.toBase58(),
+      signature,
+      walletPublicKey: walletAddress,
     }
   });
 
@@ -159,8 +160,8 @@ function assertNotStorming() {
 async function getSessionToken(
   walletAddress: string,
   data: any,
-  walletPublicKey: any,
-  signMessage: any,
+  signerAddress: string,
+  signMessage: (message: string) => Promise<string>,
   forceNew = false,
 ): Promise<string> {
   if (!forceNew) {
@@ -170,7 +171,7 @@ async function getSessionToken(
 
   return authFlight.run(async () => {
     assertNotStorming();
-    const token = await authenticateAndGetToken(data, walletPublicKey, signMessage);
+    const token = await authenticateAndGetToken(data, signerAddress, signMessage);
     storeSession(token, walletAddress);
     return token;
   });
@@ -179,16 +180,18 @@ async function getSessionToken(
 export async function callSecureEndpoint(
   action: string,
   data: any,
-  walletPublicKey: any,
-  signMessage: any
+  wallet: string,
+  signMessage: (message: string) => Promise<string>
 ) {
   try {
-    const walletAddress = walletPublicKey.toBase58();
+    // Lowercase throughout: wallets return checksummed addresses, every column
+    // holds lowercase, and one mismatched comparison is an empty mailbox.
+    const walletAddress = wallet.toLowerCase();
     console.log('Calling secure endpoint:', action);
 
     // Session-token path: at most one wallet prompt, shared by all callers.
     if (SESSION_ACTIONS.includes(action)) {
-      let sessionToken = await getSessionToken(walletAddress, data, walletPublicKey, signMessage);
+      let sessionToken = await getSessionToken(walletAddress, data, walletAddress, signMessage);
 
       // Call with session token
       const { data: response, error } = await supabase.functions.invoke('secure-email', {
@@ -219,7 +222,7 @@ export async function callSecureEndpoint(
 
         console.log('Session expired, re-authenticating once...');
         clearSession();
-        sessionToken = await getSessionToken(walletAddress, data, walletPublicKey, signMessage, true);
+        sessionToken = await getSessionToken(walletAddress, data, walletAddress, signMessage, true);
 
         const { data: retryResponse, error: retryError } = await supabase.functions.invoke('secure-email', {
           body: {
@@ -238,15 +241,13 @@ export async function callSecureEndpoint(
     }
 
     // Everything else still requires a fresh signature.
-    const messageBytes = new TextEncoder().encode(JSON.stringify(data));
-    const signature = await signMessage(messageBytes);
-    const signatureBase58 = bs58.encode(signature);
+    const signature = await signMessage(JSON.stringify(data));
 
     const { data: response, error } = await supabase.functions.invoke('secure-email', {
       body: {
         action,
         data,
-        signature: signatureBase58,
+        signature,
         walletPublicKey: walletAddress,
       }
     });

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@/hooks/useWallet";
 import { callSecureEndpoint } from "@/lib/secureApi";
 import { useEncryptionKeys } from "@/hooks/useEncryptionKeys";
 import { onCreditsChanged } from "@/lib/events";
@@ -23,7 +23,7 @@ export interface LedgerEntry {
  * sends something, and the send response already carries the new value.
  */
 export function useCredits() {
-  const { publicKey, signMessage } = useWallet();
+  const { address, signMessage } = useWallet();
   const { keysReady } = useEncryptionKeys();
   const [balance, setBalance] = useState<number | null>(null);
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
@@ -31,10 +31,10 @@ export function useCredits() {
   const loadedFor = useRef<string | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!publicKey || !signMessage) return;
+    if (!address || !signMessage) return;
     setLoading(true);
     try {
-      const res = await callSecureEndpoint("get_credits", {}, publicKey, signMessage);
+      const res = await callSecureEndpoint("get_credits", {}, address, signMessage);
       setBalance(typeof res.balance === "number" ? res.balance : null);
       setLedger(res.ledger ?? []);
     } catch (err) {
@@ -42,18 +42,18 @@ export function useCredits() {
     } finally {
       setLoading(false);
     }
-  }, [publicKey, signMessage]);
+  }, [address, signMessage]);
 
   useEffect(() => {
     // Once per wallet per mount. `refresh` depends on wallet objects whose
     // identity is not guaranteed stable across renders, so without this guard
     // the effect can re-fire indefinitely.
-    if (!keysReady || !publicKey) return;
-    const key = publicKey.toBase58();
+    if (!keysReady || !address) return;
+    const key = address;
     if (loadedFor.current === key) return;
     loadedFor.current = key;
     void refresh();
-  }, [keysReady, publicKey, refresh]);
+  }, [keysReady, address, refresh]);
 
   // Any send anywhere in the app updates every copy of this hook. The send
   // response carries the new balance, so the common case needs no round trip.
