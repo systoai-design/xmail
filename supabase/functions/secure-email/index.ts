@@ -363,10 +363,19 @@ serve(async (req) => {
         // transactions racing for the same hash, and the loser reverts with
         // AlreadyAnchored. See record_anchor.
 
+        // `anchor: anchored ? ...` used to sit here, left behind when the
+        // anchoring block above was removed. `anchored` no longer existed, so
+        // this line threw a ReferenceError AFTER the insert and the credit
+        // debit had already committed: the mail was stored and charged, the
+        // function 500'd, the client reported "Send failed", and because no
+        // emailId came back the browser never anchored anything. One dangling
+        // identifier, three symptoms that looked unrelated.
         return new Response(
           JSON.stringify({
-            success: true, emailId: row?.email_id, cost, balance: row?.balance_after,
-            anchor: anchored ? { txHash: anchored.txHash, block: anchored.blockNumber } : null,
+            success: true,
+            emailId: row?.email_id,
+            cost,
+            balance: row?.balance_after,
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
