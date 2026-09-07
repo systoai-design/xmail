@@ -72,6 +72,11 @@ export const GmailSidebar = ({
     { label: "Starred", icon: Star, value: "starred", badge: starredCount },
     { label: "Sent", icon: Send, value: "sent", badge: sentCount },
     { label: "Drafts", icon: FileEdit, value: "drafts", badge: draftsCount },
+    // Only appears when there is something in it: an always-visible empty
+    // folder for an edge case is clutter for everyone who never hits it.
+    ...(parkedCount > 0
+      ? [{ label: "Parked", icon: Clock, value: "parked", badge: parkedCount }]
+      : []),
   ];
 
   const handleNavClick = (value: string) => {
@@ -168,7 +173,14 @@ export const GmailSidebar = ({
               <Icon className="h-[18px] w-[18px] shrink-0" />
               {!collapsed && (
                 <>
-                  <span className="flex-1 text-left">{label}</span>
+                  <span
+                    className={cn(
+                      "flex-1 whitespace-nowrap text-left transition-[opacity,transform] duration-300",
+                      collapsed ? "-translate-x-1 opacity-0" : "translate-x-0 opacity-100",
+                    )}
+                  >
+                    {label}
+                  </span>
                   {badge > 0 && (
                     <span className="tabular-nums text-xs text-muted-foreground">{badge}</span>
                   )}
@@ -274,7 +286,8 @@ export const GmailSidebar = ({
     <>
       <aside
         className={cn(
-          "hidden flex-col border-r border-border/60 bg-[hsl(var(--surface-sunken))] transition-[width] duration-300 md:flex",
+          "hidden flex-col overflow-hidden border-r border-border/60 bg-[hsl(var(--surface-sunken))] md:flex",
+          "transition-[width] duration-[420ms] ease-[cubic-bezier(.16,1,.3,1)]",
           collapsed ? "w-[72px]" : "w-64",
           className,
         )}

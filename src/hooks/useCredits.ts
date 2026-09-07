@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { callSecureEndpoint } from "@/lib/secureApi";
 import { useEncryptionKeys } from "@/hooks/useEncryptionKeys";
+import { onCreditsChanged } from "@/lib/events";
 
 export interface LedgerEntry {
   delta: number;
@@ -53,6 +54,17 @@ export function useCredits() {
     loadedFor.current = key;
     void refresh();
   }, [keysReady, publicKey, refresh]);
+
+  // Any send anywhere in the app updates every copy of this hook. The send
+  // response carries the new balance, so the common case needs no round trip.
+  useEffect(
+    () =>
+      onCreditsChanged((next) => {
+        if (typeof next === "number") setBalance(next);
+        else void refresh();
+      }),
+    [refresh],
+  );
 
   /** Applied straight from a send response, so the sidebar updates instantly. */
   const setFromSend = useCallback((next: number | undefined) => {

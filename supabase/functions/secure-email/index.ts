@@ -371,6 +371,21 @@ serve(async (req) => {
         );
       }
 
+      // The full list, so parked mail has somewhere to be seen. Sealed to the
+      // sender, so only their browser can read the subjects back.
+      case 'get_parked': {
+        const { data: rows, error: listErr } = await supabaseAdmin
+          .from('parked_emails')
+          .select('*')
+          .eq('from_wallet', verifiedWallet)
+          .order('created_at', { ascending: false });
+        if (listErr) throw listErr;
+        return new Response(
+          JSON.stringify({ parked: rows || [] }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       case 'count_parked': {
         const { count } = await supabaseAdmin
           .from('parked_emails')
@@ -391,6 +406,38 @@ serve(async (req) => {
         if (delErr) throw delErr;
         return new Response(
           JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Starring lived in its own edge function that took an emailId and a
+      // boolean, used the service role, and checked nothing at all -- one curl
+      // with the publishable key could star or unstar anybody's mail. Here it
+      // inherits the same wallet verification as everything else, and the
+      // update is scoped to rows the caller is actually party to.
+      case 'toggle_star': {
+        const { emailId, starred } = data;
+        if (!emailId || typeof starred !== 'boolean') {
+          throw new Error('emailId and starred are required');
+        }
+
+        const { data: updated, error: starErr } = await supabaseAdmin
+          .from('encrypted_emails')
+          .update({ starred })
+          .eq('id', emailId)
+          .or(`from_wallet.eq.${verifiedWallet},to_wallet.eq.${verifiedWallet}`)
+          .select('id, starred')
+          .maybeSingle();
+
+        if (starErr) throw starErr;
+        if (!updated) {
+          // Either it does not exist or it is not theirs. Same answer for both,
+          // so this cannot be used to probe which emails exist.
+          throw new Error('Email not found');
+        }
+
+        return new Response(
+          JSON.stringify({ success: true, email: updated }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }

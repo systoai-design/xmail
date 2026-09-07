@@ -13,6 +13,7 @@ import {
   Archive,
   ArrowLeft,
   Reply,
+  Forward,
   Link2,
   Paperclip,
 } from 'lucide-react';
@@ -61,10 +62,11 @@ interface InlineEmailViewerProps {
   emailId: string;
   onClose: () => void;
   onDelete?: () => void;
-  onReply?: (toWallet: string) => void;
+  onReply?: (toWallet: string, subject?: string) => void;
+  onForward?: (subject: string, body: string, from: string, when: string) => void;
 }
 
-export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply }: InlineEmailViewerProps) => {
+export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply, onForward }: InlineEmailViewerProps) => {
   const { publicKey, signMessage } = useWallet();
   const { toast } = useToast();
   const [email, setEmail] = useState<EmailData | null>(null);
@@ -378,12 +380,29 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply }: Inlin
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => onReply?.(email.from_wallet)}
+          onClick={() => onReply?.(email.from_wallet, decryptedSubject)}
           disabled={!onReply}
           aria-label="Reply"
           title="Reply"
         >
           <Reply className="h-[18px] w-[18px]" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() =>
+            onForward?.(
+              decryptedSubject || 'Encrypted message',
+              decryptedBody,
+              email.from_wallet,
+              formatDate(email.timestamp),
+            )
+          }
+          disabled={!onForward || decrypting || missingKey}
+          aria-label="Forward"
+          title="Forward"
+        >
+          <Forward className="h-[18px] w-[18px]" />
         </Button>
         <Button
           variant="ghost"
@@ -616,14 +635,30 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply }: Inlin
               </div>
             )}
 
-            {onReply && (
-              <div className="mt-10">
-                <Button variant="outline" onClick={() => onReply(email.from_wallet)}>
+            <div className="mt-10 flex flex-wrap gap-2">
+              {onReply && (
+                <Button variant="outline" onClick={() => onReply(email.from_wallet, decryptedSubject)}>
                   <Reply className="mr-2 h-4 w-4" />
                   Reply
                 </Button>
-              </div>
-            )}
+              )}
+              {onForward && (
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    onForward(
+                      decryptedSubject || 'Encrypted message',
+                      decryptedBody,
+                      email.from_wallet,
+                      formatDate(email.timestamp),
+                    )
+                  }
+                >
+                  <Forward className="mr-2 h-4 w-4" />
+                  Forward
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </div>

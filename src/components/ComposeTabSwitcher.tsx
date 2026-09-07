@@ -6,8 +6,10 @@ export interface ComposeWindow {
   id: string;
   draftId?: string | null;
   subject?: string;
-  /** Pre-filled recipient, set when the window is opened as a reply. */
+  /** Pre-filled fields, set when opened as a reply or a forward. */
   initialTo?: string;
+  initialSubject?: string;
+  initialBody?: string;
   isMinimized: boolean;
 }
 

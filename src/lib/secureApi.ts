@@ -41,6 +41,11 @@ const SESSION_ACTIONS = [
   // Cleanup of your own draft, run immediately after a send. Gating it meant a
   // second prompt landed the moment the first one was approved.
   'delete_draft',
+  'toggle_star',
+  'get_parked',
+  'count_parked',
+  'get_deliverable_parked',
+  'delete_parked',
 ];
 
 /**

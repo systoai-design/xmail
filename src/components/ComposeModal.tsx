@@ -29,21 +29,26 @@ import { PublicKey } from '@solana/web3.js';
 import { useEncryptionKeys } from '@/hooks/useEncryptionKeys';
 import { isAdmin } from '@/lib/userRoles';
 import { callSecureEndpoint } from '@/lib/secureApi';
+import { emitCreditsChanged, emitMailChanged } from '@/lib/events';
+import { scheduleSend, UNDO_WINDOW_MS } from '@/lib/pendingSend';
+import { ToastAction } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 
 interface ComposeModalProps {
   isOpen: boolean;
   onClose: () => void;
   draftId?: string | null;
-  /** Pre-filled recipient. Set when this window was opened as a reply. */
+  /** Pre-filled fields. Set when opened as a reply or a forward. */
   initialTo?: string;
+  initialSubject?: string;
+  initialBody?: string;
   onSent?: () => void;
   onSubjectChange?: (subject: string) => void;
   /** Fired with the new balance after a send, so the sidebar updates at once. */
   onCreditsChanged?: (balance: number | undefined) => void;
 }
 
-export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, onSent, onSubjectChange, onCreditsChanged }: ComposeModalProps) => {
+export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubject, initialBody, onSent, onSubjectChange, onCreditsChanged }: ComposeModalProps) => {
   const { publicKey, signMessage } = useWallet();
   const { toast } = useToast();
   const { keysReady } = useEncryptionKeys();
@@ -51,8 +56,8 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, onSent, onSu
   // Seeded once, not synced: after this the field belongs to the user, and a
   // prop-driven reset would wipe a recipient they had just corrected.
   const [to, setTo] = useState(initialTo ?? '');
-  const [subject, setSubject] = useState('');
-  const [body, setBody] = useState('');
+  const [subject, setSubject] = useState(initialSubject ?? '');
+  const [body, setBody] = useState(initialBody ?? '');
   const [sending, setSending] = useState(false);
   const [saving, setSaving] = useState(false);
   const [validationStatus, setValidationStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid' | 'not-registered'>('idle');
@@ -407,43 +412,83 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, onSent, onSu
       // receipt for a payment that never happened. Sends are now charged in
       // credits, debited server-side in the same transaction as the insert, so
       // there is nothing left to fake.
-      const sendResult = await callSecureEndpoint(
-        'send_email',
-        {
-          from_wallet: publicKey.toBase58(),
-          to_wallet: recipient,
-          encrypted_subject: encryptedSubject,
-          encrypted_body: encryptedBody,
-          sender_encrypted_subject: senderEncryptedSubject,
-          sender_encrypted_body: senderEncryptedBody,
-          sender_signature: signatureBase64,
-          attachment_count: attachmentCount,
-        },
-        publicKey,
-        signMessage
-      );
-
-      // Delete draft after successful send
-      if (currentDraftId) {
+      // Everything above -- key lookup, encryption, the wallet signature -- has
+      // already happened. What is held back is the irreversible part: the
+      // insert, the credit debit and the on-chain anchor. Once those run there
+      // is genuinely no undo, because the anchor is immutable by design.
+      const draftIdAtSend = currentDraftId;
+      const performSend = async () => {
         try {
-          await callSecureEndpoint(
-            'delete_draft',
-            { draftId: currentDraftId },
+          const sendResult = await callSecureEndpoint(
+            'send_email',
+            {
+              from_wallet: publicKey.toBase58(),
+              to_wallet: recipient,
+              encrypted_subject: encryptedSubject,
+              encrypted_body: encryptedBody,
+              sender_encrypted_subject: senderEncryptedSubject,
+              sender_encrypted_body: senderEncryptedBody,
+              sender_signature: signatureBase64,
+              attachment_count: attachmentCount,
+            },
             publicKey,
             signMessage
           );
-        } catch (error) {
-          console.error('Error deleting draft:', error);
-        }
-      }
 
-      onCreditsChanged?.(sendResult?.balance);
+          if (draftIdAtSend) {
+            try {
+              await callSecureEndpoint('delete_draft', { draftId: draftIdAtSend }, publicKey, signMessage);
+            } catch (err) {
+              console.error('Error deleting draft:', err);
+            }
+          }
+
+          emitCreditsChanged(sendResult?.balance);
+          emitMailChanged();
+          toast({
+            title: 'Sent',
+            description:
+              typeof sendResult?.cost === 'number'
+                ? `${describeCost(sendResult.cost)} used · ${sendResult.balance} remaining`
+                : 'Your encrypted email has been delivered',
+          });
+        } catch (err) {
+          console.error('Deferred send failed:', err);
+          const insufficient = (err as { error?: string })?.error === 'INSUFFICIENT_CREDITS';
+          const e = err as unknown as { balance: number; required: number };
+          toast({
+            title: 'Send failed',
+            description: insufficient
+              ? `This message costs ${describeCost(e.required)} and you have ${e.balance}. It is still in your drafts.`
+              : 'The message was not sent. It is still in your drafts.',
+            variant: 'destructive',
+          });
+          emitMailChanged();
+        }
+      };
+
+      // Saved first, so a tab closed inside the undo window loses nothing.
+      await saveDraft(false, true);
+      const cancel = scheduleSend(performSend);
+
       toast({
-        title: 'Email sent',
-        description:
-          typeof sendResult?.cost === 'number'
-            ? `${describeCost(sendResult.cost)} used · ${sendResult.balance} remaining`
-            : 'Your encrypted email has been delivered',
+        title: 'Sending…',
+        description: `Undo within ${Math.round(UNDO_WINDOW_MS / 1000)} seconds.`,
+        action: (
+          <ToastAction
+            altText="Undo send"
+            onClick={() => {
+              cancel();
+              emitMailChanged();
+              toast({
+                title: 'Send undone',
+                description: 'Nothing was sent and no credits were used. It is in your drafts.',
+              });
+            }}
+          >
+            Undo
+          </ToastAction>
+        ),
       });
 
       // Reset form
@@ -931,16 +976,11 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, onSent, onSu
             >
               <Paperclip className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowScheduleSelector(true)}
-              disabled={blocked}
-              aria-label="Schedule send"
-              title="Schedule send"
-            >
-              <Clock className="h-4 w-4" />
-            </Button>
+            {/* Schedule send is deliberately hidden. process-scheduled-emails is
+                deployed but nothing invokes it -- pg_cron is not installed --
+                so a scheduled message is written to a table and never sent. A
+                button that silently discards mail is worse than no button.
+                Restore this the moment a scheduler exists. */}
 
             <span
               className="text-[11px] text-muted-foreground"

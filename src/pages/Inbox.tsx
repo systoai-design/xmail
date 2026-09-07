@@ -18,8 +18,9 @@ import { SectionHeader } from '@/components/SectionHeader';
 import { ComposeModal } from '@/components/ComposeModal';
 import { ComposeTabSwitcher, ComposeWindow } from '@/components/ComposeTabSwitcher';
 import { InlineEmailViewer } from '@/components/InlineEmailViewer';
+import { ParkedList } from '@/components/ParkedList';
 import { cn } from '@/lib/utils';
-import { openKeyManagement, onKeyImported } from '@/lib/events';
+import { openKeyManagement, onKeyImported, onMailChanged } from '@/lib/events';
 
 interface EncryptedEmail {
   id: string;
@@ -50,7 +51,7 @@ const Inbox = () => {
   const { keysReady, needsUnlock, unlocking, unlock } = useEncryptionKeys();
   const [searchParams] = useSearchParams();
   // Flushes on load: parked mail is delivered when the sender next opens xmail.
-  const { parkedCount } = useParkedOutbox(() => {
+  const { parkedCount, flush: flushParked } = useParkedOutbox(() => {
     loadSentEmails();
   });
   const tabFromUrl = searchParams.get('tab') || 'inbox';
@@ -94,7 +95,7 @@ const Inbox = () => {
     });
   }, []);
 
-  const activeTab = tabFromUrl as 'inbox' | 'sent' | 'drafts' | 'starred';
+  const activeTab = tabFromUrl as 'inbox' | 'sent' | 'drafts' | 'starred' | 'parked';
 
   // Request notification permission
   useEffect(() => {
@@ -266,12 +267,18 @@ const Inbox = () => {
         prev.map(e => e.id === emailId ? { ...e, starred: !currentStarred } : e)
       );
 
-      const response = await supabase.functions.invoke('toggle-star', {
-        body: { emailId, starred: !currentStarred }
-      });
+      // Was the unauthenticated toggle-star function. Now goes through
+      // secure-email, which verifies the wallet and scopes the update to
+      // emails this wallet is party to.
+      const response = await callSecureEndpoint(
+        'toggle_star',
+        { emailId, starred: !currentStarred },
+        publicKey,
+        signMessage
+      );
 
-      if (response.error) {
-        throw response.error;
+      if (response?.error) {
+        throw new Error(response.error);
       }
 
       toast({
@@ -364,17 +371,44 @@ const Inbox = () => {
     setActiveWindowId(newWindow.id);
   };
 
-  const handleReply = (toWallet: string) => {
+  const openCompose = (init: Partial<ComposeWindow>) => {
     const newWindow: ComposeWindow = {
       id: crypto.randomUUID(),
       draftId: null,
-      subject: '',
-      initialTo: toWallet,
+      subject: init.initialSubject ?? '',
       isMinimized: false,
+      ...init,
     };
     setComposeWindows(prev => [...prev, newWindow]);
     setActiveWindowId(newWindow.id);
   };
+
+  const handleReply = (toWallet: string, subject?: string) =>
+    openCompose({
+      initialTo: toWallet,
+      initialSubject: subject ? (/^re:/i.test(subject) ? subject : `Re: ${subject}`) : '',
+    });
+
+  // Forward carries the original across, quoted, the way every mail client
+  // does -- an empty composer would make the reader retype what they are
+  // forwarding.
+  const handleForward = (subject: string, body: string, from: string, when: string) =>
+    openCompose({
+      initialSubject: /^fwd:/i.test(subject) ? subject : `Fwd: ${subject}`,
+      initialBody:
+        `<br/><br/><div style="border-left:2px solid rgba(255,255,255,.2);padding-left:12px;color:#9A968E">` +
+        `<div>---------- Forwarded message ----------</div>` +
+        `<div>From: ${from}</div><div>Date: ${when}</div><div>Subject: ${subject}</div>` +
+        `<br/>${body}</div>`,
+    });
+
+  // Any send, undo, delete or parked delivery re-reads the folders, so the
+  // lists never disagree with what just happened.
+  useEffect(() => onMailChanged(() => {
+    loadEmails();
+    loadSentEmails();
+    loadDrafts();
+  }), []);
 
   const handleOpenDraft = (draftId: string) => {
     const newWindow: ComposeWindow = {
@@ -767,6 +801,7 @@ const Inbox = () => {
               {activeTab === 'starred' && renderEmailList(starredEmails)}
               {activeTab === 'sent' && renderEmailList(filteredSentEmails, true)}
               {activeTab === 'drafts' && renderDraftList()}
+              {activeTab === 'parked' && <ParkedList onFlush={() => void flushParked()} />}
             </>
           )}
         </div>
@@ -777,6 +812,7 @@ const Inbox = () => {
             emailId={selectedEmailId}
             onClose={() => setSelectedEmailId(null)}
             onReply={handleReply}
+            onForward={handleForward}
             onDelete={() => {
               setSelectedEmailId(null);
               loadEmails();
@@ -803,6 +839,8 @@ const Inbox = () => {
           onClose={() => handleCloseWindow(window.id)}
           draftId={window.draftId}
           initialTo={window.initialTo}
+          initialSubject={window.initialSubject}
+          initialBody={window.initialBody}
           onSent={() => {
             handleCloseWindow(window.id);
             loadEmails();
