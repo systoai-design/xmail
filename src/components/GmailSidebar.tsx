@@ -24,6 +24,7 @@ import { ContactBook } from "@/components/ContactBook";
 import { Logo } from "@/components/Logo";
 import { useEncryptionKeys } from "@/hooks/useEncryptionKeys";
 import { useCredits } from "@/hooks/useCredits";
+import { BuyCredits } from "@/components/BuyCredits";
 import { cn } from "@/lib/utils";
 
 interface GmailSidebarProps {
@@ -217,6 +218,18 @@ export const GmailSidebar = ({
                 >
                   {balance}
                 </span>
+              </div>
+            )}
+
+            {balance !== null && (
+              <div className="mb-3">
+                <BuyCredits
+                  trigger={
+                    <button className="w-full rounded-lg border border-border/70 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground">
+                      Buy more credits
+                    </button>
+                  }
+                />
               </div>
             )}
 

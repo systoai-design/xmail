@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import * as djwt from 'https://deno.land/x/djwt@v3.0.1/mod.ts';
 import {
   createWalletClient, createPublicClient, http, defineChain,
-  keccak256, encodePacked, verifyMessage, isAddress,
+  keccak256, encodePacked, verifyMessage, isAddress, parseEventLogs,
 } from 'https://esm.sh/viem@2.21.54';
 import { privateKeyToAccount } from 'https://esm.sh/viem@2.21.54/accounts';
 
@@ -43,6 +43,73 @@ const BYTES_PER_CREDIT = 4000;
 // secret existed would otherwise cache `undefined` for its whole lifetime and
 // skip anchoring silently, even after the secret was set.
 const anchorKey = () => Deno.env.get('ANCHOR_PRIVATE_KEY');
+const CREDIT_SALE_ADDRESS = Deno.env.get('CREDIT_SALE_ADDRESS');
+
+// ---- credit packages ------------------------------------------------------
+// One package, matching the Pro tier on the pricing page. Priced in USD and
+// converted at purchase time: the buyer pays in ETH but thinks in dollars.
+const PACKAGE_USD_CENTS = 1900;
+const PACKAGE_CREDITS = 500;
+
+/**
+ * ETH price, read server-side at both quote and claim time.
+ *
+ * Never taken from the client, for the obvious reason that the client is the
+ * party paying. The claim re-reads the price and compares against the amount
+ * actually sent, so a stale or manipulated quote cannot buy credits cheaply --
+ * it can only fail.
+ */
+async function ethUsdPrice(): Promise<number> {
+  const sources = [
+    { url: 'https://api.coinbase.com/v2/prices/ETH-USD/spot', pick: (j: any) => Number(j?.data?.amount) },
+    { url: 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd', pick: (j: any) => Number(j?.ethereum?.usd) },
+  ];
+  for (const src of sources) {
+    try {
+      const res = await fetch(src.url, { signal: AbortSignal.timeout(6000) });
+      if (!res.ok) continue;
+      const price = src.pick(await res.json());
+      if (Number.isFinite(price) && price > 0) return price;
+    } catch {
+      /* try the next source */
+    }
+  }
+  throw new Error('Could not read an ETH price just now. Try again in a moment.');
+}
+
+/** USD cents -> wei at a given ETH/USD price. */
+function centsToWei(cents: number, ethUsd: number): bigint {
+  return BigInt(Math.ceil((cents / 100 / ethUsd) * 1e18));
+}
+
+/** The mailbox a payment is for, as the contract records it. */
+function accountHashFor(wallet: string): `0x${string}` {
+  return keccak256(new TextEncoder().encode(wallet.toLowerCase()));
+}
+
+const CREDIT_SALE_ABI = [
+  {
+    type: 'event',
+    name: 'CreditsPurchased',
+    inputs: [
+      { name: 'payer', type: 'address', indexed: true },
+      { name: 'accountHash', type: 'bytes32', indexed: true },
+      { name: 'amountWei', type: 'uint256', indexed: false },
+      { name: 'timestamp', type: 'uint64', indexed: false },
+    ],
+  },
+] as const;
+
+/** Admin wallets get free credits, for testing against the live system. */
+async function isAdminWallet(admin: any, wallet: string): Promise<boolean> {
+  const { data } = await admin
+    .from('user_roles')
+    .select('role')
+    .eq('wallet_address', wallet.toLowerCase())
+    .eq('role', 'admin')
+    .maybeSingle();
+  return !!data;
+}
 const MESSAGE_ANCHOR_ADDRESS = Deno.env.get('MESSAGE_ANCHOR_ADDRESS');
 const RPC_URL = Deno.env.get('CHAIN_RPC_URL') ?? 'https://rpc.testnet.chain.robinhood.com';
 const CHAIN_ID = Number(Deno.env.get('CHAIN_ID') ?? 46630);
@@ -434,6 +501,173 @@ serve(async (req) => {
 
         return new Response(
           JSON.stringify({ success: true, email: updated }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // ---- buying credits ------------------------------------------------
+      case 'get_credit_quote': {
+        if (!CREDIT_SALE_ADDRESS) throw new Error('Credit purchases are not configured yet.');
+        const price = await ethUsdPrice();
+        const wei = centsToWei(PACKAGE_USD_CENTS, price);
+        return new Response(
+          JSON.stringify({
+            contract: CREDIT_SALE_ADDRESS,
+            chainId: CHAIN_ID,
+            credits: PACKAGE_CREDITS,
+            usdCents: PACKAGE_USD_CENTS,
+            ethUsd: price,
+            amountWei: wei.toString(),
+            accountHash: accountHashFor(verifiedWallet),
+            isAdmin: await isAdminWallet(supabaseAdmin, verifiedWallet),
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Verifies a payment against the chain and credits the mailbox it names.
+      // Nothing here is trusted from the client beyond the transaction hash:
+      // amount, recipient contract and account all come from the receipt.
+      case 'claim_credit_purchase': {
+        if (!CREDIT_SALE_ADDRESS) throw new Error('Credit purchases are not configured yet.');
+        const txHash = String(data.txHash ?? '').trim().toLowerCase();
+        if (!/^0x[0-9a-f]{64}$/.test(txHash)) throw new Error('That is not a transaction hash.');
+
+        const publicClient = createPublicClient({ chain: robinhood, transport: http(RPC_URL) });
+
+        let receipt;
+        try {
+          receipt = await publicClient.getTransactionReceipt({ hash: txHash as `0x${string}` });
+        } catch {
+          return new Response(
+            JSON.stringify({ error: 'NOT_FOUND', message: 'No such transaction on this chain yet. If you just sent it, wait a few seconds and try again.' }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        if (receipt.status !== 'success') {
+          return new Response(
+            JSON.stringify({ error: 'TX_FAILED', message: 'That transaction failed on-chain, so nothing was paid.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // The event is the authority, not the transaction's value field: only a
+        // call to CreditSale.buy carries the account being credited.
+        const logs = parseEventLogs({
+          abi: CREDIT_SALE_ABI,
+          logs: receipt.logs,
+          eventName: 'CreditsPurchased',
+        }).filter((l: any) => l.address.toLowerCase() === CREDIT_SALE_ADDRESS.toLowerCase());
+
+        if (logs.length === 0) {
+          return new Response(
+            JSON.stringify({ error: 'NO_PURCHASE', message: 'That transaction did not pay the credit contract.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const expected = accountHashFor(verifiedWallet);
+        const mine = logs.find((l: any) => String(l.args.accountHash).toLowerCase() === expected.toLowerCase());
+        if (!mine) {
+          // Paid for a different mailbox. Refusing is the entire point of
+          // binding the account into the payment.
+          return new Response(
+            JSON.stringify({ error: 'WRONG_ACCOUNT', message: 'That payment was made for a different xmail account.' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const paidWei = BigInt(mine.args.amountWei);
+        const price = await ethUsdPrice();
+        const requiredWei = centsToWei(PACKAGE_USD_CENTS, price);
+        // 3% tolerance: ETH moves between quote and confirmation, and refusing a
+        // payment that was correct when it was sent would simply be taking it.
+        const minimumWei = (requiredWei * 97n) / 100n;
+
+        if (paidWei < minimumWei) {
+          return new Response(
+            JSON.stringify({
+              error: 'UNDERPAID',
+              message: `That payment is short at the current ETH price. Sent ${(Number(paidWei) / 1e18).toFixed(6)} ETH, needed about ${(Number(requiredWei) / 1e18).toFixed(6)}.`,
+            }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Proportional, so overpaying is never punished.
+        const credits = Math.max(
+          PACKAGE_CREDITS,
+          Math.floor((Number(paidWei) / Number(requiredWei)) * PACKAGE_CREDITS),
+        );
+
+        const { data: newBalance, error: claimErr } = await supabaseAdmin.rpc('claim_credit_purchase', {
+          p_tx_hash: txHash,
+          p_wallet: verifiedWallet,
+          p_payer: String(mine.args.payer).toLowerCase(),
+          p_amount_wei: paidWei.toString(),
+          p_usd_cents: PACKAGE_USD_CENTS,
+          p_credits: credits,
+          p_eth_usd: price,
+          p_block: Number(receipt.blockNumber),
+        });
+
+        if (claimErr) {
+          if ((claimErr.message ?? '').includes('ALREADY_CLAIMED')) {
+            return new Response(
+              JSON.stringify({ error: 'ALREADY_CLAIMED', message: 'Those credits have already been added.' }),
+              { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          throw claimErr;
+        }
+
+        console.log(`Credited ${credits} to ${verifiedWallet} for ${txHash}`);
+        return new Response(
+          JSON.stringify({ success: true, credits, balance: newBalance, txHash }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Free credits for admin wallets, so the live system can be tested without
+      // spending real money on every run. The check is HERE, against the
+      // database, on the service role -- the client's own isAdmin() decides what
+      // to render and nothing more. A client-side role check is a suggestion.
+      case 'grant_admin_credits': {
+        if (!(await isAdminWallet(supabaseAdmin, verifiedWallet))) {
+          return new Response(
+            JSON.stringify({ error: 'NOT_ADMIN', message: 'This wallet is not an admin.' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const amount = Math.min(Math.max(Number(data.credits ?? PACKAGE_CREDITS), 1), 10000);
+        await supabaseAdmin.rpc('ensure_credit_balance', { p_wallet: verifiedWallet });
+
+        const { data: row } = await supabaseAdmin
+          .from('credit_balances')
+          .select('balance')
+          .eq('wallet_address', verifiedWallet)
+          .single();
+
+        const next = (row?.balance ?? 0) + amount;
+        await supabaseAdmin
+          .from('credit_balances')
+          .update({ balance: next, updated_at: new Date().toISOString() })
+          .eq('wallet_address', verifiedWallet);
+
+        // Logged like any other movement, so a granted credit is never
+        // indistinguishable from a purchased one in the ledger.
+        await supabaseAdmin.from('credit_ledger').insert({
+          wallet_address: verifiedWallet,
+          delta: amount,
+          reason: 'admin_grant',
+          balance_after: next,
+        });
+
+        console.log(`Admin grant: ${amount} credits to ${verifiedWallet}`);
+        return new Response(
+          JSON.stringify({ success: true, credits: amount, balance: next }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }

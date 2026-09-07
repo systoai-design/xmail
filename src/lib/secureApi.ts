@@ -41,6 +41,7 @@ const SESSION_ACTIONS = [
   // second prompt landed the moment the first one was approved.
   'delete_draft',
   'toggle_star',
+  'get_credit_quote',
   'get_parked',
   'count_parked',
   'get_deliverable_parked',
