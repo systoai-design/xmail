@@ -9,6 +9,7 @@ import { LiveChainProof } from "@/components/site/LiveChainProof";
 import { PrivacyPromise } from "@/components/site/PrivacyPromise";
 import { Features } from "@/components/site/Features";
 import { CallToAction } from "@/components/site/CallToAction";
+import { SupportSection } from "@/components/site/SupportSection";
 import { Stats } from "@/components/site/Stats";
 import { Pricing } from "@/components/site/Pricing";
 import { Faq } from "@/components/site/Faq";
@@ -62,6 +63,7 @@ const Landing = () => {
         <Pricing onConnect={openWallet} />
         <Faq />
         <CallToAction onConnect={openWallet} />
+        <SupportSection />
       </main>
       <SiteFooter />
     </div>

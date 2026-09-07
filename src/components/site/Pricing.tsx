@@ -3,6 +3,7 @@ import { Check, Coins, Paperclip, FileText, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SectionField } from "./SectionField";
+import { ACTIVE_CHAIN } from "@/config/chain";
 
 /**
  * Credit-based pricing.
@@ -69,7 +70,7 @@ const TIERS = [
       "Scheduled and recurring sends",
       "Contact book with key-rotation alerts",
     ],
-    cta: "Get started",
+    cta: "Free during beta",
     featured: true,
   },
   {
@@ -167,6 +168,18 @@ export function Pricing({ onConnect }: { onConnect?: () => void }) {
             encrypted, wrapped to its recipient, and anchored on-chain &mdash;
             so an empty month costs nothing.
           </p>
+
+          {/* xmail runs on a testnet, where the token is free from a faucet.
+              Advertising $19 while accepting worthless tokens for it would be
+              a real-sounding price for nothing, so the prices are shown as what
+              they will be rather than what anyone is being charged today. */}
+          {ACTIVE_CHAIN.testnet && (
+            <p className="mx-auto mt-5 inline-flex max-w-xl items-center gap-2 rounded-full border border-border/70 bg-white/[0.03] px-4 py-2 text-sm text-muted-foreground">
+              <Coins className="h-3.5 w-3.5 shrink-0" />
+              Free during the beta. These are the prices for when xmail moves to
+              mainnet &mdash; nothing is charged on {ACTIVE_CHAIN.shortName}.
+            </p>
+          )}
         </div>
 
         {/* --- what a credit buys ------------------------------------------ */}

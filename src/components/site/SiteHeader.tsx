@@ -3,6 +3,7 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Wordmark } from "./Wordmark";
 import { cn } from "@/lib/utils";
+import { SocialLinks } from "@/components/SocialLinks";
 import { GlowButton } from "./GlowButton";
 const NAV = [
   { label: "How it works", href: "#layers" },
@@ -59,7 +60,9 @@ export function SiteHeader({ onConnect }: { onConnect?: () => void }) {
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-3">
+          {/* Written months ago and rendered nowhere until now. */}
+          <SocialLinks className="hidden sm:flex" />
           <GlowButton
             onClick={onConnect}
             className="hidden !min-h-[40px] !px-5 !py-2 sm:inline-flex"

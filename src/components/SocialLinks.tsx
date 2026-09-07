@@ -1,5 +1,5 @@
-import { Rocket } from "lucide-react";
 import xLogo from "@/assets/x-logo.png";
+import ponsLogo from "@/assets/pons-logo.png";
 import { cn } from "@/lib/utils";
 
 interface SocialLinksProps {
@@ -18,7 +18,7 @@ const LINK_CLASS =
 export const SocialLinks = ({ className = "" }: SocialLinksProps) => (
   <div className={cn("flex items-center gap-3", className)}>
     <a
-      href="https://x.com/xmail402"
+      href="https://x.com/xmail__official"
       target="_blank"
       rel="noopener noreferrer"
       className={LINK_CLASS}
@@ -27,16 +27,18 @@ export const SocialLinks = ({ className = "" }: SocialLinksProps) => (
       <img src={xLogo} alt="" aria-hidden="true" className="h-5 w-5 sm:h-6 sm:w-6" />
     </a>
 
-    {/* Neutral icon rather than the destination's own mark: showing one brand's
-        logo on a link that goes somewhere else misrepresents where it leads. */}
+    {/* Their actual mark, because this link actually goes to them. The
+        launchpad URL is deliberately not used yet -- nothing has launched, and
+        pointing at a page that is not ready is worse than pointing at the
+        homepage. */}
     <a
-      href="https://www.ponsfamily.com/launchpad"
+      href="https://www.ponsfamily.com/"
       target="_blank"
       rel="noopener noreferrer"
-      className={cn(LINK_CLASS, "text-foreground")}
-      aria-label="Pons Family Launchpad"
+      className={LINK_CLASS}
+      aria-label="Pons"
     >
-      <Rocket className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={1.5} />
+      <img src={ponsLogo} alt="" aria-hidden="true" className="h-5 w-5 rounded sm:h-6 sm:w-6" />
     </a>
   </div>
 );
