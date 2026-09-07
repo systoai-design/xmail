@@ -18,7 +18,7 @@ import {
   Paperclip,
 } from 'lucide-react';
 import { ACTIVE_CHAIN, explorerTx } from '@/config/chain';
-import { messageCommitment, verifyRelayedAnchor } from '@/lib/chainClient';
+import { messageCommitment, verifyAnchor, verifyRelayedAnchor } from '@/lib/chainClient';
 import { useToast } from '@/hooks/use-toast';
 import { decryptMessage, importPrivateKey, decryptAESKey, decryptFile } from '@/lib/encryption';
 import { callSecureEndpoint } from '@/lib/secureApi';
@@ -110,8 +110,15 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply, onForwa
         return;
       }
 
-      // 3. And the chain must actually hold it.
-      const { verified, timestamp, blockNumber } = await verifyRelayedAnchor(recomputed, to);
+      // 3. And the chain must actually hold it, recorded by the SENDER.
+      //    Messages are anchored from the sender's own wallet now, so this is
+      //    what makes the anchor say who sent it rather than only that it has
+      //    not changed. The relayer fallback covers anchors written before
+      //    senders could sign for themselves.
+      let { verified, timestamp, blockNumber } = await verifyAnchor(recomputed, from, to);
+      if (!verified) {
+        ({ verified, timestamp, blockNumber } = await verifyRelayedAnchor(recomputed, to));
+      }
       setProof(
         verified
           ? { state: 'ok', recomputed, block: blockNumber, timestamp }
@@ -517,7 +524,7 @@ export const InlineEmailViewer = ({ emailId, onClose, onDelete, onReply, onForwa
                 {proof.state === 'ok' && (
                   <p className="mt-3 text-xs leading-relaxed text-[hsl(var(--verified))]">
                     Recomputed the hash from this exact ciphertext and found it on
-                    {' '}{ACTIVE_CHAIN.name}, recorded{' '}
+                    {' '}{ACTIVE_CHAIN.name}, signed by the sender, recorded{' '}
                     {new Date(Number(proof.timestamp) * 1000).toLocaleString()}. The message
                     has not changed since it was sent.
                   </p>

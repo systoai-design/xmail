@@ -42,6 +42,7 @@ const SESSION_ACTIONS = [
   'delete_draft',
   'toggle_star',
   'get_credit_quote',
+  'record_anchor',
   'get_parked',
   'count_parked',
   'get_deliverable_parked',

@@ -17,6 +17,8 @@ import {
   ShieldAlert,
   Coins,
   Clock,
+  Link2,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { KeyManagement } from "@/components/KeyManagement";
@@ -24,6 +26,7 @@ import { ContactBook } from "@/components/ContactBook";
 import { Logo } from "@/components/Logo";
 import { useEncryptionKeys } from "@/hooks/useEncryptionKeys";
 import { useCredits } from "@/hooks/useCredits";
+import { useOnChainKey } from "@/hooks/useOnChainKey";
 import { BuyCredits } from "@/components/BuyCredits";
 import { cn } from "@/lib/utils";
 
@@ -58,6 +61,7 @@ export const GmailSidebar = ({
   const { address } = useWallet();
   const { keysReady } = useEncryptionKeys();
   const { balance } = useCredits();
+  const { registered, publishing, publish } = useOnChainKey();
   const [collapsed, setCollapsed] = useState(false);
   const [internalMobileOpen, setInternalMobileOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -256,6 +260,32 @@ export const GmailSidebar = ({
                 </>
               )}
             </div>
+
+            {/* Publishing the key is what makes the database checkable: if we
+                ever served a different key for you, the chain would disagree
+                and the sender's browser would catch it. */}
+            {keysReady && registered === false && (
+              <button
+                onClick={() => void publish()}
+                disabled={publishing}
+                className="mb-2 flex w-full items-center gap-2 rounded-lg border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.08)] px-3 py-2 text-left text-xs"
+              >
+                {publishing ? (
+                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                ) : (
+                  <Link2 className="h-3.5 w-3.5 shrink-0 text-[hsl(var(--warning))]" />
+                )}
+                <span className="text-muted-foreground">
+                  {publishing ? "Publishing your key…" : "Publish your key on-chain"}
+                </span>
+              </button>
+            )}
+            {keysReady && registered === true && (
+              <div className="mb-2 flex items-center gap-2 px-1 text-xs">
+                <Link2 className="h-3.5 w-3.5 text-[hsl(var(--verified))]" />
+                <span className="text-muted-foreground">Key published on-chain</span>
+              </div>
+            )}
 
             <button
               onClick={copyAddress}

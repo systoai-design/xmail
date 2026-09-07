@@ -31,6 +31,8 @@ import { isAdmin } from '@/lib/userRoles';
 import { callSecureEndpoint } from '@/lib/secureApi';
 import { emitCreditsChanged, emitMailChanged } from '@/lib/events';
 import { scheduleSend, UNDO_WINDOW_MS } from '@/lib/pendingSend';
+import { useSelfAnchor } from '@/hooks/useSelfAnchor';
+import { verifyRecipientKey } from '@/hooks/useOnChainKey';
 import { ToastAction } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 
@@ -52,6 +54,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
   const { address, signMessage } = useWallet();
   const { toast } = useToast();
   const { keysReady } = useEncryptionKeys();
+  const { anchorMessage } = useSelfAnchor();
   
   // Seeded once, not synced: after this the field belongs to the user, and a
   // prop-driven reset would wipe a recipient they had just corrected.
@@ -386,6 +389,22 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
         return;
       }
 
+      // Before encrypting to a key we were handed, check the chain agrees it
+      // belongs to the recipient. This is the impersonation case, and the only
+      // one worth refusing a send over: an unregistered or unreachable key is a
+      // weaker guarantee, not a danger.
+      const keyStatus = await verifyRecipientKey(recipient, recipientKeyData.public_key);
+      if (keyStatus === 'mismatch') {
+        toast({
+          title: 'Recipient key does not match the chain',
+          description:
+            'The key we hold for this address disagrees with the one they published on-chain. Nothing was sent.',
+          variant: 'destructive',
+        });
+        setSending(false);
+        return;
+      }
+
       // Encrypt for recipient
       const recipientPublicKey = await importPublicKey(recipientKeyData.public_key);
       const encryptedSubject = await encryptMessage(subject, recipientPublicKey);
@@ -443,6 +462,17 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
 
           emitCreditsChanged(sendResult?.balance);
           emitMailChanged();
+
+          // Anchored from the sender's own wallet, so the chain records them
+          // rather than a relayer. Deliberately after the send and never fatal:
+          // a declined signature leaves the mail delivered and unanchored,
+          // which is far better than mail that fails because a chain was busy.
+          if (sendResult?.emailId) {
+            void anchorMessage(sendResult.emailId, encryptedBody, recipient).then((ok) => {
+              if (ok) emitMailChanged();
+            });
+          }
+
           toast({
             title: 'Sent',
             description:

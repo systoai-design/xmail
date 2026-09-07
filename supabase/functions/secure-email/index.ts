@@ -87,6 +87,20 @@ function accountHashFor(wallet: string): `0x${string}` {
   return keccak256(new TextEncoder().encode(wallet.toLowerCase()));
 }
 
+const ANCHORED_EVENT_ABI = [
+  {
+    type: 'event',
+    name: 'Anchored',
+    inputs: [
+      { name: 'from', type: 'address', indexed: true },
+      { name: 'to', type: 'address', indexed: true },
+      { name: 'messageHash', type: 'bytes32', indexed: true },
+      { name: 'timestamp', type: 'uint64', indexed: false },
+      { name: 'blockNumber', type: 'uint64', indexed: false },
+    ],
+  },
+] as const;
+
 const CREDIT_SALE_ABI = [
   {
     type: 'event',
@@ -342,25 +356,12 @@ serve(async (req) => {
         const row = Array.isArray(result) ? result[0] : result;
         console.log(`Email sent, ${cost} credit(s) charged`);
 
-        // The recipient's ciphertext is what gets committed: it is the exact
-        // bytes the recipient will decrypt, so a mismatch later means the stored
-        // message is not the one that was sent.
-        const anchored = await anchorMessage(
-          data.encrypted_body ?? '',
-          verifiedWallet,
-          data.to_wallet,
-        );
-        if (anchored && row?.email_id) {
-          await supabaseAdmin
-            .from('encrypted_emails')
-            .update({
-              message_hash: anchored.messageHash,
-              anchor_tx_hash: anchored.txHash,
-              anchor_block: anchored.blockNumber,
-              anchored_at: new Date().toISOString(),
-            })
-            .eq('id', row.email_id);
-        }
+        // Anchoring is NOT done here any more. The sender signs it themselves
+        // from the browser, so the contract records them rather than a shared
+        // relayer -- which is what lets an anchor prove who sent a message, not
+        // merely that it has not changed. Relaying as well would mean two
+        // transactions racing for the same hash, and the loser reverts with
+        // AlreadyAnchored. See record_anchor.
 
         return new Response(
           JSON.stringify({
@@ -668,6 +669,94 @@ serve(async (req) => {
         console.log(`Admin grant: ${amount} credits to ${verifiedWallet}`);
         return new Response(
           JSON.stringify({ success: true, credits: amount, balance: next }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // The sender anchored their own message and is telling us the transaction.
+      // Nothing here is taken on trust: the receipt is read from the chain, the
+      // Anchored event must name this wallet as the sender, and the hash must
+      // match what the stored ciphertext actually commits to. A client cannot
+      // mark its own mail as anchored.
+      case 'record_anchor': {
+        const { emailId, txHash, messageHash } = data;
+        if (!/^0x[0-9a-fA-F]{64}$/.test(String(txHash ?? ''))) {
+          throw new Error('That is not a transaction hash.');
+        }
+
+        const { data: email, error: emailErr } = await supabaseAdmin
+          .from('encrypted_emails')
+          .select('id, from_wallet, to_wallet, encrypted_body')
+          .eq('id', emailId)
+          .eq('from_wallet', verifiedWallet)
+          .maybeSingle();
+
+        if (emailErr) throw emailErr;
+        if (!email) throw new Error('Message not found');
+
+        // Recompute independently. If the client sent a hash for different
+        // content, this is where it stops.
+        const expectedHash = messageCommitment(
+          email.encrypted_body ?? '',
+          email.from_wallet as `0x${string}`,
+          email.to_wallet as `0x${string}`,
+        );
+        if (String(messageHash).toLowerCase() !== expectedHash.toLowerCase()) {
+          return new Response(
+            JSON.stringify({ error: 'HASH_MISMATCH', message: 'That hash does not match this message.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const publicClient = createPublicClient({ chain: robinhood, transport: http(RPC_URL) });
+        let receipt;
+        try {
+          receipt = await publicClient.getTransactionReceipt({ hash: txHash as `0x${string}` });
+        } catch {
+          return new Response(
+            JSON.stringify({ error: 'NOT_FOUND', message: 'That transaction is not on the chain yet.' }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        if (receipt.status !== 'success') {
+          return new Response(
+            JSON.stringify({ error: 'TX_FAILED', message: 'That transaction failed.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const events = parseEventLogs({
+          abi: ANCHORED_EVENT_ABI,
+          logs: receipt.logs,
+          eventName: 'Anchored',
+        }).filter((l: any) => l.address.toLowerCase() === String(MESSAGE_ANCHOR_ADDRESS).toLowerCase());
+
+        const match = events.find(
+          (l: any) =>
+            String(l.args.messageHash).toLowerCase() === expectedHash.toLowerCase() &&
+            String(l.args.from).toLowerCase() === verifiedWallet.toLowerCase(),
+        );
+
+        if (!match) {
+          return new Response(
+            JSON.stringify({ error: 'NO_ANCHOR', message: 'That transaction did not anchor this message from your wallet.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        await supabaseAdmin
+          .from('encrypted_emails')
+          .update({
+            message_hash: expectedHash,
+            anchor_tx_hash: String(txHash).toLowerCase(),
+            anchor_block: Number(receipt.blockNumber),
+            anchored_at: new Date().toISOString(),
+          })
+          .eq('id', emailId);
+
+        console.log(`Self-anchored ${emailId} by ${verifiedWallet}`);
+        return new Response(
+          JSON.stringify({ success: true }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }

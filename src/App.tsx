@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/toaster";
+import { ConnectDialog } from "@/components/ConnectDialog";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -23,6 +24,9 @@ const App = () => (
       >
         <WalletContextProvider>
           <TooltipProvider>
+            {/* Mounted once, above the router: any CTA on any page can open
+                it, and it survives the component that asked for it. */}
+            <ConnectDialog />
             <Toaster />
             <Sonner />
             <KeyRegistrar />

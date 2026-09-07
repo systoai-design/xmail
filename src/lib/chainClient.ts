@@ -23,6 +23,19 @@ export const publicClient = createPublicClient({
 });
 
 export const MESSAGE_ANCHOR_ABI = [
+  // Write. The sender signs this themselves, so the contract records THEM as
+  // msg.sender -- which is what turns "this message has not changed" into
+  // "this sender sent this message".
+  {
+    type: "function",
+    name: "anchor",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "messageHash", type: "bytes32" },
+      { name: "to", type: "address" },
+    ],
+    outputs: [],
+  },
   {
     type: "function",
     name: "verify",
@@ -91,6 +104,16 @@ export const KEY_REGISTRY_ABI = [
     stateMutability: "view",
     inputs: [{ name: "owner", type: "address" }],
     outputs: [{ type: "bool" }],
+  },
+  // Write. `msg.sender` is the only address that can write its own slot, so
+  // there is no owner to trust and key substitution is unrepresentable rather
+  // than merely forbidden.
+  {
+    type: "function",
+    name: "registerKey",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "publicKey", type: "bytes" }],
+    outputs: [],
   },
 ] as const;
 
