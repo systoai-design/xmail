@@ -80,11 +80,10 @@ export const GmailSidebar = ({
     { label: "Starred", icon: Star, value: "starred", badge: starredCount },
     { label: "Sent", icon: Send, value: "sent", badge: sentCount },
     { label: "Drafts", icon: FileEdit, value: "drafts", badge: draftsCount },
-    // Only appears when there is something in it: an always-visible empty
-    // folder for an edge case is clutter for everyone who never hits it.
-    ...(parkedCount > 0
-      ? [{ label: "Parked", icon: Clock, value: "parked", badge: parkedCount }]
-      : []),
+    // Always present. Hiding it until something was parked meant there was
+    // nowhere to look for a parked message, and no way to discover the folder
+    // exists -- which is worse than one quiet empty folder.
+    { label: "Parked", icon: Clock, value: "parked", badge: parkedCount },
   ];
 
   const handleNavClick = (value: string) => {
@@ -237,15 +236,6 @@ export const GmailSidebar = ({
                     </button>
                   }
                 />
-              </div>
-            )}
-
-            {parkedCount > 0 && (
-              <div className="mb-2 flex items-center gap-2 px-1 text-xs">
-                <Clock className="h-3.5 w-3.5 text-[hsl(var(--warning))]" />
-                <span className="text-muted-foreground">
-                  {parkedCount} waiting for the recipient to register
-                </span>
               </div>
             )}
 

@@ -76,6 +76,8 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
   const [attachmentCount, setAttachmentCount] = useState(0);
   const autoSaveTimerRef = useRef<NodeJS.Timeout>();
   const attachRef = useRef<AttachmentUploadHandle>(null);
+  // Set after one refused close, so a second press always gets out.
+  const forceClose = useRef(false);
 
   // Check admin status
   useEffect(() => {
@@ -239,7 +241,7 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
   // Recipient validation
   useEffect(() => {
     const validateRecipient = async (address: string) => {
-      const trimmed = address.trim();
+      const trimmed = address.trim().toLowerCase();
       
       if (!trimmed) {
         setValidationStatus('idle');
@@ -303,7 +305,9 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
       return;
     }
 
-    const recipient = to.trim();
+    // Lowercased at the boundary: the database stores lowercase, and wallets
+    // hand out the checksummed mixed-case form.
+    const recipient = to.trim().toLowerCase();
     
     if (!isAddress(recipient)) {
       toast({
@@ -571,7 +575,9 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
       return;
     }
 
-    const recipient = to.trim();
+    // Lowercased at the boundary: the database stores lowercase, and wallets
+    // hand out the checksummed mixed-case form.
+    const recipient = to.trim().toLowerCase();
     
     if (!isAddress(recipient)) {
       toast({
@@ -736,10 +742,18 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
       return;
     }
 
+    // Refusing to close was meant to protect unsaved writing, but it trapped
+    // people in a window they could not leave when saving was broken for a
+    // reason they could not fix. Warn, then let them out on the next press.
     if (!keysReady) {
+      if (forceClose.current) {
+        onClose();
+        return;
+      }
+      forceClose.current = true;
       toast({
         title: 'Draft not saved',
-        description: 'Unlock encryption first — drafts are stored encrypted, the same as sent mail.',
+        description: 'Encryption is not ready. Copy your message, then press close again to discard it.',
         variant: 'destructive',
       });
       return;
@@ -750,9 +764,14 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
     setClosing(false);
 
     if (!savedId) {
+      if (forceClose.current) {
+        onClose();
+        return;
+      }
+      forceClose.current = true;
       toast({
         title: 'Draft not saved',
-        description: 'Your message is still here. Copy it somewhere safe before closing again.',
+        description: 'Copy your message somewhere safe. Press close again to discard it.',
         variant: 'destructive',
       });
       return;
@@ -947,9 +966,11 @@ export const ComposeModal = ({ isOpen, onClose, draftId, initialTo, initialSubje
       </div>
 
       {/* --- message ------------------------------------------------------
-          The writing surface gets the remaining height and no chrome of its
-          own. Quill's toolbar is pinned below it by CSS, out of the way. */}
-      <div className="flex min-h-0 flex-1 flex-col px-5 py-4">
+          `min-h-0` is load-bearing: a flex child defaults to min-height:auto,
+          so a long message grew the panel instead of scrolling inside it and
+          pushed Send, the attach button and the footer off the bottom of the
+          screen with no way to reach them. */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 py-4">
         <RichTextEditor
           value={body}
           onChange={setBody}

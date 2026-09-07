@@ -56,16 +56,20 @@ export const useEncryptionKeys = () => {
     setupInProgress.current = true;
 
     try {
-      // 1. Already unlocked on this device.
-      if (
-        localStorage.getItem("encryption_private_key") &&
-        localStorage.getItem("encryption_public_key")
-      ) {
-        setKeysReady(true);
-        setNeedsUnlock(false);
-        return;
-      }
+      const localPrivate = localStorage.getItem("encryption_private_key");
+      const localPublic = localStorage.getItem("encryption_public_key");
 
+      // This used to return here whenever localStorage held a keypair, without
+      // ever consulting the database. That is wrong: a key in this browser says
+      // nothing about whether THIS wallet has one registered. After the move
+      // from Solana to EVM the browser still held the old keypair, so setup
+      // short-circuited, no row was ever created for the new address, and every
+      // lookup downstream failed -- drafts would not save, attachments had
+      // nothing to attach to, and the composer reported the user's own address
+      // as unregistered.
+      //
+      // localStorage and the database are now always reconciled for the wallet
+      // that is actually connected.
       const { data: backendKey, error } = await supabase
         .from("encryption_keys")
         .select("public_key, encrypted_private_key, iv")
@@ -82,9 +86,49 @@ export const useEncryptionKeys = () => {
         return;
       }
 
-      // 2. A wrapped key exists but this device does not have it. Unwrapping
-      //    needs a signature, so it waits for a click.
+      // Registered for this wallet, and this browser holds it. Nothing to do.
+      if (backendKey && localPrivate && localPublic && backendKey.public_key === localPublic) {
+        setKeysReady(true);
+        setNeedsUnlock(false);
+        return;
+      }
+
+      // This browser holds a keypair but the wallet has none registered --
+      // a new wallet in a browser that has used xmail before. Adopt the local
+      // key for this address rather than generating a second one, so anything
+      // already published on-chain still matches.
+      if (!backendKey && localPrivate && localPublic) {
+        const { error: adoptError } = await supabase
+          .from("encryption_keys")
+          .insert({ wallet_address: walletAddress, public_key: localPublic });
+
+        if (adoptError) {
+          console.error("Key registration failed:", adoptError);
+          toast({
+            title: "Could not register your encryption key",
+            description: "Mail cannot be sent or saved until this succeeds. Reload and try again.",
+            variant: "destructive",
+          });
+          setKeysReady(false);
+          return;
+        }
+
+        setKeysReady(true);
+        setNeedsUnlock(false);
+        return;
+      }
+
+      // A wrapped key exists but this device does not have it. Unwrapping needs
+      // a signature, so it waits for a click.
       if (backendKey?.encrypted_private_key && backendKey?.iv) {
+        setNeedsUnlock(true);
+        setKeysReady(false);
+        return;
+      }
+
+      // Registered, but this browser has no private key and there is no backup
+      // to unwrap. Nothing here can read that mail.
+      if (backendKey && !localPrivate) {
         setNeedsUnlock(true);
         setKeysReady(false);
         return;
@@ -106,7 +150,18 @@ export const useEncryptionKeys = () => {
         const { error: insertError } = await supabase
           .from("encryption_keys")
           .insert({ wallet_address: walletAddress, public_key: publicKeyBase64 });
-        if (insertError) console.error("Key registration failed:", insertError);
+        if (insertError) {
+          // Silent before. A failed registration looks exactly like a working
+          // account until the first send, draft or attachment quietly fails.
+          console.error("Key registration failed:", insertError);
+          toast({
+            title: "Could not register your encryption key",
+            description: "Mail cannot be sent or saved until this succeeds. Reload and try again.",
+            variant: "destructive",
+          });
+          setKeysReady(false);
+          return;
+        }
       } else if (backendKey.public_key !== publicKeyBase64) {
         // A different public key is already registered for this wallet and the
         // registry is append-only, so we cannot silently replace it. Say so

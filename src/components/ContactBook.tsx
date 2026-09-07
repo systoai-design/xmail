@@ -78,7 +78,7 @@ export const ContactBook = () => {
     try {
       const { error } = await supabase.from('contacts').insert({
         owner_wallet: address,
-        wallet_address: newWallet.trim(),
+        wallet_address: newWallet.trim().toLowerCase(),
         nickname: newNickname.trim(),
       });
 

@@ -679,8 +679,11 @@
 .rich-text-editor {
   display: flex;
   flex: 1;
+  /* Without min-height:0 a flex child sizes to its content, so a long message
+     expanded the composer past the viewport and took the send button with it. */
   min-height: 0;
   flex-direction: column;
+  overflow: hidden;
 }
 .rich-text-editor .ql-container {
   order: 1;

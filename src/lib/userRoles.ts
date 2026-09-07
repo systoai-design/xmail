@@ -4,7 +4,7 @@ export async function isAdmin(walletAddress: string): Promise<boolean> {
   const { data } = await supabase
     .from('user_roles')
     .select('role')
-    .eq('wallet_address', walletAddress)
+    .eq('wallet_address', walletAddress.toLowerCase())
     .eq('role', 'admin')
     .maybeSingle();
   
