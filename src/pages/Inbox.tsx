@@ -20,6 +20,7 @@ import { ComposeTabSwitcher, ComposeWindow } from '@/components/ComposeTabSwitch
 import { InlineEmailViewer } from '@/components/InlineEmailViewer';
 import { ParkedList } from '@/components/ParkedList';
 import { UnanchoredNotice } from '@/components/UnanchoredNotice';
+import { MessageListSkeleton } from '@/components/MessageListSkeleton';
 import { cn } from '@/lib/utils';
 import { openKeyManagement, onKeyImported, onMailChanged } from '@/lib/events';
 
@@ -127,9 +128,15 @@ const Inbox = () => {
     // React already has the mechanism: depend on the value and let the effect
     // re-run when it changes.
     if (!keysReady) {
-      // No toast. If a signature is needed the banner below asks for it, and a
-      // toast cannot be clicked to provide the gesture the wallet requires.
-      setLoading(false);
+      // Keys are still being set up, or waiting to be unlocked. Only the second
+      // of those is a finished state -- the first is still loading, and calling
+      // it finished rendered "Nothing here yet" over a mailbox that had mail in
+      // it, for as long as key setup took.
+      //
+      // No toast either way: if a signature is needed the banner below asks for
+      // it, and a toast cannot be clicked to provide the gesture a wallet
+      // requires.
+      if (needsUnlock) setLoading(false);
       return;
     }
 
@@ -750,11 +757,14 @@ const Inbox = () => {
         )}
 
         {/* Email List */}
+        {/* Mail sent before anchoring became a precondition can still be
+            unanchored. Nothing surfaced that, so it was only discoverable by
+            opening each message one at a time. */}
+        <UnanchoredNotice />
+
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            </div>
+            <MessageListSkeleton />
           ) : totalEmails === 0 ? (
             <EmptyState tab={activeTab} onCompose={handleCompose} />
           ) : (

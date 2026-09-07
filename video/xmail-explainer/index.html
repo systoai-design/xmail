@@ -45,10 +45,13 @@
         --ink-2: #2a2a33;
         --ink-soft: #55555f;
         --ink-faint: #6d6d74;
-        --verified: #487a68;
-        --verified-bright: #55a088;
-        --verified-pale: #d9e7e1;
-        --warning: #e8850c;
+        /* The product's design system carries one chromatic accent
+           (--verified, a green) for on-chain verification. The film
+           deliberately does not: xmail reads as ink on paper here, so all
+           hierarchy comes from tone. These three stand in for that accent. */
+        --tone-1: #131318;
+        --tone-2: #78787f;
+        --tint: #eceae6;
         --border: #e3e3e8;
         --white: #ffffff;
       }
@@ -101,15 +104,15 @@
         background:
           radial-gradient(
             ellipse 70% 80% at 12% 22%,
-            rgba(72, 122, 104, 0.14),
+            rgba(19, 19, 24, 0.1),
             transparent 62%
           ),
           radial-gradient(
             ellipse 60% 70% at 92% 82%,
-            rgba(72, 122, 104, 0.12),
+            rgba(19, 19, 24, 0.07),
             transparent 60%
           ),
-          linear-gradient(140deg, #f6f5f2 0%, #eef1ef 55%, #f4f3f0 100%);
+          linear-gradient(140deg, #f7f6f3 0%, #efeeeb 55%, #f5f4f1 100%);
       }
 
       /* --- pills (scene 1) ---------------------------------------------- */
@@ -144,7 +147,7 @@
         width: 34px;
         height: 34px;
         border-radius: 50%;
-        background: var(--verified-bright);
+        background: var(--tone-1);
       }
 
       /* --- headline typography ------------------------------------------ */
@@ -170,10 +173,10 @@
         display: inline-block;
       }
       .tail {
-        color: var(--verified);
+        color: var(--tone-2);
       }
       .tail-2 {
-        color: var(--verified-bright);
+        color: var(--tone-1);
       }
     </style>
     <style>
@@ -422,11 +425,8 @@
         display: inline-flex;
         align-items: center;
         gap: 5px;
-        background: var(--verified-pale);
-        /* Darker than --verified: at 13px on the pale fill the token itself
-           only reaches 3.9:1, and a verification badge is the one label in
-           this film that must never be marginal to read. */
-        color: #35604f;
+        background: var(--tint);
+        color: var(--tone-1);
         border-radius: 300px;
         padding: 3px 10px 3px 7px;
         font-size: 13px;
@@ -574,7 +574,7 @@
         gap: 7px;
         background: var(--sunken);
         font-size: 14px;
-        color: var(--verified);
+        color: var(--tone-1);
         font-weight: 600;
       }
 
@@ -603,7 +603,7 @@
         position: absolute;
         display: block;
         border-radius: 50%;
-        border: 3px solid rgba(72, 122, 104, 0.42);
+        border: 3px solid rgba(19, 19, 24, 0.3);
       }
 
       /* --- scene 9: notification toasts --------------------------------- */
@@ -624,7 +624,7 @@
         width: 34px;
         height: 34px;
         flex: 0 0 34px;
-        color: var(--verified);
+        color: var(--tone-1);
       }
       .toast-txt {
         flex: 1;
@@ -675,8 +675,8 @@
         width: 28px;
         height: 28px;
         border-radius: 50%;
-        background: var(--verified-bright);
-        box-shadow: 0 0 0 7px var(--paper);
+        background: #ffffff;
+        box-shadow: 0 0 0 6px var(--ink);
       }
       .wordmark {
         display: block;
@@ -738,7 +738,7 @@
         <span
           id="s1-dot"
           class="accent-dot"
-          style="left: 892px; top: 350px; background: #e8850c"
+          style="left: 892px; top: 350px; background: #131318"
         ></span>
       </div>
 
@@ -761,7 +761,7 @@
         <span
           id="s2-dot"
           class="accent-dot"
-          style="left: 1636px; top: 626px; background: #e8850c"
+          style="left: 1636px; top: 626px; background: #131318"
         ></span>
       </div>
 
@@ -780,14 +780,12 @@
         <span
           id="s3-h"
           class="headline"
-          style="top: 486px; font-size: 96px; height: 124px"
+          style="top: 442px; font-size: 148px; height: 196px"
         >
-          <span class="word-mask" style="height: 120px"
-            ><span class="w">Meet&nbsp;</span></span
-          ><span class="word-mask" style="height: 120px"
-            ><span class="w tail">wallet-to-wallet&nbsp;</span></span
-          ><span class="word-mask" style="height: 120px"
-            ><span class="w tail-2">email</span></span
+          <span class="word-mask" style="height: 190px"
+            ><span class="w tail">Meet&nbsp;</span></span
+          ><span class="word-mask" style="height: 190px"
+            ><span class="w tail-2">xmail.</span></span
           >
         </span>
       </div>
@@ -946,7 +944,7 @@
                 bottom: 44px;
                 width: 46px;
                 height: 46px;
-                color: #55a088;
+                color: #f3f2f0;
               "
             >
               <svg
@@ -993,7 +991,7 @@
         <span
           id="s5-h"
           class="headline"
-          style="top: 92px; font-size: 104px; height: 132px; color: #487a68"
+          style="top: 92px; font-size: 104px; height: 132px; color: #131318"
         >
           <span class="ltr">V</span><span class="ltr">e</span><span class="ltr">r</span><span class="ltr">i</span><span class="ltr">f</span><span class="ltr">i</span><span class="ltr">e</span><span class="ltr">d</span><span class="ltr" style="width:0.30em">&nbsp;</span><span class="ltr">o</span><span class="ltr">n</span><span class="ltr">-</span><span class="ltr">c</span><span class="ltr">h</span><span class="ltr">a</span><span class="ltr">i</span><span class="ltr">n</span>
         </span>
@@ -1170,8 +1168,8 @@
             height: 900px;
             background: radial-gradient(
               circle at 40% 35%,
-              rgba(72, 122, 104, 0.3),
-              rgba(72, 122, 104, 0.1) 70%
+              rgba(19, 19, 24, 0.16),
+              rgba(19, 19, 24, 0.05) 70%
             );
           "
         ></span>
@@ -1185,8 +1183,8 @@
             height: 760px;
             background: radial-gradient(
               circle at 45% 40%,
-              rgba(72, 122, 104, 0.22),
-              rgba(72, 122, 104, 0.06) 72%
+              rgba(19, 19, 24, 0.11),
+              rgba(19, 19, 24, 0.03) 72%
             );
           "
         ></span>
@@ -1196,7 +1194,7 @@
             <defs>
               <linearGradient id="rg1" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0" stop-color="#131318" />
-                <stop offset="1" stop-color="#3c4a45" />
+                <stop offset="1" stop-color="#4a4a54" />
               </linearGradient>
             </defs>
             <path
@@ -1209,8 +1207,8 @@
           <svg width="620" height="360" viewBox="0 0 300 190" fill="none">
             <defs>
               <linearGradient id="rg2" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#487a68" />
-                <stop offset="1" stop-color="#7fb3a0" />
+                <stop offset="0" stop-color="#8e8e97" />
+                <stop offset="1" stop-color="#c6c6cc" />
               </linearGradient>
             </defs>
             <path
@@ -1223,8 +1221,8 @@
           <svg width="560" height="320" viewBox="0 0 300 190" fill="none">
             <defs>
               <linearGradient id="rg3" x1="0" y1="1" x2="1" y2="0">
-                <stop offset="0" stop-color="#1d2a25" />
-                <stop offset="1" stop-color="#487a68" />
+                <stop offset="0" stop-color="#131318" />
+                <stop offset="1" stop-color="#6d6d74" />
               </linearGradient>
             </defs>
             <path
@@ -1366,9 +1364,9 @@
           id="s8-h"
           class="headline"
           style="top: 480px; font-size: 118px; height: 140px"
-          ><span id="s8-w1" style="display: inline-block; color: #2d4f43"
+          ><span id="s8-w1" style="display: inline-block; color: #3a3a44"
             >No&nbsp;</span
-          ><span id="s8-w2" style="display: inline-block; color: #55a088"
+          ><span id="s8-w2" style="display: inline-block; color: #78787f"
             >more&nbsp;</span
           ><span id="s8-w3" style="display: inline-block">spoofing.</span></span
         >
@@ -1553,6 +1551,15 @@
           >Email, addressed to a wallet.</span
         >
       </div>
+      <!-- The reference resolves to black. The end card holds, then goes. -->
+      <div
+        id="fade"
+        class="clip scene"
+        data-start="28.1"
+        data-duration="0.5"
+        data-track-index="10"
+        style="background: #000000"
+      ></div>
     </div>
 
     <style>
@@ -1742,7 +1749,7 @@
       // It lands: the zone confirms in the verified green, then clears.
       tl.to(
         "#s4-drop",
-        { borderColor: "rgba(85,160,136,0.95)", scale: 1.05, duration: 0.22, ease: "power2.out" },
+        { borderColor: "rgba(19,19,24,0.9)", scale: 1.05, duration: 0.22, ease: "power2.out" },
         S4 + 3.97,
       );
       tl.to("#s4-drop", { opacity: 0, scale: 1, duration: 0.42, ease: "power2.out" }, S4 + 4.22);
@@ -1930,6 +1937,8 @@
       // The lockup settles rather than freezing dead on the last frame.
       tl.to("#s10-lock", { y: -10, duration: 0.86, ease: "sine.out" }, S10 + 0.86);
       tl.to("#s10-tag", { y: -10, duration: 0.86, ease: "sine.out" }, S10 + 1.28);
+
+      tl.fromTo("#fade", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.in" }, 28.1);
 
       window.__timelines["main"] = tl;
     </script>
