@@ -2,980 +2,785 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* ===========================================================================
+   xmail design system
+   Light-first, with a real dark mode. Spacing, timing and tracking are
+   chosen values, not template leftovers. All colors are HSL triplets so
+   Tailwind's hsl(var(--x)) wrappers keep working.
+   =========================================================================== */
 
 @layer base {
   :root {
-    /* Deep Navy Blue Security Palette - Premium Design */
-    --background: 220 35% 8%;
-    --background-darker: 220 40% 6%;
-    --background-medium: 220 30% 12%;
-    --background-light: 220 25% 16%;
-    --foreground: 0 0% 100%;
-    
-    --card: 220 30% 12%;
-    --card-foreground: 0 0% 98%;
-    
-    --popover: 220 30% 10%;
-    --popover-foreground: 0 0% 98%;
-    
-    --primary: 220 90% 56%;
-    --primary-light: 220 85% 70%;
-    --primary-dark: 220 95% 45%;
-    --primary-foreground: 0 0% 100%;
-    
-    --secondary: 190 100% 55%;
-    --secondary-foreground: 0 0% 100%;
-    
-    --muted: 220 25% 20%;
-    --muted-foreground: 220 15% 65%;
-    
-    --accent: 280 75% 65%;
-    --accent-foreground: 0 0% 100%;
-    
-    --success: 160 85% 45%;
-    --secure: 160 85% 45%;
-    
-    --amber: 45 95% 55%;
-    --cyan: 190 100% 55%;
-    
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    
-    --border: 220 30% 18%;
-    --input: 220 30% 15%;
-    --ring: 220 90% 56%;
-    --radius: 1rem;
-    
-    /* Premium Gradients - Navy Theme */
-    --gradient-primary: linear-gradient(135deg, hsl(220 90% 56%), hsl(220 85% 70%));
-    --gradient-hero: linear-gradient(180deg, hsl(220 35% 8%) 0%, hsl(220 40% 10%) 30%, hsl(220 35% 9%) 70%, hsl(220 35% 8%) 100%);
-    --gradient-section: linear-gradient(180deg, hsl(220 35% 8%) 0%, hsl(220 30% 10%) 50%, hsl(220 35% 8%) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(220 30% 12%) 0%, hsl(220 25% 14%) 100%);
-    --gradient-button: linear-gradient(135deg, hsl(220 90% 56%), hsl(220 95% 50%));
-    --gradient-secure: linear-gradient(135deg, hsl(160 85% 45% / 0.2), hsl(160 80% 40% / 0.1));
-    --gradient-encrypted: linear-gradient(135deg, hsl(220 90% 56% / 0.2), hsl(190 100% 55% / 0.1));
-    --gradient-subtle: linear-gradient(180deg, hsl(220 35% 8%), hsl(220 30% 10%));
-    
-    /* Premium Shadows */
-    --shadow-glow: 0 0 40px rgba(74, 158, 255, 0.2), 0 0 80px rgba(74, 158, 255, 0.1);
-    --shadow-glow-cyan: 0 0 40px rgba(0, 212, 255, 0.2);
-    --shadow-glow-secure: 0 0 30px rgba(0, 255, 136, 0.2);
-    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    --shadow-elevated: 0 20px 50px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    --shadow-premium: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
-    --shadow-elegant: 0 10px 30px -10px rgba(74, 158, 255, 0.3);
-    
-    /* Transitions */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-slow: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    
-    /* CTA Color */
-    --cta: 30 100% 56%;
-    --cta-foreground: 0 0% 0%;
-  }
-}
+    /* --- ground & surfaces ---
+       A warm white, not a clinical one. Paper, not screen. */
+    --background: 36 30% 99%;
+    --surface-sunken: 36 20% 96.5%;
+    --surface-raised: 0 0% 100%;
+    --foreground: 240 12% 8%;
 
-@layer base {
+    --card: 0 0% 100%;
+    --card-foreground: 240 12% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 12% 8%;
+
+    /* --- accent ---
+       One accent, used sparingly. Indigo reads as trustworthy infrastructure
+       without the neon the old palette leaned on. */
+    --primary: 240 12% 12%;
+    --primary-hover: 240 12% 6%;
+    --primary-foreground: 36 30% 99%;
+
+    --secondary: 36 20% 95%;
+    --secondary-foreground: 240 12% 12%;
+
+    --muted: 36 16% 95%;
+    --muted-foreground: 240 6% 44%;
+
+    --accent: 36 20% 95%;
+    --accent-foreground: 240 12% 12%;
+
+    /* --- semantic ---
+       "Verified" gets its own colour because on-chain verification is the one
+       claim this product must be able to make unambiguously. */
+    --verified: 158 26% 38%;
+    --verified-foreground: 0 0% 100%;
+    --warning: 32 90% 48%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 10% 90%;
+    --input: 240 10% 88%;
+    --ring: 240 12% 30%;
+
+    /* Measured radius census: 3px detail, 24-32px cards, 300px pills.
+       A generous card radius is a large part of why the reference reads as
+       soft-tech rather than as a dashboard. */
+    /* Sylva's fluid design unit: one custom property, three explicit tiers.
+       Not a rem driver -- the root font-size is untouched and values that
+       should scale multiply calc(N * var(--u)) instead. */
+    --u: calc(100vw / 1600);
+
+    --radius: 1.25rem;
+    --radius-detail: 3px;
+    --radius-card: 2rem;
+    --radius-pill: 300px;
+
+    /* --- depth ---
+       Layered low-opacity shadows read as real elevation. One big blur reads
+       as a drop shadow from 2013. */
+    --shadow-xs: 0 1px 2px hsl(240 12% 8% / 0.04);
+    --shadow-sm:
+      0 1px 2px hsl(240 12% 8% / 0.04), 0 2px 4px hsl(240 12% 8% / 0.03);
+    --shadow-md:
+      0 2px 4px hsl(240 12% 8% / 0.04), 0 6px 12px hsl(240 12% 8% / 0.05);
+    --shadow-lg:
+      0 4px 8px hsl(240 12% 8% / 0.04), 0 12px 28px hsl(240 12% 8% / 0.07);
+    --shadow-xl:
+      0 8px 16px hsl(240 12% 8% / 0.05), 0 24px 56px hsl(240 12% 8% / 0.1);
+    --shadow-accent: 0 8px 28px hsl(240 12% 12% / 0.18);
+
+    /* --- glass --- */
+    --glass-bg: 0 0% 100%;
+    --glass-opacity: 0.72;
+    --glass-border: 240 12% 8%;
+
+    /* --- motion ---
+       Apple's damping/response model: critically damped by default, bounce
+       reserved for momentum-driven gestures only. */
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+    --dur-fast: 450ms;
+    --dur-base: 900ms;
+    --dur-slow: 1050ms;
+    --ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+    /* --- sidebar (shadcn contract) --- */
+    --sidebar-background: 36 24% 97.5%;
+    --sidebar-foreground: 240 12% 12%;
+    --sidebar-primary: 240 12% 12%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 36 20% 94%;
+    --sidebar-accent-foreground: 240 12% 12%;
+    --sidebar-border: 240 10% 90%;
+    --sidebar-ring: 240 12% 30%;
+  }
+
+  .dark {
+    /* Dark is the default theme. Ground is near-black with a hint of blue --
+       never pure #000, which kills the depth layered surfaces depend on.
+       Surfaces are white at low alpha rather than lighter greys, which is what
+       the captured reference does and why its panels read as glass rather than
+       as paint. */
+    --background: 240 10% 3.5%;
+    --surface-sunken: 240 12% 2.5%;
+    --surface-raised: 240 8% 9%;
+    --foreground: 45 12% 94%;
+
+    /* Measured text ramp: 1.0 / 0.8 / 0.72 / 0.64 / 0.56. Hierarchy comes from
+       opacity against one ink, not from five different greys. */
+    --text-strong: 45 12% 94%;
+    --text-muted: 45 8% 92%;
+    --text-alpha-1: 0.78;
+    --text-alpha-2: 0.62;
+    --text-alpha-3: 0.44;
+    --text-alpha-4: 0.34;
+
+    /* `--card` stays an opaque surface because Tailwind resolves bg-card as
+       hsl(var(--card)) with no alpha channel. The translucent white-on-black
+       panel from the reference is a separate material, applied via .panel. */
+    --card: 240 8% 7%;
+    --card-foreground: 0 0% 100%;
+    --popover: 240 8% 9%;
+    --popover-foreground: 0 0% 100%;
+
+    /* The reference's panel material: white at very low alpha over near-black. */
+    --panel-tint: 0 0% 100%;
+    --panel-alpha: 0.04;
+    --panel-border-alpha: 0.1;
+
+    --primary: 45 10% 93%;
+    --primary-hover: 45 14% 98%;
+    --primary-foreground: 240 12% 6%;
+
+    --secondary: 240 6% 14%;
+    --secondary-foreground: 240 20% 97%;
+
+    --muted: 240 6% 14%;
+    --muted-foreground: 240 8% 62%;
+
+    --accent: 240 6% 15%;
+    --accent-foreground: 240 20% 97%;
+
+    --verified: 158 22% 62%;
+    --verified-foreground: 240 20% 6%;
+    --warning: 32 90% 58%;
+    --destructive: 0 68% 53%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 8% 17%;
+    --input: 240 8% 20%;
+    --ring: 45 10% 88%;
+
+    /* On a near-black ground, cast shadows are invisible -- depth has to come
+       from emitted light instead. This is the reference's language: a tight
+       0 0 6px core with a wide low-alpha bloom, rather than a drop shadow. */
+    --shadow-xs: 0 0 0 1px hsl(0 0% 100% / 0.06);
+    --shadow-sm: 0 0 0 1px hsl(0 0% 100% / 0.07), 0 2px 8px hsl(0 0% 0% / 0.5);
+    --shadow-md:
+      0 0 0 1px hsl(0 0% 100% / 0.08), 0 8px 24px hsl(0 0% 0% / 0.55);
+    --shadow-lg:
+      0 0 0 1px hsl(0 0% 100% / 0.09), 0 16px 48px hsl(0 0% 0% / 0.6);
+    --shadow-xl: 0 0 0 1px hsl(0 0% 100% / 0.1), 0 28px 80px hsl(0 0% 0% / 0.7);
+    --shadow-accent:
+      0 0 0 1px hsl(0 0% 100% / 0.12), 0 8px 28px hsl(0 0% 0% / 0.6);
+    --glow-soft: 0 0 24px hsl(0 0% 100% / 0.1);
+    --glow-verified:
+      0 0 6px hsl(var(--verified) / 0.5), 0 0 28px hsl(var(--verified) / 0.28);
+
+    --glass-bg: 240 8% 10%;
+    --glass-opacity: 0.68;
+    --glass-border: 0 0% 100%;
+
+    --sidebar-background: 240 10% 6%;
+    --sidebar-foreground: 240 20% 95%;
+    --sidebar-primary: 45 10% 93%;
+    --sidebar-primary-foreground: 240 20% 6%;
+    --sidebar-accent: 240 6% 13%;
+    --sidebar-accent-foreground: 240 20% 95%;
+    --sidebar-border: 240 8% 16%;
+    --sidebar-ring: 45 10% 88%;
+  }
+
+  @media (min-width: 1900px) {
+    :root {
+      --u: calc(1900px / 1600);
+    }
+  }
+  @media (max-width: 900px) {
+    :root {
+      --u: calc(100vw / 760);
+    }
+  }
+
   * {
     @apply border-border;
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    cursor: none;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+    text-rendering: optimizeLegibility;
+    font-weight: 400;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-display font-black tracking-tight;
-    letter-spacing: -0.02em;
+  /* One weight, everywhere. Polestar carries 762 of 763 sampled elements at a
+     single weight and builds every level of hierarchy from size, line-height
+     and tracking instead. Mixing four weights is what makes a page read as a
+     template; this is the single highest-leverage discipline in the library. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  strong,
+  b,
+  th {
+    font-weight: 400;
   }
 
-  /* Custom Cursor Styles */
-  .custom-cursor-dot {
-    position: fixed;
-    width: 8px;
-    height: 8px;
-    background: hsl(var(--primary));
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9999;
-    transition: transform 0.15s ease-out;
-    box-shadow: 0 0 10px hsl(var(--primary) / 0.5);
+  /* Tracking is size-specific. A single letter-spacing value is wrong
+     somewhere: large type reads too loose, small type too tight. */
+  /* Tracking and leading are both functions of size, measured across Polestar,
+     Homy and Nova: tracking tightens in em as type grows (-0.045em at 110px
+     down to -0.008em at 12px), and line-height closes from 1.6 to 0.9 over the
+     same range. One flat value for either is wrong at both ends of the scale. */
+  .type-display,
+  h1 {
+    letter-spacing: -0.042em;
+    line-height: 0.98;
+  }
+  .type-title,
+  h2 {
+    letter-spacing: -0.034em;
+    line-height: 1.06;
+  }
+  .type-heading,
+  h3 {
+    letter-spacing: -0.024em;
+    line-height: 1.16;
+  }
+  h4,
+  h5,
+  h6 {
+    letter-spacing: -0.016em;
+    line-height: 1.28;
+  }
+  p,
+  li {
+    letter-spacing: -0.008em;
+    line-height: 1.55;
+  }
+  small,
+  .text-xs,
+  .text-sm {
+    letter-spacing: 0;
+    line-height: 1.45;
   }
 
-  .custom-cursor-ring {
-    position: fixed;
-    width: 32px;
-    height: 32px;
-    border: 2px solid hsl(var(--primary));
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9998;
-    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+  /* Visible, non-ugly focus. Keyboard users are users. */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 
-  /* Magnetic button wrapper */
-  .magnetic-wrapper {
-    transition: transform 0.2s cubic-bezier(0.33, 1, 0.68, 1);
-    will-change: transform;
+  ::selection {
+    background: hsl(var(--primary) / 0.22);
+  }
+
+  /* Scrollbars that match the surface instead of fighting it */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 6px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.5);
+    background-clip: content-box;
   }
 }
 
-@layer utilities {
-  .gradient-primary {
-    background: var(--gradient-primary);
-  }
-
-  .gradient-card {
-    background: var(--gradient-card);
-  }
-
-  .gradient-hero {
-    background: var(--gradient-hero);
-    position: relative;
-  }
-  
-  .gradient-hero::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: 
-      repeating-linear-gradient(0deg, transparent, transparent 2px, hsl(217 100% 64% / 0.03) 2px, hsl(217 100% 64% / 0.03) 4px),
-      repeating-linear-gradient(90deg, transparent, transparent 2px, hsl(217 100% 64% / 0.03) 2px, hsl(217 100% 64% / 0.03) 4px);
-    opacity: 0.5;
-    pointer-events: none;
-  }
-
-  .gradient-section {
-    background: var(--gradient-section);
-  }
-
-  .shadow-glow {
-    box-shadow: var(--shadow-glow);
-  }
-
-  .shadow-glow-cyan {
-    box-shadow: var(--shadow-glow-cyan);
-  }
-
-  .shadow-glow-strong {
-    box-shadow: var(--shadow-glow-strong);
-  }
-
-  .transition-smooth {
-    transition: var(--transition-smooth);
-  }
-
-  .transition-slow {
-    transition: var(--transition-slow);
-  }
-
+@layer components {
+  /* --- materials ---
+     Translucent chrome that content scrolls under, per Apple's material
+     guidance, rather than an opaque bar consuming a fixed strip. */
   .glass {
-    background: rgba(255, 255, 255, 0.03);
+    background: hsl(var(--glass-bg) / var(--glass-opacity));
     backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: var(--shadow-premium);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid hsl(var(--glass-border) / 0.08);
   }
 
-  .glass:hover {
-    background: rgba(26, 26, 26, 0.2);
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  .glass-card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    transition:
+      box-shadow var(--dur-base) var(--ease-out),
+      transform var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out);
   }
 
   .glass-strong {
-    background: rgba(26, 26, 26, 0.9);
+    background: hsl(var(--glass-bg) / 0.96);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .glass-strong:hover {
-    background: rgba(26, 26, 26, 0.3);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  }
-
-  .glass-ultra {
-    background: rgba(26, 26, 26, 0.35);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .glass-ultra:hover {
-    background: rgba(26, 26, 26, 0.15);
-    backdrop-filter: blur(6px);
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  }
-
-  .glass-glow {
-    background: rgba(26, 26, 26, 0.85);
-    backdrop-filter: blur(20px);
-    border: 1px solid transparent;
-    background-image: linear-gradient(rgba(26, 26, 26, 0.85), rgba(26, 26, 26, 0.85)), var(--gradient-border);
-    background-origin: border-box;
-    background-clip: padding-box, border-box;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .glass-glow:hover {
-    background-image: linear-gradient(rgba(26, 26, 26, 0.3), rgba(26, 26, 26, 0.3)), var(--gradient-border);
-    backdrop-filter: blur(8px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  }
-
-  /* Premium glass card for content */
-  .glass-card {
-    background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: var(--shadow-card);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Subtle glass for backgrounds */
-  .glass-subtle {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Header-specific glass with better contrast */
-  .glass-header {
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 4px 32px -8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Gmail-style email interface */
-  .gmail-email-row {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform, background-color;
-  }
-
-  .gmail-email-row:hover {
-    background: rgba(255, 255, 255, 0.03);
-  }
-
-  .gmail-email-row-unread {
-    background: rgba(255, 255, 255, 0.02);
-  }
-
-  .gmail-section-header {
-    cursor: pointer;
-    transition: background 0.15s ease;
-  }
-
-  .gmail-section-header:hover {
-    background: rgba(255, 255, 255, 0.03);
-  }
-
-  /* Scroll animations */
-  .fade-in-up {
-    opacity: 0;
-    transform: translateY(40px);
-    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-  }
-
-  .fade-in-up.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .fade-in {
-    opacity: 0;
-    transition: opacity 0.8s ease-out;
-  }
-
-  .fade-in.visible {
-    opacity: 1;
-  }
-
-  /* Slide up animation */
-  @keyframes slide-up {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .animate-slide-up {
-    animation: slide-up 0.8s ease-out forwards;
-  }
-
-  /* Float animation for particles */
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0) translateX(0);
-    }
-    25% {
-      transform: translateY(-20px) translateX(10px);
-    }
-    50% {
-      transform: translateY(-10px) translateX(-10px);
-    }
-    75% {
-      transform: translateY(-30px) translateX(5px);
-    }
-  }
-
-  .animate-float {
-    animation: float linear infinite;
-  }
-  
-  /* Security-focused animations */
-  @keyframes security-scan {
-    0% {
-      transform: translateY(-100%);
-      opacity: 0;
-    }
-    50% {
-      opacity: 0.3;
-    }
-    100% {
-      transform: translateY(100%);
-      opacity: 0;
-    }
-  }
-  
-  @keyframes data-flow {
-    0% {
-      transform: translateX(-100%) translateY(0);
-      opacity: 0;
-    }
-    10% {
-      opacity: 0.6;
-    }
-    90% {
-      opacity: 0.6;
-    }
-    100% {
-      transform: translateX(100%) translateY(-20px);
-      opacity: 0;
-    }
-  }
-  
-  @keyframes grid-pulse {
-    0%, 100% {
-      opacity: 0.3;
-    }
-    50% {
-      opacity: 0.6;
-    }
-  }
-  
-  @keyframes encrypt-reveal {
-    0% {
-      opacity: 0;
-      transform: translateY(10px);
-      filter: blur(10px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-      filter: blur(0);
-    }
-  }
-  
-  @keyframes border-scan {
-    0% {
-      opacity: 0;
-      offset-distance: 0%;
-    }
-    50% {
-      opacity: 1;
-    }
-    100% {
-      opacity: 0;
-      offset-distance: 100%;
-    }
-  }
-  
-  .animate-security-scan {
-    animation: security-scan 3s linear infinite;
-  }
-  
-  .animate-data-flow {
-    animation: data-flow 4s linear infinite;
-  }
-  
-  .animate-grid-pulse {
-    animation: grid-pulse 3s ease-in-out infinite;
-  }
-  
-  .animate-encrypt-reveal {
-    animation: encrypt-reveal 0.8s ease-out forwards;
-  }
-  
-  /* Premium Security utility classes */
-  .security-grid {
-    background-image: 
-      linear-gradient(rgba(74, 158, 255, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(74, 158, 255, 0.05) 1px, transparent 1px);
-    background-size: 60px 60px;
-    animation: grid-pulse 10s ease-in-out infinite;
-  }
-  
-  .scanline {
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .scanline::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, transparent 0%, hsl(187 100% 51% / 0.1) 50%, transparent 100%);
-    animation: security-scan 6s linear infinite;
-    pointer-events: none;
-  }
-  
-  .data-particles {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
-  }
-  
-  .data-particles::before,
-  .data-particles::after {
-    content: '';
-    position: absolute;
-    width: 100px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, hsl(217 100% 64% / 0.6), transparent);
-    animation: data-flow 8s linear infinite;
-    top: 30%;
-  }
-  
-  .data-particles::after {
-    animation-delay: 4s;
-    top: 60%;
-  }
-
-  /* Slow bounce */
-  @keyframes bounce-slow {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
-  }
-
-  .animate-bounce-slow {
-    animation: bounce-slow 3s ease-in-out infinite;
-  }
-
-  /* Mesh animation */
-  @keyframes mesh-move {
-    0%, 100% { transform: translate(0, 0); }
-    50% { transform: translate(30px, 30px); }
-  }
-
-  /* Progressive line drawing */
-  @keyframes draw-line {
-    from {
-      transform: scaleX(0);
-      opacity: 0;
-    }
-    to {
-      transform: scaleX(1);
-      opacity: 1;
-    }
-  }
-
-  /* Arrow entrance */
-  @keyframes arrow-enter {
-    from {
-      transform: translateX(-20px);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-
-  .animate-draw-line {
-    animation: draw-line 0.8s ease-out forwards;
-    transform-origin: left;
-  }
-
-  .animate-arrow-enter {
-    animation: arrow-enter 0.5s ease-out forwards;
-  }
-
-  /* Text effects */
-  .text-outline {
-    -webkit-text-stroke: 2px currentColor;
-    -webkit-text-fill-color: transparent;
-  }
-
-  /* Shimmer effect */
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
-@keyframes scan-line {
-  0% { 
-    transform: translateY(-100%);
-    opacity: 0.5;
-  }
-  100% { 
-    transform: translateY(100%);
-    opacity: 0;
-  }
-}
-
-.scan-line {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, 
-    transparent, 
-    hsl(var(--primary)), 
-    transparent
-  );
-  animation: scan-line 2s ease-in-out infinite;
-}
-
-  .animate-shimmer {
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.1) 50%,
-      transparent 100%
-    );
-    background-size: 1000px 100%;
-    animation: shimmer 3s infinite;
-  }
-
-  /* Scale on hover */
-  .hover-lift {
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform;
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--glass-border) / 0.1);
   }
 
   .hover-lift:hover {
-    transform: translateY(-8px) scale(1.01);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 40px hsl(217 91% 60% / 0.2);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
   }
 
-  /* Press feedback for interactive elements */
-  .press-feedback {
-    transition: transform 0.1s ease;
+  /* The reference's panel material: white at very low alpha over near-black,
+     with a brighter top edge where light catches the surface. Falls back to a
+     solid card in light mode, where a translucent white panel is invisible. */
+  .panel {
+    border-radius: var(--radius-card);
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-sm);
   }
 
-  .press-feedback:active {
-    transform: scale(0.95);
+  /* Solid fill, not a blurred surface. There are ~20 panels on this page, and
+     backdrop-filter is composited per element -- twenty of them is a measurable
+     scroll cost for an effect nobody can see over an opaque background. The
+     opaque fill also gives the cards a defined edge instead of a vague one. */
+  .dark .panel {
+    background: hsl(240 8% 8.5%);
+    border: 1px solid hsl(0 0% 100% / 0.09);
   }
 
-  /* Glow on hover */
-  .hover-glow {
-    transition: var(--transition-smooth);
+  .dark .panel:hover {
+    border-color: hsl(0 0% 100% / 0.16);
+  }
+
+  /* Text hierarchy by opacity against one ink, per the measured ramp. */
+  .dark .text-l1 {
+    color: hsl(var(--text-strong));
+  }
+  .dark .text-l2 {
+    color: hsl(var(--text-muted) / var(--text-alpha-1));
+  }
+  .dark .text-l3 {
+    color: hsl(var(--text-muted) / var(--text-alpha-2));
+  }
+  .dark .text-l4 {
+    color: hsl(var(--text-muted) / var(--text-alpha-3));
+  }
+  .dark .text-l5 {
+    color: hsl(var(--text-muted) / var(--text-alpha-4));
+  }
+  .text-l1 {
+    color: hsl(var(--foreground));
+  }
+  .text-l2,
+  .text-l3 {
+    color: hsl(var(--foreground) / 0.78);
+  }
+  .text-l4,
+  .text-l5 {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .glow {
+    box-shadow: var(--glow-soft);
+  }
+  .glow-accent {
+    box-shadow: var(--shadow-accent);
+  }
+  .pill {
+    border-radius: var(--radius-pill);
+  }
+
+  /* --- elevation ---
+     Replaces the old neon shadow-glow-* family. Same class names so existing
+     surfaces keep working; the look is depth, not radioactivity. */
+  .shadow-glow,
+  .shadow-glow-primary {
+    box-shadow: var(--shadow-lg);
+  }
+  .shadow-glow-strong {
+    box-shadow: var(--shadow-xl);
+  }
+  .shadow-glow-accent {
+    box-shadow: var(--shadow-accent);
+  }
+  .shadow-glow-success,
+  .shadow-glow-cyan {
+    box-shadow: 0 8px 28px hsl(var(--verified) / 0.2);
+  }
+
+  .gradient-primary {
+    background-image: linear-gradient(
+      135deg,
+      hsl(var(--primary)),
+      hsl(var(--primary-hover))
+    );
+  }
+
+  /* --- entrances ---
+     The old sheet ran ~25 keyframe animations, many infinite, alongside two
+     canvas rAF loops. That was the single largest cause of the jank. What
+     survives: short, one-shot, compositor-only entrances. */
+  .fade-in {
+    animation: fade-in var(--dur-slow) var(--ease-out) both;
+  }
+  .fade-in-up {
+    animation: fade-in-up var(--dur-slow) var(--ease-out) both;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 12px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  .stagger > * {
+    animation: fade-in-up var(--dur-slow) var(--ease-out) both;
+  }
+  .stagger > *:nth-child(1) {
+    animation-delay: 0ms;
+  }
+  .stagger > *:nth-child(2) {
+    animation-delay: 60ms;
+  }
+  .stagger > *:nth-child(3) {
+    animation-delay: 120ms;
+  }
+  .stagger > *:nth-child(4) {
+    animation-delay: 180ms;
+  }
+  .stagger > *:nth-child(5) {
+    animation-delay: 240ms;
+  }
+  .stagger > *:nth-child(6) {
+    animation-delay: 300ms;
+  }
+
+
+  /* --- primary CTA -------------------------------------------------------
+     Layered body: the element carries the base gradient, ::before adds a top
+     sheen inset 1px, ::after re-lays the gradient inset 2px so a hairline of
+     the sheen shows as a rim. Achromatic: near-black lit from below by white.
+     No hover transform on purpose -- a CTA that moves under the cursor is what
+     makes a page feel unsteady. */
+  .glow-btn {
     position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    padding: 12px 22px;
+    min-height: 48px;
+    min-width: 102px;
+    border-radius: var(--radius-pill);
+    background:
+      radial-gradient(65% 65% at 50% 100%, hsl(0 0% 100% / 0.45) 0%, hsl(0 0% 100% / 0) 100%),
+      linear-gradient(0deg, hsl(240 8% 12%), hsl(240 8% 12%));
+    transition: box-shadow 250ms var(--ease-out), transform 120ms ease-out;
+    box-shadow:
+      0 0 0 1px hsl(0 0% 100% / 0.12),
+      0 10px 30px hsl(0 0% 0% / 0.55);
   }
 
-  .hover-glow::before {
-    content: '';
+  .glow-btn::before,
+  .glow-btn::after {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    border-radius: inherit;
+    transition: all 500ms var(--ease-out);
+  }
+
+  .glow-btn::before {
+    inset: 1px;
+    background: linear-gradient(178deg, hsl(0 0% 100% / 0.2) 0%, hsl(0 0% 100% / 0) 100%);
+  }
+
+  .glow-btn::after {
+    inset: 2px;
+    background:
+      radial-gradient(65% 65% at 50% 100%, hsl(0 0% 100% / 0.4) 0%, hsl(0 0% 100% / 0) 100%),
+      linear-gradient(0deg, hsl(240 8% 12%), hsl(240 8% 12%));
+  }
+
+  .glow-btn:hover {
+    box-shadow:
+      0 0 0 1px hsl(0 0% 100% / 0.22),
+      0 12px 34px hsl(0 0% 0% / 0.6);
+  }
+
+  .glow-btn:active {
+    transform: scale(0.97);
+  }
+
+  .glow-btn__points {
     position: absolute;
     inset: 0;
-    border-radius: inherit;
-    padding: 2px;
-    background: var(--gradient-primary-intense);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0;
-    transition: var(--transition-smooth);
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
   }
 
-  .hover-glow:hover::before {
-    opacity: 0.6;
+  .glow-btn__point {
+    position: absolute;
+    bottom: -10px;
+    width: 2px;
+    height: 2px;
+    border-radius: 9999px;
+    background-color: #fff;
+    animation: glow-btn-float infinite ease-in-out;
+    pointer-events: none;
   }
 
-  .hover-glow:hover {
-    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3), 0 0 40px hsl(217 91% 60% / 0.2);
+  @keyframes glow-btn-float {
+    0% { transform: translateY(0); }
+    85% { opacity: 0; }
+    100% { transform: translateY(-55px); opacity: 0; }
   }
 
-  /* Subtle glow on hover */
-  .hover-glow-subtle {
-    transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  .glow-btn__point:nth-child(1)  { left: 10%; opacity: 1;   animation-duration: 2.35s; animation-delay: 0.2s; }
+  .glow-btn__point:nth-child(2)  { left: 30%; opacity: 0.7; animation-duration: 2.5s;  animation-delay: 0.5s; }
+  .glow-btn__point:nth-child(3)  { left: 25%; opacity: 0.8; animation-duration: 2.2s;  animation-delay: 0.1s; }
+  .glow-btn__point:nth-child(4)  { left: 44%; opacity: 0.6; animation-duration: 2.05s; }
+  .glow-btn__point:nth-child(5)  { left: 50%; opacity: 1;   animation-duration: 1.9s; }
+  .glow-btn__point:nth-child(6)  { left: 75%; opacity: 0.5; animation-duration: 1.5s;  animation-delay: 1.5s; }
+  .glow-btn__point:nth-child(7)  { left: 88%; opacity: 0.9; animation-duration: 2.2s;  animation-delay: 0.2s; }
+  .glow-btn__point:nth-child(8)  { left: 58%; opacity: 0.8; animation-duration: 2.25s; animation-delay: 0.2s; }
+  .glow-btn__point:nth-child(9)  { left: 98%; opacity: 0.6; animation-duration: 2.6s;  animation-delay: 0.1s; }
+  .glow-btn__point:nth-child(10) { left: 65%; opacity: 1;   animation-duration: 2.5s;  animation-delay: 0.2s; }
+
+  .glow-btn__inner {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    color: #fff;
+    font-size: 15px;
+    line-height: 1.5;
   }
 
-  .hover-glow-subtle:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), 0 0 20px hsl(217 91% 60% / 0.15);
+  .glow-btn__icon {
+    width: 18px;
+    height: 18px;
+    stroke: #fff;
+    fill: none;
+    transition: transform 300ms var(--ease-out);
   }
 
-  /* Gradient text animation */
-  @keyframes gradient-shift {
-    0%, 100% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
+  .glow-btn:hover .glow-btn__icon {
+    transform: translateX(2px);
   }
 
-  .animate-gradient {
-    background-size: 200% 200%;
-    animation: gradient-shift 4s ease infinite;
+  .glow-btn:hover .glow-btn__icon path {
+    animation: glow-btn-dash 0.8s linear forwards;
   }
 
-  /* Pulse glow animation - toned down */
-  @keyframes pulse-glow {
-    0%, 100% {
-      box-shadow: 0 0 15px hsl(217 91% 60% / 0.2);
-    }
-    50% {
-      box-shadow: 0 0 30px hsl(217 91% 60% / 0.4), 0 0 50px hsl(187 100% 43% / 0.2);
-    }
+  @keyframes glow-btn-dash {
+    0%   { stroke-dasharray: 0, 20;  stroke-dashoffset: 0; }
+    50%  { stroke-dasharray: 10, 10; stroke-dashoffset: -5; }
+    100% { stroke-dasharray: 20, 0;  stroke-dashoffset: -10; }
   }
 
-  .animate-pulse-glow {
-    animation: pulse-glow 4s ease-in-out infinite;
+  .text-balance {
+    text-wrap: balance;
   }
-
-  /* Slow float animation */
-  @keyframes float-slow {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-15px);
-    }
+  .text-pretty {
+    text-wrap: pretty;
   }
+}
 
-  .animate-float-slow {
-    animation: float-slow 6s ease-in-out infinite;
-  }
-
-  /* Fade in slow */
-  @keyframes fade-in-slow {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  .animate-fade-in-slow {
-    animation: fade-in-slow 0.6s ease-out forwards;
-  }
-
-  /* Slide in from top */
-  @keyframes slide-in-top {
-    from {
-      transform: translateY(-100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-
-  .animate-slide-in-top {
-    animation: slide-in-top 0.5s ease-out forwards;
-  }
-
-  /* Lock pulse */
-  @keyframes lock-pulse {
-    0%, 100% {
-      transform: scale(1);
-      opacity: 1;
-    }
-    50% {
-      transform: scale(1.1);
-      opacity: 0.8;
-    }
-  }
-
-  .animate-lock-pulse {
-    animation: lock-pulse 2s ease-in-out infinite;
-  }
-
-  /* Progress bar fill */
-  @keyframes progress-fill {
-    from {
-      width: 0%;
-    }
-    to {
-      width: 100%;
-    }
-  }
-
-  .animate-progress-fill {
-    animation: progress-fill 1.5s ease-out forwards;
-  }
-
-  /* Parallax utilities - disabled to prevent background flashing */
-  .parallax-layer {
-    transition: none;
-  }
-
+/* ===========================================================================
+   Accessibility. Reduced motion is a gentler equivalent, not "no feedback":
+   opacity still changes so state stays legible, movement stops.
+   =========================================================================== */
+@media (prefers-reduced-motion: reduce) {
   html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
   }
-  
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .fade-in,
+  .fade-in-up,
+  .stagger > * {
+    animation: fade-in 160ms linear both !important;
+  }
+  .glow-btn__point {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-strong {
+    background: hsl(var(--card));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 }
 
-@layer utilities {
-  /* Enhanced glass effect */
-  .glass {
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
+@media (prefers-contrast: more) {
+  :root {
+    --border: 240 10% 70%;
   }
-
-  /* Rich Text Editor Styling */
-  .rich-text-editor .ql-container {
-    border: 1px solid hsl(var(--border));
-    border-radius: var(--radius);
-    background: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-family: inherit;
-    font-size: 0.875rem;
-    min-height: 200px;
+  .dark {
+    --border: 240 8% 40%;
   }
-
-  .rich-text-editor .ql-toolbar {
-    border: 1px solid hsl(var(--border));
-    border-radius: var(--radius) var(--radius) 0 0;
-    background: hsl(var(--muted) / 0.3);
-  }
-
-  .rich-text-editor .ql-editor {
-    min-height: 200px;
-    padding: 1rem;
-  }
-
-  .rich-text-editor .ql-editor.ql-blank::before {
-    color: hsl(var(--muted-foreground));
-    font-style: normal;
-  }
-
-  .rich-text-editor .ql-stroke {
-    stroke: hsl(var(--foreground) / 0.8);
-  }
-
-  .rich-text-editor .ql-fill {
-    fill: hsl(var(--foreground) / 0.8);
-  }
-
-  .rich-text-editor .ql-picker {
-    color: hsl(var(--foreground));
-  }
-
-  .rich-text-editor .ql-picker-options {
-    background: hsl(var(--background));
-    border: 1px solid hsl(var(--border));
-    border-radius: var(--radius);
-  }
-
-  .rich-text-editor .ql-toolbar button:hover,
-  .rich-text-editor .ql-toolbar button.ql-active {
-    color: hsl(var(--primary));
-  }
-
-  .rich-text-editor .ql-toolbar button:hover .ql-stroke,
-  .rich-text-editor .ql-toolbar button.ql-active .ql-stroke {
-    stroke: hsl(var(--primary));
-  }
-
-  .rich-text-editor .ql-toolbar button:hover .ql-fill,
-  .rich-text-editor .ql-toolbar button.ql-active .ql-fill {
-    fill: hsl(var(--primary));
-  }
-
-  /* Prose content styles for rendered HTML emails */
-  .prose-content {
-    line-height: 1.6;
-    color: inherit;
-  }
-
-  .prose-content p {
-    margin-bottom: 1em;
-  }
-
-  .prose-content p:last-child {
-    margin-bottom: 0;
-  }
-
-  .prose-content strong {
-    font-weight: 600;
-  }
-
-  .prose-content em {
-    font-style: italic;
-  }
-
-  .prose-content u {
-    text-decoration: underline;
-  }
-
-  .prose-content s {
-    text-decoration: line-through;
-  }
-
-  .prose-content ul,
-  .prose-content ol {
-    margin: 1em 0;
-    padding-left: 1.5em;
-  }
-
-  .prose-content ul {
-    list-style-type: disc;
-  }
-
-  .prose-content ol {
-    list-style-type: decimal;
-  }
-
-  .prose-content li {
-    margin: 0.5em 0;
-  }
-
-  .prose-content a {
-    color: rgb(59, 130, 246);
-    text-decoration: underline;
-  }
-
-  .prose-content a:hover {
-    color: rgb(37, 99, 235);
-  }
-
-  /* Wallet Node Animations */
-  .wallet-node {
-    animation: node-pulse 3s ease-in-out infinite;
-    filter: drop-shadow(0 0 20px rgba(74, 158, 255, 0.5));
-  }
-
-  @keyframes node-pulse {
-    0%, 100% {
-      transform: scale(1);
-      opacity: 0.8;
-    }
-    50% {
-      transform: scale(1.1);
-      opacity: 1;
-    }
-  }
-
-  /* Floating Badge Animations */
-  .floating-badge {
-    animation: float 6s ease-in-out infinite;
-  }
-
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-20px);
-    }
-  }
-
-  /* Glow Effects for Badges */
-  .shadow-glow-primary {
-    box-shadow: 0 0 30px rgba(74, 158, 255, 0.3), 0 0 60px rgba(74, 158, 255, 0.1);
-  }
-
-  .shadow-glow-success {
-    box-shadow: 0 0 30px rgba(34, 197, 94, 0.3), 0 0 60px rgba(34, 197, 94, 0.1);
-  }
-
-  .shadow-glow-accent {
-    box-shadow: 0 0 30px rgba(147, 51, 234, 0.3), 0 0 60px rgba(147, 51, 234, 0.1);
-  }
-
-  @keyframes ping-slow {
-    0% {
-      transform: scale(1);
-      opacity: 0.3;
-    }
-    50% {
-      transform: scale(1.2);
-      opacity: 0;
-    }
-    100% {
-      transform: scale(1.2);
-      opacity: 0;
-    }
-  }
-
-  .animate-ping-slow {
-    animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-  }
-
-  @keyframes scale-in {
-    0% {
-      transform: scale(0);
-      opacity: 0;
-    }
-    50% {
-      transform: scale(1.2);
-    }
-    100% {
-      transform: scale(1);
-      opacity: 1;
-    }
-  }
-
-  .animate-scale-in {
-    animation: scale-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  @keyframes checkmark {
-    0% {
-      transform: scale(0) rotate(-45deg);
-      opacity: 0;
-    }
-    50% {
-      transform: scale(1.2) rotate(0deg);
-    }
-    100% {
-      transform: scale(1) rotate(0deg);
-      opacity: 1;
-    }
-  }
-
-  .animate-checkmark {
-    animation: checkmark 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  .glass,
+  .glass-strong {
+    background: hsl(var(--card));
+    backdrop-filter: none;
   }
 }
+
+/* --- compose editor -----------------------------------------------------
+   Quill ships snow.css: a light-theme widget that draws a 1px box around the
+   toolbar and another around the text area. Dropped into a dark composer it
+   read as two stacked boxes with a single-line field wedged between them, and
+   the writing area never grew, so you could not see what you were typing.
+   The surface you write on gets no chrome and all the height; formatting sits
+   underneath, out of the way, the way Gmail places it. */
+.rich-text-editor {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+.rich-text-editor .ql-container {
+  order: 1;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  border: none;
+  font-family: inherit;
+  font-size: 14px;
+}
+.rich-text-editor .ql-editor {
+  padding: 0;
+  min-height: 100%;
+  line-height: 1.7;
+  color: hsl(var(--foreground));
+}
+.rich-text-editor .ql-editor.ql-blank::before {
+  left: 0;
+  right: 0;
+  font-style: normal;
+  color: hsl(var(--muted-foreground) / 0.55);
+}
+.rich-text-editor .ql-toolbar {
+  order: 2;
+  margin-top: 10px;
+  padding: 8px 0 0;
+  border: none;
+  border-top: 1px solid hsl(var(--border) / 0.6);
+}
+.rich-text-editor .ql-toolbar button { width: 26px; height: 26px; }
+.rich-text-editor .ql-toolbar .ql-stroke { stroke: hsl(var(--muted-foreground)); }
+.rich-text-editor .ql-toolbar .ql-fill { fill: hsl(var(--muted-foreground)); }
+.rich-text-editor .ql-toolbar button:hover .ql-stroke,
+.rich-text-editor .ql-toolbar button.ql-active .ql-stroke { stroke: hsl(var(--foreground)); }
+.rich-text-editor .ql-toolbar button:hover .ql-fill,
+.rich-text-editor .ql-toolbar button.ql-active .ql-fill { fill: hsl(var(--foreground)); }
+.rich-text-editor .ql-tooltip {
+  z-index: 60;
+  background: hsl(var(--surface-raised));
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  box-shadow: none;
+  color: hsl(var(--foreground));
+}
+.rich-text-editor .ql-tooltip input[type="text"] {
+  background: transparent;
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+  color: hsl(var(--foreground));
+}
+
+/* --- privacy claim: one pinned stage, one dragged sentence ---------------
+   Modelled on the Systo claim section, which was itself measured off
+   gsap.com. The mechanism is a single horizontal strip -- [panel exactly one
+   viewport wide][the sentence] -- dragged left by scroll while pinned, so the
+   headline leaves the screen and the sentence arrives. Building it as a
+   vertical column with a band underneath shares the parts and none of the
+   idea. Below 900px or under reduced motion it degrades to static prose. */
+.pc { position: relative; height: 100vh; overflow: hidden; padding: 0; }
+.pc__strip { display: flex; flex-wrap: nowrap; align-items: center; height: 100%; width: max-content; }
+/* --pc-vw comes from documentElement.clientWidth, not 100vw: vw counts the
+   scrollbar gutter, which would leave a sliver of the sentence on screen
+   before the drag starts. */
+.pc__panel { position: relative; display: flex; height: 100%; flex: 0 0 var(--pc-vw, 100vw); align-items: center; }
+
+/* overflow:hidden is what lets a line rise out from under its own block. The
+   block is a sibling of the text, not a background on it, because a background
+   cannot be scaled independently of the glyphs sitting on it. */
+.pc__line { position: relative; display: inline-block; overflow: hidden; padding: 6px 18px 12px; }
+.pc__mark { position: absolute; inset: 0; border-radius: 4px; background: hsl(var(--foreground)); transform: scaleX(0); transform-origin: left center; }
+.pc__line--alt .pc__mark { transform-origin: right center; }
+.pc__text { position: relative; display: block; font-size: clamp(30px, 5.4vw, 74px); line-height: 1; letter-spacing: -0.04em; color: hsl(var(--background)); }
+
+.pc__track {
+  display: flex; flex: 0 0 auto; flex-wrap: nowrap; align-items: center;
+  gap: 0.24em; white-space: nowrap; padding-right: 14vw;
+  font-size: clamp(38px, 7vw, 92px); line-height: 1.08; letter-spacing: -0.035em;
+}
+.pc__chip { border-radius: 0.1em; padding: 0.06em 0.22em 0.12em; background: hsl(var(--foreground)); color: hsl(var(--background)); transform: rotate(-1.1deg); }
+/* A degree off level: square blocks in a row read as a table, a slight
+   rotation reads as marker on paper. */
+.pc__chip--outline { background: transparent; color: hsl(var(--foreground)); box-shadow: inset 0 0 0 2px hsl(var(--foreground) / 0.55); transform: rotate(1deg); }
+
+.pc__dot { display: inline-block; flex-shrink: 0; width: 0.34em; height: 0.34em; border-radius: 50%; background: hsl(var(--foreground) / 0.75); }
+.pc__dot--ring { background: none; box-sizing: border-box; border: 0.09em solid hsl(var(--foreground) / 0.7); }
+.pc__dot--square { border-radius: 0.07em; transform: rotate(-10deg); }
+
+/* Offset with `top`, never a transform: GSAP animates rotation and scale on
+   these, and a CSS transform would be overwritten by the first tween, dropping
+   every mark back onto the baseline. */
+.pc__inline { position: relative; top: var(--lift, 0); z-index: 2; display: inline-block; flex-shrink: 0; width: 1.05em; margin: 0 0.08em; }
+.pc__inline svg { display: block; width: 100%; height: auto; overflow: visible; }
+.pc__inline--spin { width: 1.3em; }
+/* Negative margins pull neighbouring words under the mark so it sits ON the
+   sentence instead of pushing a gap into it, while keeping a real box so the
+   spin turns on its own centre rather than orbiting the text. */
+.pc__inline--over { z-index: 4; width: 1.9em; margin-left: calc(1.9em * -0.52); margin-right: calc(1.9em * -0.52); }
+
+.pc[data-static="true"] { height: auto; padding: 6rem 0; }
+.pc[data-static="true"] .pc__strip { display: block; width: auto; }
+.pc[data-static="true"] .pc__panel { display: block; height: auto; }
+.pc[data-static="true"] .pc__mark { transform: scaleX(1); }
+.pc[data-static="true"] .pc__track { flex-wrap: wrap; white-space: normal; padding: 2.5rem 0 0; font-size: clamp(22px, 5vw, 38px); }

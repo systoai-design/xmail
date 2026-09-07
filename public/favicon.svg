@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="xmail">
+  <!--
+    The xmail mark: an envelope whose flap folds into the diagonal of an X, so
+    the glyph reads as "mail" and "x" at once. Matches Wordmark.tsx.
+    Dark tile with a white glyph, to sit correctly against the dark-first site
+    and stay legible in both light and dark browser chrome.
+  -->
+  <rect width="64" height="64" rx="15" fill="#0A0A0C"/>
+  <g fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="13" y="17" width="38" height="30" rx="4.5" stroke-width="3.4"/>
+    <path d="M15 18.5 32 32.5 49 18.5" stroke-width="3.8"/>
+    <path d="M15 45.5 28.2 34.6" stroke-width="3.8"/>
+    <path d="M49 45.5 35.8 34.6" stroke-width="3.8"/>
+  </g>
+  <circle cx="50.5" cy="16.5" r="6.5" fill="#0A0A0C"/>
+  <circle cx="50.5" cy="16.5" r="4" fill="#FFFFFF"/>
+</svg>

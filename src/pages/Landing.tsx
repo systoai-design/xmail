@@ -1,114 +1,71 @@
-import { useWallet } from '@solana/wallet-adapter-react';
-import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { Header } from '@/components/landing/Header';
-import { HeroSection } from '@/components/landing/HeroSection';
-import { HowItWorks } from '@/components/landing/HowItWorks';
-import { FeaturesShowcase } from '@/components/landing/FeaturesShowcase';
-import { InteractiveDemo } from '@/components/landing/InteractiveDemo';
-import { TechnologySection } from '@/components/landing/TechnologySection';
-import { CTASection } from '@/components/landing/CTASection';
-import { Footer } from '@/components/landing/Footer';
-import { EncryptionPlayground } from '@/components/landing/EncryptionPlayground';
-import { ComparisonTable } from '@/components/landing/ComparisonTable';
-import { Shield3D } from '@/components/landing/Shield3D';
-import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-
+import { useEffect, useRef } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { useNavigate } from "react-router-dom";
+import { SiteHeader } from "@/components/site/SiteHeader";
+import { Hero } from "@/components/site/Hero";
+import { EncryptionLayers } from "@/components/site/EncryptionLayers";
+import { LiveChainProof } from "@/components/site/LiveChainProof";
+import { PrivacyPromise } from "@/components/site/PrivacyPromise";
+import { Features } from "@/components/site/Features";
+import { CallToAction } from "@/components/site/CallToAction";
+import { Stats } from "@/components/site/Stats";
+import { Pricing } from "@/components/site/Pricing";
+import { Faq } from "@/components/site/Faq";
+import { SiteFooter } from "@/components/site/SiteFooter";
 const Landing = () => {
   const { connected } = useWallet();
+  const { setVisible } = useWalletModal();
   const navigate = useNavigate();
-  const shieldSection = useScrollAnimation(0.2);
-  const comparisonSection = useScrollAnimation(0.2);
-  const playgroundSection = useScrollAnimation(0.2);
+  // Read once, at mount. The previous version read this flag inside the same
+  // effect that performed the redirect, and cleared it there too -- so arriving
+  // from the inbox suppressed the redirect, wiped the flag, and then never
+  // re-ran (deps are [connected, navigate], neither of which changes after).
+  // A connected user was stranded here until a full reload.
+  const arrivedFromInbox = useRef(sessionStorage.getItem("fromInbox") === "true");
+  const userAskedToEnter = useRef(false);
 
   useEffect(() => {
-    const isFromInbox = sessionStorage.getItem('fromInbox');
-    if (connected && !isFromInbox) {
-      navigate('/inbox');
-    }
-    // Clear the flag after checking
-    if (isFromInbox) {
-      sessionStorage.removeItem('fromInbox');
+    sessionStorage.removeItem("fromInbox");
+  }, []);
+
+  useEffect(() => {
+    // Auto-redirect a connected visitor, unless they deliberately navigated
+    // back here from the inbox -- in which case only an explicit click moves.
+    if (connected && (userAskedToEnter.current || !arrivedFromInbox.current)) {
+      navigate("/inbox");
     }
   }, [connected, navigate]);
 
+  // A CTA has to do the thing it promises. Opening a "connect a wallet" modal
+  // to someone whose wallet is already connected is a dead end: `connected`
+  // never changes, so nothing downstream ever fires.
+  const openWallet = () => {
+    userAskedToEnter.current = true;
+    if (connected) {
+      navigate("/inbox");
+    } else {
+      setVisible(true);
+    }
+  };
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      <HeroSection />
-      
-      {/* 3D Shield Visualization Section */}
-      <section 
-        ref={shieldSection.ref}
-        className={`py-20 bg-background-darker relative overflow-hidden transition-all duration-1000 ${
-          shieldSection.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'
-        }`}
-      >
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">
-              Multi-Layer Encryption
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Your messages are protected by multiple encryption layers. Interact with our shield to see how it works.
-            </p>
-          </div>
-          <Shield3D />
+      <SiteHeader onConnect={openWallet} />
+      <main>
+        <Hero onConnect={openWallet} />
+        <Stats />
+        <div id="layers">
+          <EncryptionLayers />
         </div>
-      </section>
-
-      <HowItWorks />
-      <FeaturesShowcase />
-      <InteractiveDemo />
-      
-      {/* Live Encryption Playground */}
-      <section 
-        ref={playgroundSection.ref}
-        className={`py-20 bg-background relative transition-all duration-1000 ${
-          playgroundSection.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'
-        }`}
-      >
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">
-              Try It Yourself
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              See how your messages are encrypted in real-time. Type anything and watch the magic happen.
-            </p>
-          </div>
-          
-          <EncryptionPlayground />
-        </div>
-      </section>
-      
-      {/* Comparison Table Section */}
-      <section 
-        ref={comparisonSection.ref}
-        className={`py-20 bg-background-darker relative transition-all duration-1000 ${
-          comparisonSection.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'
-        }`}
-      >
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">
-              Why Choose XMail?
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Compare XMail's security features with traditional email providers
-            </p>
-          </div>
-          <div className="max-w-6xl mx-auto glass-card p-6 md:p-8 rounded-2xl border border-primary/20">
-            <ComparisonTable />
-          </div>
-        </div>
-      </section>
-      
-      <TechnologySection />
-      <CTASection />
-      <Footer />
+        <LiveChainProof />
+        <PrivacyPromise />
+        <Features />
+        <Pricing onConnect={openWallet} />
+        <Faq />
+        <CallToAction onConnect={openWallet} />
+      </main>
+      <SiteFooter />
     </div>
   );
 };
-
 export default Landing;

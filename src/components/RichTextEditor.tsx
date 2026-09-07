@@ -40,7 +40,6 @@ export const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorP
         modules={modules}
         formats={formats}
         placeholder={placeholder}
-        style={{ minHeight: '200px' }}
       />
     </div>
   );

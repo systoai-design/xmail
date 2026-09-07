@@ -88,30 +88,98 @@ export async function importPrivateKey(privateKeyBase64: string): Promise<Crypto
 /**
  * Encrypt message for recipient using their public key
  */
-export async function encryptMessage(message: string, recipientPublicKey: CryptoKey): Promise<string> {
-  const encoded = new TextEncoder().encode(message);
+/**
+ * base64 helpers.
+ *
+ * String.fromCharCode(...bytes) overflows the call stack once a payload gets
+ * large, and message bodies are unbounded, so conversion is chunked.
+ */
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
+
+function base64ToBytes(b64: string): Uint8Array {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+/**
+ * Raw RSA-OAEP. Only safe for payloads under 190 bytes: a 2048-bit modulus
+ * holds 256 bytes and OAEP with SHA-256 spends 66 of them on padding.
+ * Use it for keys, never for user content.
+ */
+export async function rsaEncrypt(text: string, recipientPublicKey: CryptoKey): Promise<string> {
   const encrypted = await crypto.subtle.encrypt(
     { name: "RSA-OAEP" },
     recipientPublicKey,
-    encoded as BufferSource
+    new TextEncoder().encode(text) as BufferSource
   );
-  return btoa(String.fromCharCode(...new Uint8Array(encrypted)));
+  return bytesToBase64(new Uint8Array(encrypted));
+}
+
+export async function rsaDecrypt(encrypted: string, privateKey: CryptoKey): Promise<string> {
+  const decrypted = await crypto.subtle.decrypt(
+    { name: "RSA-OAEP" },
+    privateKey,
+    base64ToBytes(encrypted) as BufferSource
+  );
+  return new TextDecoder().decode(decrypted);
+}
+
+/** Marks the hybrid envelope. Legacy ciphertext is bare base64 and never matches. */
+const HYBRID_PREFIX = "xm1:";
+
+/**
+ * Encrypt a message for a recipient.
+ *
+ * This used to hand the message straight to RSA-OAEP, which caps at 190 bytes
+ * -- so sending anything longer than about two sentences threw OperationError
+ * and the send failed. The body is now encrypted under a single-use AES-256-GCM
+ * key and only that key is RSA-wrapped, which is the same construction
+ * attachments have always used.
+ */
+export async function encryptMessage(message: string, recipientPublicKey: CryptoKey): Promise<string> {
+  const aesKey = await generateAESKey();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    aesKey,
+    new TextEncoder().encode(message) as BufferSource
+  );
+
+  const envelope = JSON.stringify({
+    v: 1,
+    k: await rsaEncrypt(await exportAESKey(aesKey), recipientPublicKey),
+    iv: bytesToBase64(iv),
+    c: bytesToBase64(new Uint8Array(ciphertext)),
+  });
+
+  return HYBRID_PREFIX + btoa(envelope);
 }
 
 /**
  * Decrypt message using private key
  */
 export async function decryptMessage(encryptedMessage: string, privateKey: CryptoKey): Promise<string> {
-  const binaryString = atob(encryptedMessage);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
+  // Mail sent before the hybrid envelope existed is bare RSA ciphertext and has
+  // to keep opening, so the format is detected rather than assumed.
+  if (!encryptedMessage.startsWith(HYBRID_PREFIX)) {
+    return await rsaDecrypt(encryptedMessage, privateKey);
   }
 
+  const { k, iv, c } = JSON.parse(atob(encryptedMessage.slice(HYBRID_PREFIX.length)));
+  const aesKey = await importAESKey(await rsaDecrypt(k, privateKey));
   const decrypted = await crypto.subtle.decrypt(
-    { name: "RSA-OAEP" },
-    privateKey,
-    bytes as BufferSource
+    { name: "AES-GCM", iv: base64ToBytes(iv) },
+    aesKey,
+    base64ToBytes(c) as BufferSource
   );
   return new TextDecoder().decode(decrypted);
 }
@@ -198,14 +266,19 @@ export async function decryptFile(
  * Encrypt AES key with RSA public key for recipient
  */
 export async function encryptAESKey(aesKey: CryptoKey, recipientPublicKey: CryptoKey): Promise<string> {
+  // Deliberately raw RSA, not encryptMessage: a 44-char exported key fits in one
+  // block, and routing it through the hybrid envelope would wrap an AES key in
+  // an AES key and change the on-disk format of every existing attachment.
   const aesKeyRaw = await exportAESKey(aesKey);
-  return await encryptMessage(aesKeyRaw, recipientPublicKey);
+  return await rsaEncrypt(aesKeyRaw, recipientPublicKey);
 }
 
 /**
  * Decrypt AES key with RSA private key
  */
 export async function decryptAESKey(encryptedAESKey: string, privateKey: CryptoKey): Promise<CryptoKey> {
-  const aesKeyRaw = await decryptMessage(encryptedAESKey, privateKey);
+  // decryptMessage would also work (it falls through to raw RSA for unprefixed
+  // input), but naming the primitive keeps the attachment format explicit.
+  const aesKeyRaw = await rsaDecrypt(encryptedAESKey, privateKey);
   return await importAESKey(aesKeyRaw);
 }

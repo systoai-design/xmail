@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local env (VITE_ vars are public, but keep the file out of the repo)
+.env
+.env.local
+.env.*.local
+
+# Claude Code workspace
+.claude/

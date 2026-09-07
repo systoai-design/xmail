@@ -1,0 +1,24 @@
+{
+  "network": "robinhoodTestnet",
+  "chainId": 46630,
+  "deployedAt": "2026-09-06T22:49:31.121Z",
+  "deployer": "0xd5959d80fd9defa138c63745864c75bc4f3e5b71",
+  "contracts": {
+    "KeyRegistry": "0x1c9d3016fd775c1b35c02e418fa5866b0eaa45ff",
+    "MessageAnchor": "0xcf134d8c38552132a0ae105572597db26b73145a"
+  },
+  "proof": {
+    "registerKeyTx": "0x0b0762a50fcc775b2f6f01cb258d69d48fb3d082382b3d7071ef7f38f477754d",
+    "anchorTx": "0xd8ae3c75e3243b45cd6130c14608aa448d33a86dd5aa214f2f7e93606b0f6b7d",
+    "anchoredMessageHash": "0x55380e753112b20e1613cb749b9db3af6535e6adb7ab35c0ad0097eeb1edab0c",
+    "anchoredPlaintextPreimage": "xmail-proof-1788734968513",
+    "verifiedOnChain": true,
+    "blockNumber": 11650229
+  },
+  "explorer": {
+    "keyRegistry": "https://explorer.testnet.chain.robinhood.com/address/0x1c9d3016fd775c1b35c02e418fa5866b0eaa45ff",
+    "messageAnchor": "https://explorer.testnet.chain.robinhood.com/address/0xcf134d8c38552132a0ae105572597db26b73145a",
+    "registerKeyTx": "https://explorer.testnet.chain.robinhood.com/tx/0x0b0762a50fcc775b2f6f01cb258d69d48fb3d082382b3d7071ef7f38f477754d",
+    "anchorTx": "https://explorer.testnet.chain.robinhood.com/tx/0xd8ae3c75e3243b45cd6130c14608aa448d33a86dd5aa214f2f7e93606b0f6b7d"
+  }
+}

@@ -1,11 +1,24 @@
-import { Lock, Star } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { Lock, Star, Link2, Paperclip } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
+
+/**
+ * A row in the message list.
+ *
+ * Gmail's row is the right density model, but it has nothing to say about
+ * whether a message is what the sender actually sent. That is the one thing
+ * xmail knows and Gmail cannot, so verification state is a first-class column
+ * here rather than an afterthought.
+ *
+ * No hover transform: a list of rows that each grow under the cursor makes a
+ * dense list feel unstable while you scan it. The row states its hover with
+ * background alone.
+ */
 
 interface EmailRowProps {
   id: string;
   sender: string;
+  senderName?: string | null;
   subject: string;
   preview: string;
   timestamp: string;
@@ -13,138 +26,135 @@ interface EmailRowProps {
   starred: boolean;
   encrypted: boolean;
   paid?: boolean;
+  anchored?: boolean;
+  hasAttachment?: boolean;
   selected: boolean;
   onSelect: (checked: boolean) => void;
   onStarToggle: () => void;
   onClick: () => void;
 }
 
+const shortAddress = (a: string) =>
+  a.length > 18 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a;
+
+function formatTimestamp(ts: string) {
+  const date = new Date(ts);
+  const now = new Date();
+  const sameDay = date.toDateString() === now.toDateString();
+  if (sameDay) {
+    return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  }
+  const sameYear = date.getFullYear() === now.getFullYear();
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(sameYear ? {} : { year: "numeric" }),
+  });
+}
+
 export const EmailRow = ({
-  id,
   sender,
+  senderName,
   subject,
   preview,
   timestamp,
   read,
   starred,
   encrypted,
-  paid,
+  anchored,
+  hasAttachment,
   selected,
   onSelect,
   onStarToggle,
   onClick,
 }: EmailRowProps) => {
-  const formatTimestamp = (ts: string) => {
-    const date = new Date(ts);
-    const now = new Date();
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    if (date.toDateString() === now.toDateString()) {
-      return date.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit', 
-        hour12: true 
-      });
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
-    } else if (date.getFullYear() === now.getFullYear()) {
-      return date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric' 
-      });
-    } else {
-      return date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
-      });
-    }
-  };
-
   return (
     <div
-      className={cn(
-        "gmail-email-row group transition-all duration-200 hover:scale-[1.01] hover:bg-muted/20",
-        !read && "gmail-email-row-unread",
-        selected && "bg-muted/30 border-l-2 border-primary"
-      )}
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className={cn(
+        "group relative flex cursor-pointer items-center gap-3 border-b border-border/60 px-4 py-2.5 transition-colors duration-150",
+        read ? "bg-transparent" : "bg-white/[0.025]",
+        "hover:bg-white/[0.05] focus-visible:bg-white/[0.05] focus-visible:outline-none",
+        selected && "bg-primary/[0.07]",
+      )}
     >
-      <div className="flex items-center gap-3 px-4 py-3">
-        {/* Checkbox */}
-        <Checkbox
-          checked={selected}
-          onCheckedChange={onSelect}
-          onClick={(e) => e.stopPropagation()}
-          className="flex-shrink-0"
-        />
+      {/* Unread is carried by a rail rather than bold-everything, so the eye can
+          find new mail without the whole row shouting. */}
+      <span
+        aria-hidden="true"
+        className={cn(
+          "absolute inset-y-0 left-0 w-[2px]",
+          !read ? "bg-foreground/70" : "bg-transparent",
+        )}
+      />
 
-        {/* Star */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onStarToggle();
-          }}
-          className="flex-shrink-0 text-muted-foreground hover:text-yellow-500 transition-all duration-200 hover:scale-110 active:scale-90"
-        >
-          <Star
-            className={cn(
-              "w-5 h-5 transition-all duration-200",
-              starred && "fill-yellow-500 text-yellow-500 animate-bounce-in"
-            )}
-          />
-        </button>
+      <Checkbox
+        checked={selected}
+        onCheckedChange={onSelect}
+        onClick={(e) => e.stopPropagation()}
+        className="shrink-0"
+        aria-label={`Select message from ${senderName ?? sender}`}
+      />
 
-        {/* Sender */}
-        <div
-          className={cn(
-            "w-48 flex-shrink-0 truncate text-sm",
-            !read && "font-bold"
-          )}
-        >
-          {sender.slice(0, 8)}...{sender.slice(-8)}
-        </div>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onStarToggle();
+        }}
+        aria-label={starred ? "Unstar" : "Star"}
+        className="shrink-0 text-muted-foreground/60 transition-colors hover:text-foreground"
+      >
+        <Star className={cn("h-4 w-4", starred && "fill-foreground text-foreground")} />
+      </button>
 
-        {/* Subject and Preview */}
-        <div className="flex-1 min-w-0 flex items-center gap-2">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            {encrypted && (
-              <Lock className="w-4 h-4 text-primary flex-shrink-0" />
-            )}
-            <span className={cn(
-              "text-sm truncate",
-              !read && "font-bold"
-            )}>
-              {subject}
-            </span>
-            <span className="text-sm text-muted-foreground truncate">
-              — {preview}
-            </span>
-          </div>
+      {/* Sender: a nickname when the contact book knows one, the address when it
+          does not. The address stays monospaced so it stays scannable. */}
+      <div className="w-44 shrink-0 truncate">
+        {senderName ? (
+          <span className={cn("text-sm", !read && "font-medium")}>{senderName}</span>
+        ) : (
+          <span className={cn("font-mono text-[13px]", !read && "font-medium")}>
+            {shortAddress(sender)}
+          </span>
+        )}
+      </div>
 
-          {/* Badges */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {!read && (
-              <Badge variant="default" className="bg-accent text-xs animate-pulse">
-                New
-              </Badge>
-            )}
-            {paid && (
-              <div className="text-xs bg-accent/20 text-accent px-2 py-1 rounded-full font-bold animate-scale-in">
-                ✓
-              </div>
-            )}
-          </div>
-        </div>
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        {encrypted && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />}
+        <span className={cn("shrink-0 truncate text-sm", !read && "font-medium")}>
+          {subject}
+        </span>
+        <span className="truncate text-sm text-muted-foreground/70">— {preview}</span>
+      </div>
 
-        {/* Timestamp */}
-        <div className={cn(
-          "w-24 flex-shrink-0 text-right text-xs text-muted-foreground",
-          !read && "font-bold"
-        )}>
-          {formatTimestamp(timestamp)}
-        </div>
+      <div className="flex shrink-0 items-center gap-2">
+        {hasAttachment && <Paperclip className="h-3.5 w-3.5 text-muted-foreground/50" />}
+        {anchored && (
+          <span
+            title="Integrity anchor verified on-chain"
+            className="inline-flex items-center gap-1 rounded-full bg-[hsl(var(--verified)/0.12)] px-1.5 py-0.5 text-[10px] text-[hsl(var(--verified))]"
+          >
+            <Link2 className="h-2.5 w-2.5" />
+            verified
+          </span>
+        )}
+      </div>
+
+      <div
+        className={cn(
+          "w-20 shrink-0 text-right text-xs tabular-nums",
+          read ? "text-muted-foreground/70" : "text-foreground/80",
+        )}
+      >
+        {formatTimestamp(timestamp)}
       </div>
     </div>
   );
