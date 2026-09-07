@@ -2,9 +2,16 @@
 
 ## 1. Import the repo
 
-Vercel → Add New → Project → import `systoai-design/xmail`. Framework, build
-command and output directory are already set in `vercel.json`; leave the
-detected values alone.
+Vercel → Add New → Project → import `systoai-design/xmail`.
+
+**Root Directory: leave it as the repository root.** Do not set it, and do not
+pick a subfolder. `package.json`, `vite.config.ts` and `index.html` all live at
+the top level. There is a second `package.json` in `contracts/`, which is the
+Hardhat project for the smart contracts -- it is not the website, and pointing
+Vercel at it produces a build with nothing to serve.
+
+Framework, build command and output directory come from `vercel.json`; leave
+the detected values alone.
 
 ## 2. Environment variables
 
