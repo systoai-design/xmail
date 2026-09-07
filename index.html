@@ -3,29 +3,80 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>xmail - Encrypted Email on Solana</title>
-    <meta name="description" content="Send wallet-to-wallet encrypted emails with micropayments via Solana x402 protocol. True end-to-end encryption, no intermediaries." />
+
+    <title>xmail — Encrypted email addressed to a wallet</title>
+    <meta
+      name="description"
+      content="Encrypted email sent wallet-to-wallet on Robinhood Chain. Messages are sealed in your browser with AES-256-GCM; the chain holds the recipient's public key and a keccak256 proof of what you sent, so integrity is verifiable by anyone."
+    />
     <meta name="author" content="xmail" />
     <meta name="generator" content="Systo AI (https://systo-ai.com)" />
-    <meta name="keywords" content="encrypted email, solana, web3, x402, blockchain email, decentralized email, xmail" />
+    <meta
+      name="keywords"
+      content="encrypted email, robinhood chain, wallet to wallet email, blockchain email, end-to-end encryption, on-chain key registry, message integrity, web3 email, xmail"
+    />
+    <meta name="theme-color" content="#08080A" />
+    <meta name="color-scheme" content="dark" />
 
-    <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.png" sizes="64x64" type="image/png" />
+    <link rel="apple-touch-icon" href="/logo-192.png" />
     <link rel="manifest" href="/manifest.json" />
-    
-    <!-- Premium Fonts -->
+
+    <!--
+      One weight, one family, per the design system: hierarchy is carried by
+      size, line-height and tracking rather than by weight. Space Grotesk was
+      loaded but never referenced, and Inter shipped six weights for a page that
+      uses one. Trimmed from 13 font files to 2.
+    -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400&family=JetBrains+Mono:wght@400&display=swap"
+      rel="stylesheet"
+    />
 
-    <meta property="og:title" content="xmail - Encrypted Email on Solana" />
-    <meta property="og:description" content="Send wallet-to-wallet encrypted emails with micropayments. Only your recipient can decrypt." />
+    <meta property="og:site_name" content="xmail" />
+    <meta property="og:title" content="xmail — Encrypted email addressed to a wallet" />
+    <meta
+      property="og:description"
+      content="Sealed in your browser, sent wallet-to-wallet on Robinhood Chain, and provably unaltered. No account, no password, no server that can read your mail."
+    />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/logo-512.png" />
+    <meta property="og:image:alt" content="xmail" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="xmail - Encrypted Email on Solana" />
-    <meta name="twitter:description" content="Send wallet-to-wallet encrypted emails with micropayments via x402 protocol" />
+    <meta name="twitter:title" content="xmail — Encrypted email addressed to a wallet" />
+    <meta
+      name="twitter:description"
+      content="Sealed in your browser, sent wallet-to-wallet on Robinhood Chain, and provably unaltered."
+    />
     <meta name="twitter:image" content="/logo-512.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "xmail",
+        "applicationCategory": "CommunicationApplication",
+        "operatingSystem": "Web",
+        "description": "Encrypted email addressed to a wallet. Messages are sealed in the browser with AES-256-GCM and anchored on Robinhood Chain, so their integrity can be verified by anyone.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "description": "25 credits per month, free"
+        },
+        "featureList": [
+          "End-to-end encryption with AES-256-GCM",
+          "On-chain public key registry",
+          "keccak256 message integrity anchor",
+          "Wallet-based identity, no account required",
+          "On-device AI drafting and triage"
+        ]
+      }
+    </script>
   </head>
 
   <body>

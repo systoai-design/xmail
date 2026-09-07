@@ -247,11 +247,15 @@ export type Database = {
       }
       encrypted_emails: {
         Row: {
+          anchor_block: number | null
+          anchor_tx_hash: string | null
+          anchored_at: string | null
           created_at: string
           encrypted_body: string
           encrypted_subject: string
           from_wallet: string
           id: string
+          message_hash: string | null
           payment_tx_signature: string | null
           read: boolean
           sender_encrypted_body: string | null
@@ -262,11 +266,15 @@ export type Database = {
           to_wallet: string
         }
         Insert: {
+          anchor_block?: number | null
+          anchor_tx_hash?: string | null
+          anchored_at?: string | null
           created_at?: string
           encrypted_body: string
           encrypted_subject: string
           from_wallet: string
           id?: string
+          message_hash?: string | null
           payment_tx_signature?: string | null
           read?: boolean
           sender_encrypted_body?: string | null
@@ -277,11 +285,15 @@ export type Database = {
           to_wallet: string
         }
         Update: {
+          anchor_block?: number | null
+          anchor_tx_hash?: string | null
+          anchored_at?: string | null
           created_at?: string
           encrypted_body?: string
           encrypted_subject?: string
           from_wallet?: string
           id?: string
+          message_hash?: string | null
           payment_tx_signature?: string | null
           read?: boolean
           sender_encrypted_body?: string | null

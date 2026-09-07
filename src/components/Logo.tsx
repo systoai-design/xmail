@@ -1,62 +1,72 @@
-import xmailLogo from '@/assets/xmail-logo.png';
+import { cn } from "@/lib/utils";
+
+/**
+ * The xmail mark, used in app chrome.
+ *
+ * Draws the same glyph as Wordmark.tsx (an envelope whose flap folds into the
+ * diagonal of an X) rather than loading a raster. Previously this pulled a PNG
+ * that was byte-identical to the favicon and every other icon in the project,
+ * so it could not be resized cleanly or recoloured with the theme.
+ */
 
 interface LogoProps {
-  size?: 'small' | 'medium' | 'large';
+  size?: "small" | "medium" | "large";
   className?: string;
+  /** Show the "xmail" wordmark beside the tile. */
+  withText?: boolean;
 }
 
-const sizeMap = {
-  small: 'h-8 sm:h-10',
-  medium: 'h-10 sm:h-12',
-  large: 'h-14 sm:h-16 md:h-20',
-};
+const TILE = {
+  small: "h-8 w-8 rounded-[10px]",
+  medium: "h-10 w-10 rounded-xl",
+  large: "h-14 w-14 rounded-2xl",
+} as const;
 
-// Initial clipped width (square box)
-const clipWidthMap = {
-  small: 'max-w-[32px] sm:max-w-[40px]',
-  medium: 'max-w-[40px] sm:max-w-[48px]',
-  large: 'max-w-[56px] sm:max-w-[64px] md:max-w-[80px]',
-};
+const GLYPH = {
+  small: "h-4 w-4",
+  medium: "h-5 w-5",
+  large: "h-7 w-7",
+} as const;
 
-// Border radius per size
-const radiusMap = {
-  small: 'rounded-[10px] sm:rounded-[12px]',
-  medium: 'rounded-[12px] sm:rounded-[14px]',
-  large: 'rounded-[14px] sm:rounded-[16px] md:rounded-[18px]',
-};
+const TEXT = {
+  small: "text-sm",
+  medium: "text-base",
+  large: "text-xl",
+} as const;
 
-// Expanded width on hover
-const revealMaxMap = {
-  small: 'group-hover:max-w-[180px]',
-  medium: 'group-hover:max-w-[220px]',
-  large: 'group-hover:max-w-[300px]',
-};
-
-export const Logo = ({ size = 'medium', className = '' }: LogoProps) => {
-  return (
-    <div
-      className={`inline-flex items-center group cursor-hover ${className}`}
-      role="img"
-      aria-label="xmail logo"
+export const Logo = ({ size = "medium", className = "", withText = false }: LogoProps) => (
+  <span className={cn("inline-flex items-center gap-2.5", className)}>
+    <span
+      className={cn(
+        "relative flex shrink-0 items-center justify-center bg-white",
+        TILE[size],
+      )}
     >
-      <div
-        className={`relative overflow-hidden transition-all duration-500 ease-out ${radiusMap[size]} ${clipWidthMap[size]} ${revealMaxMap[size]} bg-primary/95 ring-2 ring-white/15 shadow-[0_0_20px_rgba(74,158,255,0.3),0_0_40px_rgba(74,158,255,0.15)] group-hover:shadow-[0_0_30px_rgba(74,158,255,0.4),0_0_60px_rgba(74,158,255,0.2)]`}
-      >
-        {/* Logo image */}
-        <img
-          src={xmailLogo}
-          alt="xmail"
-          className={`${sizeMap[size]} w-auto transition-transform duration-500 group-hover:scale-105`}
-          style={{
-            filter: 'drop-shadow(0 0 12px rgba(74, 158, 255, 0.4))'
-          }}
+      <svg viewBox="0 0 24 24" className={cn("text-[#0A0A0C]", GLYPH[size])} aria-hidden="true">
+        <path
+          d="M3.2 6.4a1.6 1.6 0 0 1 1.6-1.6h14.4a1.6 1.6 0 0 1 1.6 1.6v11.2a1.6 1.6 0 0 1-1.6 1.6H4.8a1.6 1.6 0 0 1-1.6-1.6V6.4Z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.7"
         />
+        <path
+          d="M3.9 6 12 12.6 20.1 6M3.9 18l6.2-5.1M20.1 18l-6.2-5.1"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <span
+        aria-hidden="true"
+        className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-[hsl(var(--background))]"
+      />
+    </span>
+    {withText && (
+      <span className={cn("tracking-[-0.02em]", TEXT[size])}>xmail</span>
+    )}
+  </span>
+);
 
-        {/* Blue cover that slides away on hover */}
-        <div
-          className={`pointer-events-none absolute inset-0 z-10 ${radiusMap[size]} bg-primary transition-all duration-500 ease-out origin-left w-full group-hover:w-0`}
-        />
-      </div>
-    </div>
-  );
-};
+export default Logo;

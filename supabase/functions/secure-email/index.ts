@@ -3,23 +3,143 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import nacl from 'https://esm.sh/tweetnacl@1.0.3';
 import bs58 from 'https://esm.sh/bs58@5.0.0';
 import * as djwt from 'https://deno.land/x/djwt@v3.0.1/mod.ts';
+import {
+  createWalletClient, createPublicClient, http, defineChain,
+  keccak256, encodePacked,
+} from 'https://esm.sh/viem@2.21.54';
+import { privateKeyToAccount } from 'https://esm.sh/viem@2.21.54/accounts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const JWT_SECRET = 'xmail-session-secret-2024'; // In production, use env variable
+// This secret is the only thing standing between a stranger and every inbox:
+// session tokens gate get_inbox / get_email / get_sent, so anyone who knows it
+// can mint a token for any wallet and read that wallet's mail. It was a literal
+// string in committed source. Refusing to boot without the env var is the point
+// -- a fallback default would silently reintroduce the same hole.
+const JWT_SECRET = Deno.env.get('SESSION_JWT_SECRET');
+if (!JWT_SECRET) {
+  throw new Error('SESSION_JWT_SECRET is not set; refusing to issue forgeable sessions.');
+}
 const SESSION_DURATION = 3600; // 1 hour in seconds
 
+/** Mirrors src/lib/credits.ts. This side is authoritative. */
+const BYTES_PER_CREDIT = 4000;
+
+// ---- on-chain anchoring ---------------------------------------------------
+//
+// Users hold Solana wallets and the anchor contract lives on an EVM chain, so
+// they cannot sign the transaction themselves. xmail submits it with its own
+// key. Be precise about what that does and does not prove: the hash on chain is
+// immutable and publicly checkable, so nobody -- including xmail -- can alter a
+// message after the fact without the hash ceasing to match. It is NOT proof the
+// sender authorised the anchor; that would need the sender's own EVM signature,
+// which is the wallet migration.
+//
+// Anchoring is best-effort and deliberately non-fatal. A message that sends but
+// fails to anchor is a message with no integrity proof; a message that fails to
+// send because the chain was busy is lost mail. The first is strictly better.
+// Read per call, not at module load. A function instance that booted before the
+// secret existed would otherwise cache `undefined` for its whole lifetime and
+// skip anchoring silently, even after the secret was set.
+const anchorKey = () => Deno.env.get('ANCHOR_PRIVATE_KEY');
+const MESSAGE_ANCHOR_ADDRESS = Deno.env.get('MESSAGE_ANCHOR_ADDRESS');
+const RPC_URL = Deno.env.get('CHAIN_RPC_URL') ?? 'https://rpc.testnet.chain.robinhood.com';
+const CHAIN_ID = Number(Deno.env.get('CHAIN_ID') ?? 46630);
+
+const robinhood = defineChain({
+  id: CHAIN_ID,
+  name: 'Robinhood Chain Testnet',
+  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrls: { default: { http: [RPC_URL] } },
+});
+
+const ANCHOR_ABI = [
+  {
+    type: 'function',
+    name: 'anchor',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'messageHash', type: 'bytes32' },
+      { name: 'to', type: 'address' },
+    ],
+    outputs: [],
+  },
+] as const;
+
+/**
+ * Solana public key -> EVM address. Duplicated from src/lib/walletAddress.ts;
+ * the two MUST agree or every anchor verifies as absent. Change one, change both.
+ */
+function walletToEvmAddress(base58Address: string): `0x${string}` {
+  const bytes = bs58.decode(base58Address);
+  return `0x${keccak256(bytes).slice(-40)}` as `0x${string}`;
+}
+
+/** Must stay byte-identical to messageCommitment() in src/lib/chainClient.ts. */
+function messageCommitment(ciphertext: string, from: `0x${string}`, to: `0x${string}`) {
+  return keccak256(encodePacked(['string', 'address', 'address'], [ciphertext, from, to]));
+}
+
+async function anchorMessage(ciphertext: string, fromWallet: string, toWallet: string) {
+  const key = anchorKey();
+  if (!key || !MESSAGE_ANCHOR_ADDRESS) {
+    console.log('Anchoring skipped: ANCHOR_PRIVATE_KEY or MESSAGE_ANCHOR_ADDRESS not set');
+    return null;
+  }
+  try {
+    const from = walletToEvmAddress(fromWallet);
+    const to = walletToEvmAddress(toWallet);
+    const messageHash = messageCommitment(ciphertext, from, to);
+
+    const account = privateKeyToAccount(key as `0x${string}`);
+    const wallet = createWalletClient({ account, chain: robinhood, transport: http(RPC_URL) });
+    const publicClient = createPublicClient({ chain: robinhood, transport: http(RPC_URL) });
+
+    const txHash = await wallet.writeContract({
+      address: MESSAGE_ANCHOR_ADDRESS as `0x${string}`,
+      abi: ANCHOR_ABI,
+      functionName: 'anchor',
+      args: [messageHash, to],
+    });
+
+    // The block number is what makes the anchor citable, so it is worth a short
+    // wait -- but never an unbounded one, because the mail is already delivered.
+    let blockNumber: bigint | null = null;
+    try {
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 15_000 });
+      blockNumber = receipt.blockNumber;
+    } catch {
+      console.log('Anchor submitted but receipt timed out; tx hash recorded');
+    }
+
+    console.log(`Anchored ${messageHash} in tx ${txHash}`);
+    return { messageHash, txHash, blockNumber: blockNumber ? Number(blockNumber) : null };
+  } catch (err) {
+    console.error('Anchoring failed (message already sent):', err);
+    return null;
+  }
+}
+
+/** Cached: importKey on every request is pure overhead for a fixed secret. */
+let signingKey: CryptoKey | null = null;
+async function getSigningKey(): Promise<CryptoKey> {
+  if (!signingKey) {
+    signingKey = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(JWT_SECRET),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign', 'verify']
+    );
+  }
+  return signingKey;
+}
+
 async function generateSessionToken(walletPublicKey: string): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    'raw',
-    new TextEncoder().encode(JWT_SECRET),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign', 'verify']
-  );
+  const key = await getSigningKey();
 
   return await djwt.create(
     { alg: 'HS256', typ: 'JWT' },
@@ -33,14 +153,7 @@ async function generateSessionToken(walletPublicKey: string): Promise<string> {
 
 async function verifySessionToken(token: string): Promise<string | null> {
   try {
-    const key = await crypto.subtle.importKey(
-      'raw',
-      new TextEncoder().encode(JWT_SECRET),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign', 'verify']
-    );
-
+    const key = await getSigningKey();
     const payload = await djwt.verify(token, key);
     return payload.wallet as string;
   } catch (error) {
@@ -121,31 +234,182 @@ serve(async (req) => {
         if (data.from_wallet !== verifiedWallet) {
           throw new Error('Sender wallet mismatch');
         }
-        
-        // Insert email with both recipient and sender encrypted copies
-        const emailData = {
-          from_wallet: data.from_wallet,
-          to_wallet: data.to_wallet,
-          encrypted_subject: data.encrypted_subject,
-          encrypted_body: data.encrypted_body,
-          sender_encrypted_subject: data.sender_encrypted_subject,
-          sender_encrypted_body: data.sender_encrypted_body,
-          sender_signature: data.sender_signature,
-          payment_tx_signature: data.payment_tx_signature,
-        };
-        
-        const { error: insertError } = await supabaseAdmin
-          .from('encrypted_emails')
-          .insert(emailData);
-        
-        if (insertError) {
-          console.error('Insert error:', insertError);
-          throw insertError;
+
+        // Cost is computed here, from the bytes actually about to be stored --
+        // never from anything the client tells us. See src/lib/credits.ts; the
+        // rule is duplicated because one side must display it and the other
+        // must enforce it, and this is the side that enforces.
+        const storedBytes =
+          (data.encrypted_subject?.length ?? 0) +
+          (data.encrypted_body?.length ?? 0) +
+          (data.sender_encrypted_subject?.length ?? 0) +
+          (data.sender_encrypted_body?.length ?? 0);
+        const attachmentCount = Number(data.attachment_count ?? 0);
+        const cost = 1 + Math.floor(storedBytes / BYTES_PER_CREDIT) + attachmentCount;
+
+        // Debit and insert are one transaction. Two round trips would leave a
+        // window where a send is charged but never stored, or the reverse.
+        const { data: result, error: debitError } = await supabaseAdmin.rpc('send_email_debit', {
+          p_wallet: verifiedWallet,
+          p_cost: cost,
+          p_to_wallet: data.to_wallet,
+          p_encrypted_subject: data.encrypted_subject,
+          p_encrypted_body: data.encrypted_body,
+          p_sender_encrypted_subject: data.sender_encrypted_subject,
+          p_sender_encrypted_body: data.sender_encrypted_body,
+          p_sender_signature: data.sender_signature,
+        });
+
+        if (debitError) {
+          const m = /INSUFFICIENT_CREDITS:(\d+):(\d+)/.exec(debitError.message ?? '');
+          if (m) {
+            return new Response(
+              JSON.stringify({
+                error: 'INSUFFICIENT_CREDITS',
+                balance: Number(m[1]),
+                required: Number(m[2]),
+              }),
+              { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          console.error('Send debit error:', debitError);
+          throw debitError;
         }
-        
-        console.log('Email sent successfully with sender copy');
+
+        const row = Array.isArray(result) ? result[0] : result;
+        console.log(`Email sent, ${cost} credit(s) charged`);
+
+        // The recipient's ciphertext is what gets committed: it is the exact
+        // bytes the recipient will decrypt, so a mismatch later means the stored
+        // message is not the one that was sent.
+        const anchored = await anchorMessage(
+          data.encrypted_body ?? '',
+          verifiedWallet,
+          data.to_wallet,
+        );
+        if (anchored && row?.email_id) {
+          await supabaseAdmin
+            .from('encrypted_emails')
+            .update({
+              message_hash: anchored.messageHash,
+              anchor_tx_hash: anchored.txHash,
+              anchor_block: anchored.blockNumber,
+              anchored_at: new Date().toISOString(),
+            })
+            .eq('id', row.email_id);
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true, emailId: row?.email_id, cost, balance: row?.balance_after,
+            anchor: anchored ? { txHash: anchored.txHash, block: anchored.blockNumber } : null,
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // ---- parked mail -------------------------------------------------
+      // Parking is free; the credit is charged when the message is actually
+      // delivered, through the normal send path.
+      case 'park_email': {
+        if (data.from_wallet !== verifiedWallet) {
+          throw new Error('Sender wallet mismatch');
+        }
+        const { data: parked, error: parkErr } = await supabaseAdmin
+          .from('parked_emails')
+          .insert({
+            from_wallet: verifiedWallet,
+            to_wallet: data.to_wallet,
+            sender_encrypted_subject: data.sender_encrypted_subject,
+            sender_encrypted_body: data.sender_encrypted_body,
+          })
+          .select()
+          .single();
+        if (parkErr) throw parkErr;
+
+        return new Response(
+          JSON.stringify({ success: true, parkedId: parked.id }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Returns only the parked messages whose recipient has since registered a
+      // key, so the client has nothing to filter and no reason to learn who is
+      // registered beyond the people it already wrote to.
+      case 'get_deliverable_parked': {
+        const { data: parked, error: pErr } = await supabaseAdmin
+          .from('parked_emails')
+          .select('*')
+          .eq('from_wallet', verifiedWallet);
+        if (pErr) throw pErr;
+        if (!parked?.length) {
+          return new Response(JSON.stringify({ parked: [] }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const recipients = [...new Set(parked.map((p) => p.to_wallet))];
+        const { data: keys } = await supabaseAdmin
+          .from('encryption_keys')
+          .select('wallet_address, public_key')
+          .in('wallet_address', recipients);
+
+        const keyed = new Map((keys ?? []).map((k) => [k.wallet_address, k.public_key]));
+        const deliverable = parked
+          .filter((p) => keyed.has(p.to_wallet))
+          .map((p) => ({ ...p, recipient_public_key: keyed.get(p.to_wallet) }));
+
+        await supabaseAdmin
+          .from('parked_emails')
+          .update({ last_checked_at: new Date().toISOString() })
+          .eq('from_wallet', verifiedWallet);
+
+        console.log(`${deliverable.length}/${parked.length} parked messages now deliverable`);
+        return new Response(
+          JSON.stringify({ parked: deliverable, total: parked.length }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'count_parked': {
+        const { count } = await supabaseAdmin
+          .from('parked_emails')
+          .select('id', { count: 'exact', head: true })
+          .eq('from_wallet', verifiedWallet);
+        return new Response(
+          JSON.stringify({ count: count ?? 0 }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'delete_parked': {
+        const { error: delErr } = await supabaseAdmin
+          .from('parked_emails')
+          .delete()
+          .eq('id', data.parkedId)
+          .eq('from_wallet', verifiedWallet);
+        if (delErr) throw delErr;
         return new Response(
           JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'get_credits': {
+        const { data: balance, error: balErr } = await supabaseAdmin.rpc('ensure_credit_balance', {
+          p_wallet: verifiedWallet,
+        });
+        if (balErr) throw balErr;
+
+        const { data: ledger } = await supabaseAdmin
+          .from('credit_ledger')
+          .select('delta, reason, balance_after, created_at')
+          .eq('wallet_address', verifiedWallet)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        return new Response(
+          JSON.stringify({ balance, ledger: ledger || [] }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }

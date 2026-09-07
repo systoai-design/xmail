@@ -7,16 +7,17 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useEncryptionKeys } from '@/hooks/useEncryptionKeys';
+import { useParkedOutbox } from '@/hooks/useParkedOutbox';
 import { callSecureEndpoint } from '@/lib/secureApi';
 import { supabase } from '@/integrations/supabase/client';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { GmailSidebar } from '@/components/GmailSidebar';
 import { EmailRow } from '@/components/EmailRow';
+import { EmptyState } from '@/components/EmptyState';
 import { SectionHeader } from '@/components/SectionHeader';
 import { ComposeModal } from '@/components/ComposeModal';
 import { ComposeTabSwitcher, ComposeWindow } from '@/components/ComposeTabSwitcher';
 import { InlineEmailViewer } from '@/components/InlineEmailViewer';
-import { SocialLinks } from '@/components/SocialLinks';
 import { cn } from '@/lib/utils';
 import { openKeyManagement, onKeyImported } from '@/lib/events';
 
@@ -46,8 +47,12 @@ const Inbox = () => {
   const { connected, publicKey, disconnect, signMessage } = useWallet();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { keysReady } = useEncryptionKeys();
+  const { keysReady, needsUnlock, unlocking, unlock } = useEncryptionKeys();
   const [searchParams] = useSearchParams();
+  // Flushes on load: parked mail is delivered when the sender next opens xmail.
+  const { parkedCount } = useParkedOutbox(() => {
+    loadSentEmails();
+  });
   const tabFromUrl = searchParams.get('tab') || 'inbox';
   
   const [emails, setEmails] = useState<EncryptedEmail[]>([]);
@@ -110,31 +115,26 @@ const Inbox = () => {
       return;
     }
     
-    // Try to load emails with a wait for keys
-    const loadWithRetry = async () => {
-      // Wait for keys with timeout (up to 10 seconds)
-      let attempts = 0;
-      while (!keysReady && attempts < 20) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        attempts++;
-      }
-      
-      if (keysReady) {
-        loadEmails();
-        loadSentEmails();
-        loadDrafts();
-      } else {
-        setLoading(false);
-        toast({
-          title: 'Keys Not Ready',
-          description: 'Your encryption keys are still being set up. Please wait or reconnect your wallet.',
-          variant: 'default',
-        });
-      }
-    };
-    
-    loadWithRetry();
-  }, [connected, navigate, publicKey]);
+    // This used to poll `while (!keysReady)` for ten seconds. `keysReady` is
+    // captured from the render that created the effect and was not in the deps,
+    // so the loop re-read the same stale `false` twenty times and then gave up
+    // for good -- and the effect never re-ran when the keys actually arrived.
+    // Signing out and back in landed here with keys still unlocking, so inbox,
+    // sent and drafts all stayed permanently empty.
+    //
+    // React already has the mechanism: depend on the value and let the effect
+    // re-run when it changes.
+    if (!keysReady) {
+      // No toast. If a signature is needed the banner below asks for it, and a
+      // toast cannot be clicked to provide the gesture the wallet requires.
+      setLoading(false);
+      return;
+    }
+
+    loadEmails();
+    loadSentEmails();
+    loadDrafts();
+  }, [connected, keysReady, navigate, publicKey]);
 
   // Set up Realtime listener for new emails
   useEffect(() => {
@@ -219,6 +219,11 @@ const Inbox = () => {
       setSentEmails(response.emails || []);
     } catch (error) {
       console.error('Error loading sent emails:', error);
+      toast({
+        title: 'Could not load sent mail',
+        description: 'Reload to try again.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -234,7 +239,15 @@ const Inbox = () => {
       );
       setDrafts(response.drafts || []);
     } catch (error) {
+      // Swallowing this made a failed fetch look exactly like an empty folder,
+      // which is how "my drafts disappeared" reads to someone whose drafts are
+      // sitting safely in the database.
       console.error('Error loading drafts:', error);
+      toast({
+        title: 'Could not load drafts',
+        description: 'They are still saved. Reload to try again.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -351,6 +364,18 @@ const Inbox = () => {
     setActiveWindowId(newWindow.id);
   };
 
+  const handleReply = (toWallet: string) => {
+    const newWindow: ComposeWindow = {
+      id: crypto.randomUUID(),
+      draftId: null,
+      subject: '',
+      initialTo: toWallet,
+      isMinimized: false,
+    };
+    setComposeWindows(prev => [...prev, newWindow]);
+    setActiveWindowId(newWindow.id);
+  };
+
   const handleOpenDraft = (draftId: string) => {
     const newWindow: ComposeWindow = {
       id: Math.random().toString(36).substring(7),
@@ -364,6 +389,10 @@ const Inbox = () => {
 
   const handleCloseWindow = (windowId: string) => {
     setComposeWindows(prev => prev.filter(w => w.id !== windowId));
+    // The composer saves a draft on its way out, so the folder that is supposed
+    // to hold it has to be re-read. Without this a saved draft stayed invisible
+    // until a manual reload, which looks exactly like a save that failed.
+    loadDrafts();
     if (activeWindowId === windowId) {
       const remaining = composeWindows.filter(w => w.id !== windowId);
       setActiveWindowId(remaining.length > 0 ? remaining[0].id : null);
@@ -549,6 +578,7 @@ const Inbox = () => {
         sentCount={sentEmails.length}
         draftsCount={drafts.length}
         starredCount={starredCount}
+        parkedCount={parkedCount}
         onDisconnect={handleDisconnect}
         onCompose={handleCompose}
         mobileOpen={mobileSidebarOpen}
@@ -622,9 +652,6 @@ const Inbox = () => {
               )}
             </div>
 
-            {/* Social Links - Hidden on mobile to prevent crowding */}
-            <SocialLinks className="hidden sm:flex" />
-
             {/* Refresh Button */}
             <Button
               variant="ghost"
@@ -637,8 +664,10 @@ const Inbox = () => {
           </div>
         </header>
 
-        {/* Toolbar */}
-        <div className="border-b border-border px-4 py-2 flex items-center gap-3 bg-background">
+        {/* Selection bar. Only exists when there is something to select --
+            otherwise it renders as a lone checkbox floating over an empty list. */}
+        {totalEmails > 0 && (
+        <div className="flex items-center gap-3 border-b border-border bg-background px-4 py-2">
           <Checkbox
             checked={selectedEmails.size > 0}
             onCheckedChange={handleSelectAll}
@@ -659,6 +688,31 @@ const Inbox = () => {
             </>
           )}
         </div>
+        )}
+
+        {needsUnlock && (
+          <div className="mx-4 mt-4 rounded-xl border border-white/10 bg-card p-4 sm:mx-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">Unlock your encryption</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Your key is stored encrypted. Approve one wallet signature to
+                  decrypt it on this device.
+                </p>
+              </div>
+              <Button onClick={unlock} disabled={unlocking} size="sm" className="shrink-0">
+                {unlocking ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Waiting for signature
+                  </>
+                ) : (
+                  'Unlock encryption'
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Email List */}
         <div className="flex-1 overflow-y-auto">
@@ -667,14 +721,7 @@ const Inbox = () => {
               <Loader2 className="w-12 h-12 animate-spin text-primary" />
             </div>
           ) : totalEmails === 0 ? (
-            <div className="text-center py-20">
-              <p className="text-xl text-muted-foreground">
-                {activeTab === 'inbox' && 'No messages in inbox'}
-                {activeTab === 'sent' && 'No sent messages'}
-                {activeTab === 'drafts' && 'No drafts'}
-                {activeTab === 'starred' && 'No starred messages'}
-              </p>
-            </div>
+            <EmptyState tab={activeTab} onCompose={handleCompose} />
           ) : (
             <>
               {activeTab === 'inbox' && (
@@ -729,6 +776,7 @@ const Inbox = () => {
           <InlineEmailViewer
             emailId={selectedEmailId}
             onClose={() => setSelectedEmailId(null)}
+            onReply={handleReply}
             onDelete={() => {
               setSelectedEmailId(null);
               loadEmails();
@@ -754,6 +802,7 @@ const Inbox = () => {
           isOpen={!window.isMinimized}
           onClose={() => handleCloseWindow(window.id)}
           draftId={window.draftId}
+          initialTo={window.initialTo}
           onSent={() => {
             handleCloseWindow(window.id);
             loadEmails();

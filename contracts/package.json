@@ -1,0 +1,26 @@
+{
+  "name": "xmail-contracts",
+  "version": "1.0.0",
+  "description": "",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "build": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:testnet": "hardhat run scripts/deploy.ts --network robinhoodTestnet",
+    "deploy:mainnet": "hardhat run scripts/deploy.ts --network robinhoodMainnet",
+    "wallet:new": "node scripts/new-wallet.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.7",
+    "dotenv": "^17.4.2",
+    "hardhat": "^3.15.0",
+    "viem": "^2.56.3"
+  },
+  "private": true,
+  "type": "module"
+}
