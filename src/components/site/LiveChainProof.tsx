@@ -282,7 +282,11 @@ function StatusBar({
         <div className="min-w-0">
           <p className="text-[hsl(var(--verified))]">Verified on-chain</p>
           <p className="text-l4 mt-0.5 text-xs">
-            Anchored in block {status.blockNumber.toLocaleString()} on{" "}
+            {/* REFERENCE_PROOF's L2 block, not status.blockNumber. verify()
+                returns what the contract stored, which on an Orbit chain is the
+                parent chain's height -- a different number from the one the
+                explorer link directly below this shows. */}
+            Anchored in block {REFERENCE_PROOF.blockNumber.toLocaleString()} on{" "}
             {new Date(Number(status.timestamp) * 1000).toLocaleDateString(
               undefined,
               {

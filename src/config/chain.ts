@@ -49,18 +49,16 @@ export const CONTRACTS = {
 };
 
 /**
- * The wallet that submits anchor transactions.
+ * The wallet that submitted anchor transactions before senders signed for
+ * themselves.
  *
- * Users sign in with Solana wallets and the anchor contract is EVM, so they
- * cannot sign the transaction themselves -- xmail relays it. The contract
- * records `from` as `msg.sender`, which is therefore THIS address, not the
- * sender's. Verification must ask for it accordingly: calling verify() with the
- * sender's own derived address returns false for every message, which is
- * exactly the bug this constant exists to prevent.
+ * Kept only so that verification still resolves for mail anchored under the old
+ * Solana-era arrangement, where users held wallets that could not sign on an EVM
+ * chain and xmail relayed on their behalf -- making `msg.sender` this address
+ * rather than the sender's. Everything sent since is signed by the sender, so
+ * verification tries the sender first and only falls back to this.
  *
- * The binding to the real sender is not lost -- it lives inside the hash, whose
- * preimage includes the sender's derived address. Recomputing the commitment is
- * what proves who sent it; the chain proves when, and that it has not changed.
+ * Nothing writes anchors from this key any more. Do not reintroduce one.
  */
 export const ANCHOR_RELAYER = (import.meta.env.VITE_ANCHOR_RELAYER ??
   "0xd5959d80fd9defa138c63745864c75bc4f3e5b71") as string;
@@ -84,7 +82,19 @@ export const REFERENCE_PROOF = {
   participant: "0xd5959d80fd9defa138c63745864c75bc4f3e5b71" as `0x${string}`,
   messageHash: "0x55380e753112b20e1613cb749b9db3af6535e6adb7ab35c0ad0097eeb1edab0c" as `0x${string}`,
   txHash: "0xd8ae3c75e3243b45cd6130c14608aa448d33a86dd5aa214f2f7e93606b0f6b7d",
-  blockNumber: 11650229,
+  /**
+   * The L2 block, taken from the transaction receipt -- NOT the block the
+   * contract stores.
+   *
+   * Robinhood Chain is an Arbitrum Orbit (Nitro) L2, where `block.number`
+   * inside the EVM reports the parent chain's height, not the L2's. So
+   * MessageAnchor recorded 11650229 for this anchor while the transaction
+   * itself is in L2 block 114426835. Both are correct; only one of them is the
+   * number the explorer shows, and this section links straight to the explorer.
+   * Quoting the other one hands a visitor two different numbers for one message
+   * on the page that tells them to go and check for themselves.
+   */
+  blockNumber: 114426835,
 };
 
 export const explorerTx = (hash: string) => `${ACTIVE_CHAIN.explorerUrl}/tx/${hash}`;

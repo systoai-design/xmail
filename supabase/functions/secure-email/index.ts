@@ -2,10 +2,9 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import * as djwt from 'https://deno.land/x/djwt@v3.0.1/mod.ts';
 import {
-  createWalletClient, createPublicClient, http, defineChain,
+  createPublicClient, http, defineChain,
   keccak256, encodePacked, verifyMessage, isAddress, parseEventLogs,
 } from 'https://esm.sh/viem@2.21.54';
-import { privateKeyToAccount } from 'https://esm.sh/viem@2.21.54/accounts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,21 +27,17 @@ const BYTES_PER_CREDIT = 4000;
 
 // ---- on-chain anchoring ---------------------------------------------------
 //
-// Users hold Solana wallets and the anchor contract lives on an EVM chain, so
-// they cannot sign the transaction themselves. xmail submits it with its own
-// key. Be precise about what that does and does not prove: the hash on chain is
-// immutable and publicly checkable, so nobody -- including xmail -- can alter a
-// message after the fact without the hash ceasing to match. It is NOT proof the
-// sender authorised the anchor; that would need the sender's own EVM signature,
-// which is the wallet migration.
+// xmail holds no key for this. Senders sign their own anchor, before the
+// message is stored, and send_email verifies that anchor against the chain
+// before accepting anything -- so the anchor proves WHO sent a message, not
+// merely that xmail recorded a hash for it.
 //
-// Anchoring is best-effort and deliberately non-fatal. A message that sends but
-// fails to anchor is a message with no integrity proof; a message that fails to
-// send because the chain was busy is lost mail. The first is strictly better.
-// Read per call, not at module load. A function instance that booted before the
-// secret existed would otherwise cache `undefined` for its whole lifetime and
-// skip anchoring silently, even after the secret was set.
-const anchorKey = () => Deno.env.get('ANCHOR_PRIVATE_KEY');
+// There used to be a server-side relayer here, because Solana wallets could not
+// sign on an EVM chain. It has been dead code since senders started signing for
+// themselves, and a funded key sitting in a production function with no callers
+// is a liability and nothing else, so it is gone. Do not add one back: a shared
+// relayer is exactly the trust assumption this product exists to remove.
+
 const CREDIT_SALE_ADDRESS = Deno.env.get('CREDIT_SALE_ADDRESS');
 
 // ---- credit packages ------------------------------------------------------
@@ -135,65 +130,9 @@ const robinhood = defineChain({
   rpcUrls: { default: { http: [RPC_URL] } },
 });
 
-const ANCHOR_ABI = [
-  {
-    type: 'function',
-    name: 'anchor',
-    stateMutability: 'nonpayable',
-    inputs: [
-      { name: 'messageHash', type: 'bytes32' },
-      { name: 'to', type: 'address' },
-    ],
-    outputs: [],
-  },
-] as const;
-
 /** Must stay byte-identical to messageCommitment() in src/lib/chainClient.ts. */
 function messageCommitment(ciphertext: string, from: `0x${string}`, to: `0x${string}`) {
   return keccak256(encodePacked(['string', 'address', 'address'], [ciphertext, from, to]));
-}
-
-async function anchorMessage(ciphertext: string, fromWallet: string, toWallet: string) {
-  const key = anchorKey();
-  if (!key || !MESSAGE_ANCHOR_ADDRESS) {
-    console.log('Anchoring skipped: ANCHOR_PRIVATE_KEY or MESSAGE_ANCHOR_ADDRESS not set');
-    return null;
-  }
-  try {
-    // Wallet addresses ARE EVM addresses now. The keccak derivation that used
-    // to bridge Solana addresses onto this chain is gone, and with it a whole
-    // class of "the two sides derived differently" bug.
-    const from = fromWallet as `0x${string}`;
-    const to = toWallet as `0x${string}`;
-    const messageHash = messageCommitment(ciphertext, from, to);
-
-    const account = privateKeyToAccount(key as `0x${string}`);
-    const wallet = createWalletClient({ account, chain: robinhood, transport: http(RPC_URL) });
-    const publicClient = createPublicClient({ chain: robinhood, transport: http(RPC_URL) });
-
-    const txHash = await wallet.writeContract({
-      address: MESSAGE_ANCHOR_ADDRESS as `0x${string}`,
-      abi: ANCHOR_ABI,
-      functionName: 'anchor',
-      args: [messageHash, to],
-    });
-
-    // The block number is what makes the anchor citable, so it is worth a short
-    // wait -- but never an unbounded one, because the mail is already delivered.
-    let blockNumber: bigint | null = null;
-    try {
-      const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 15_000 });
-      blockNumber = receipt.blockNumber;
-    } catch {
-      console.log('Anchor submitted but receipt timed out; tx hash recorded');
-    }
-
-    console.log(`Anchored ${messageHash} in tx ${txHash}`);
-    return { messageHash, txHash, blockNumber: blockNumber ? Number(blockNumber) : null };
-  } catch (err) {
-    console.error('Anchoring failed (message already sent):', err);
-    return null;
-  }
 }
 
 /** Cached: importKey on every request is pure overhead for a fixed secret. */
