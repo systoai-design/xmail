@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import {
   ACTIVE_CHAIN,
   isDeployed,
@@ -43,7 +44,13 @@ export function SiteFooter() {
           </div>
 
           <div className="grid grid-cols-2 gap-x-12 gap-y-2 text-sm sm:grid-cols-2">
-            <FooterLink href="#layers">How it works</FooterLink>
+            <FooterLink href="/docs" internal>
+              Documentation
+            </FooterLink>
+            <FooterLink href="/pitch" internal>
+              The short version
+            </FooterLink>
+            <FooterLink href="/#layers">How it works</FooterLink>
             <FooterLink href="https://docs.robinhood.com/chain/" external>
               Chain docs
             </FooterLink>
@@ -81,16 +88,28 @@ function FooterLink({
   href,
   children,
   external,
+  internal,
 }: {
   href: string;
   children: React.ReactNode;
   external?: boolean;
+  /** Route through the router, so a page change does not reload the app. */
+  internal?: boolean;
 }) {
+  const className =
+    "text-muted-foreground transition-colors hover:text-foreground";
+  if (internal) {
+    return (
+      <Link to={href} className={className}>
+        {children}
+      </Link>
+    );
+  }
   return (
     <a
       href={href}
       {...(external ? { target: "_blank", rel: "noreferrer noopener" } : {})}
-      className="text-muted-foreground transition-colors hover:text-foreground"
+      className={className}
     >
       {children}
     </a>

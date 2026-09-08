@@ -10,6 +10,8 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { KeyRegistrar } from "./components/KeyRegistrar";
 import Landing from "./pages/Landing";
 import Inbox from "./pages/Inbox";
+import Docs from "./pages/Docs";
+import Pitch from "./pages/Pitch";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +36,8 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/inbox" element={<Inbox />} />
+                <Route path="/docs" element={<Docs />} />
+                <Route path="/pitch" element={<Pitch />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

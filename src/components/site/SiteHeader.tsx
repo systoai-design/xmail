@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Wordmark } from "./Wordmark";
 import { cn } from "@/lib/utils";
 import { SocialLinks } from "@/components/SocialLinks";
 import { GlowButton } from "./GlowButton";
+// Absolute, not bare fragments. These used to be "#layers" and friends, which
+// resolve to nothing on any page that is not the landing page -- so every nav
+// item was dead on /docs and /pitch.
 const NAV = [
-  { label: "How it works", href: "#layers" },
-  { label: "Verify", href: "#verify" },
-  { label: "Features", href: "#security" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
+  { label: "How it works", href: "/#layers" },
+  { label: "Verify", href: "/#verify" },
+  { label: "Features", href: "/#security" },
+  { label: "Pricing", href: "/#pricing" },
+  { label: "FAQ", href: "/#faq" },
 ];
 export function SiteHeader({ onConnect }: { onConnect?: () => void }) {
   const [scrolled, setScrolled] = useState(false);
@@ -98,6 +102,17 @@ export function SiteHeader({ onConnect }: { onConnect?: () => void }) {
                 {item.label}
               </a>
             ))}
+            {/* Docs lives here and in the footer rather than in the desktop
+                pill: that pill is absolutely centred, so it overlaps the CTA
+                rather than pushing it, and at 1024px it already clears it by
+                only 45px. A sixth item puts the collision straight back. */}
+            <Link
+              to="/docs"
+              onClick={() => setMenuOpen(false)}
+              className="text-l3 rounded-xl px-3 py-2.5 text-sm transition-colors hover:bg-white/[0.06] hover:text-white"
+            >
+              Documentation
+            </Link>
             <Button size="sm" className="pill mt-2 h-10" onClick={onConnect}>
               Get started
             </Button>
