@@ -38,6 +38,23 @@ gsap.registerPlugin(ScrollTrigger);
 
 const SLIDE_COUNT = 8;
 
+/**
+ * Half the travel, in percent of the element's own height, that a layer at
+ * depth 1 makes across a full slide traversal.
+ *
+ * The trigger runs from the slide entering the bottom of the viewport to it
+ * leaving the top, so the midpoint of that range is exactly the snapped
+ * position -- which means every layer is at yPercent 0 when a slide is at
+ * rest, whatever its depth. Nothing is displaced from where it was designed to
+ * sit; the movement exists only while a slide is in transit. That is what
+ * makes it safe to push this figure well past what looks reasonable on paper.
+ *
+ * A negative depth moves a layer AGAINST the scroll. Opposing motion is what
+ * actually reads as depth -- layers merely lagging each other by a few percent
+ * is the version of this that everyone writes and nobody notices.
+ */
+const PARALLAX = 16;
+
 export default function Pitch() {
   const { connected } = useWallet();
   const navigate = useNavigate();
@@ -340,9 +357,9 @@ export default function Pitch() {
             const depth = Number((layer as HTMLElement).dataset.depth ?? 1);
             gsap.fromTo(
               layer,
-              { yPercent: 5 * depth },
+              { yPercent: PARALLAX * depth },
               {
-                yPercent: -5 * depth,
+                yPercent: -PARALLAX * depth,
                 ease: "none",
                 scrollTrigger: {
                   trigger: slide,
@@ -431,60 +448,66 @@ export default function Pitch() {
         className="h-full snap-y snap-mandatory overflow-y-auto [scroll-behavior:auto]"
       >
         <Slide n={0} field="center">
-          <span
-            data-rise
-            className="panel pill text-l4 inline-flex items-center gap-2 px-3 py-1 text-xs"
-          >
-            {isDeployed ? `Live on ${ACTIVE_CHAIN.shortName}` : "In development"}
-          </span>
-          <h1 className="mt-7 text-5xl leading-[1.05] sm:text-7xl">
-            <Reveal text="Email, addressed" block />
-            <Reveal text="to a wallet" block />
-          </h1>
-          <p
-            data-rise
-            className="text-l3 mx-auto mt-6 max-w-xl text-pretty text-lg leading-relaxed"
-          >
-            Encrypted in your browser. Proven on a public chain. No account, no
-            password, nothing for us to read.
-          </p>
+          <div data-depth="1.5">
+            <span
+              data-rise
+              className="panel pill text-l4 inline-flex items-center gap-2 px-3 py-1 text-xs"
+            >
+              {isDeployed
+                ? `Live on ${ACTIVE_CHAIN.shortName}`
+                : "In development"}
+            </span>
+            <h1 className="mt-7 text-5xl leading-[1.05] sm:text-7xl">
+              <Reveal text="Email, addressed" block />
+              <Reveal text="to a wallet" block />
+            </h1>
+            <p
+              data-rise
+              className="text-l3 mx-auto mt-6 max-w-xl text-pretty text-lg leading-relaxed"
+            >
+              Encrypted in your browser. Proven on a public chain. No account,
+              no password, nothing for us to read.
+            </p>
+          </div>
         </Slide>
 
         <Slide n={1} field="left">
-          <Eyebrow>The problem</Eyebrow>
-          <H>Email was never private</H>
-          <p
-            data-rise
-            className="text-l3 mt-6 max-w-2xl text-pretty text-lg leading-relaxed"
-          >
-            Every mainstream mail provider can read your mail. Not because they
-            are careless, but because the architecture requires it &mdash; the
-            message sits on their servers in a form they can open. Encryption
-            gets bolted on afterwards, and you are asked to trust a promise not
-            to look.
-          </p>
-          <p
-            data-rise
-            className="text-l3 mt-4 max-w-2xl text-pretty text-lg leading-relaxed"
-          >
-            The encrypted alternatives ask for the same trust in a smaller
-            company. You still cannot check whether the key you were handed is
-            really your recipient&rsquo;s, or whether the message you are
-            reading is the one that was sent.
-          </p>
+          <div data-depth="1.5">
+            <Eyebrow>The problem</Eyebrow>
+            <H>Email was never private</H>
+            <p
+              data-rise
+              className="text-l3 mt-6 max-w-2xl text-pretty text-lg leading-relaxed"
+            >
+              Every mainstream mail provider can read your mail. Not because
+              they are careless, but because the architecture requires it
+              &mdash; the message sits on their servers in a form they can open.
+              Encryption gets bolted on afterwards, and you are asked to trust a
+              promise not to look.
+            </p>
+            <p
+              data-rise
+              className="text-l3 mt-4 max-w-2xl text-pretty text-lg leading-relaxed"
+            >
+              The encrypted alternatives ask for the same trust in a smaller
+              company. You still cannot check whether the key you were handed is
+              really your recipient&rsquo;s, or whether the message you are
+              reading is the one that was sent.
+            </p>
+          </div>
         </Slide>
 
         <Slide n={2} field="right">
           <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
-            <div data-depth="1.6">
+            <div data-depth="1.9">
               <Eyebrow>What we built</Eyebrow>
               <H>Your wallet is the address</H>
               <p
                 data-rise
                 className="text-l3 mt-5 text-pretty text-base leading-relaxed"
               >
-                No signup, no password, no email address anywhere in the
-                system. Connect a wallet and it is your identity.
+                No signup, no password, no email address anywhere in the system.
+                Connect a wallet and it is your identity.
               </p>
               <div className="mt-6 space-y-2.5">
                 <Card
@@ -505,12 +528,20 @@ export default function Pitch() {
             {/* The actual product, tilted into the page and settling flat. It
                 is the same component the home page renders, so the two cannot
                 drift into showing different inboxes. */}
-            <div data-depth="0.5" className="relative">
+            <div data-depth="0.35" className="relative">
               <div
                 aria-hidden="true"
                 className="pointer-events-none absolute -inset-6 rounded-[2rem] bg-[radial-gradient(ellipse_at_50%_30%,hsl(var(--primary)/0.13),transparent_70%)] blur-2xl"
               />
-              <div data-stage className="relative">
+              {/* Capped and faded rather than shown whole. Four inbox rows plus
+                  the copy column runs 867px on an 800px screen, and a deck
+                  whose premise is that a slide is a screen should not put its
+                  hero image behind an internal scrollbar. Cutting it off under
+                  a fade also says the right thing -- the inbox continues. */}
+              <div
+                data-stage
+                className="relative max-h-[380px] overflow-hidden [-webkit-mask-image:linear-gradient(to_bottom,#000_0%,#000_72%,transparent_100%)] [mask-image:linear-gradient(to_bottom,#000_0%,#000_72%,transparent_100%)]"
+              >
                 <InboxPreview />
               </div>
             </div>
@@ -530,7 +561,7 @@ export default function Pitch() {
             is stored. Decline the signature and nothing is sent.
           </p>
 
-          <div data-depth="0.6">
+          <div data-depth="0.4">
             <ProofDiagram />
           </div>
 
@@ -548,7 +579,10 @@ export default function Pitch() {
         <Slide n={4} field="bottom">
           <Eyebrow>Status</Eyebrow>
           <H>Running, today</H>
-          <div data-depth="0.6" className="mt-10 grid max-w-3xl gap-6 sm:grid-cols-3">
+          <div
+            data-depth="0.4"
+            className="mt-10 grid max-w-3xl gap-6 sm:grid-cols-3"
+          >
             <Stat
               value={anchored === null ? null : Number(anchored)}
               l="Messages anchored end-to-end"
@@ -588,10 +622,17 @@ export default function Pitch() {
             on-chain proof and its gas included. No seats, no per-user tax, and
             an empty month costs nothing.
           </p>
-          <div data-depth="0.6" className="mt-10 grid max-w-3xl gap-4 sm:grid-cols-3">
+          <div
+            data-depth="0.4"
+            className="mt-10 grid max-w-3xl gap-4 sm:grid-cols-3"
+          >
             <Price tier="Starter" price="Free" note="25 credits every month" />
             <Price tier="Pro" price="$19" note="500 credits a month" />
-            <Price tier="Scale" price="$0.02" note="Per credit, pay as you go" />
+            <Price
+              tier="Scale"
+              price="$0.02"
+              note="Per credit, pay as you go"
+            />
           </div>
           {ACTIVE_CHAIN.testnet && (
             <p
@@ -617,7 +658,7 @@ export default function Pitch() {
             Everything below is planned, not shipped. Dates are intentions
             rather than commitments.
           </p>
-          <div data-depth="0.6" className="mt-8 max-w-2xl space-y-5">
+          <div data-depth="0.4" className="mt-8 max-w-2xl space-y-5">
             <Next
               t="Mainnet"
               d="The same contracts, deployed to Robinhood Chain proper, with credits switched on."
@@ -635,41 +676,43 @@ export default function Pitch() {
         </Slide>
 
         <Slide n={7} field="bottom">
-          <h2 className="text-4xl leading-[1.08] sm:text-6xl">
-            <Reveal text="Send something you&rsquo;d" block />
-            <Reveal text="rather not send over email" block />
-          </h2>
-          <p
-            data-rise
-            className="text-l3 mx-auto mt-6 max-w-xl text-pretty text-lg leading-relaxed"
-          >
-            Connect a wallet and write a message. There is nothing to sign up
-            for and nothing to uninstall if you decide against it.
-          </p>
-          <div
-            data-rise
-            className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
-          >
-            <button
-              type="button"
-              onClick={openWallet}
-              className="pill inline-flex items-center gap-2 bg-foreground px-7 py-3.5 text-base text-background transition-opacity hover:opacity-90"
+          <div data-depth="1.5">
+            <h2 className="text-4xl leading-[1.08] sm:text-6xl">
+              <Reveal text="Send something you&rsquo;d" block />
+              <Reveal text="rather not send over email" block />
+            </h2>
+            <p
+              data-rise
+              className="text-l3 mx-auto mt-6 max-w-xl text-pretty text-lg leading-relaxed"
             >
-              Connect wallet
-              <ArrowRight className="h-4 w-4" />
-            </button>
-            <Link
-              to="/docs"
-              className="panel pill px-6 py-3.5 text-base transition-colors hover:bg-white/[0.06]"
+              Connect a wallet and write a message. There is nothing to sign up
+              for and nothing to uninstall if you decide against it.
+            </p>
+            <div
+              data-rise
+              className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
             >
-              Read the documentation
-            </Link>
+              <button
+                type="button"
+                onClick={openWallet}
+                className="pill inline-flex items-center gap-2 bg-foreground px-7 py-3.5 text-base text-background transition-opacity hover:opacity-90"
+              >
+                Connect wallet
+                <ArrowRight className="h-4 w-4" />
+              </button>
+              <Link
+                to="/docs"
+                className="panel pill px-6 py-3.5 text-base transition-colors hover:bg-white/[0.06]"
+              >
+                Read the documentation
+              </Link>
+            </div>
+            <p data-rise className="text-l5 mt-10 text-sm">
+              <Link to="/" className="hover:text-foreground">
+                xmail.today
+              </Link>
+            </p>
           </div>
-          <p data-rise className="text-l5 mt-10 text-sm">
-            <Link to="/" className="hover:text-foreground">
-              xmail.today
-            </Link>
-          </p>
         </Slide>
       </div>
     </div>
@@ -709,7 +752,30 @@ function Slide({
        */
       className="relative flex h-full w-full shrink-0 snap-start overflow-y-auto"
     >
-      <SectionField variant={field} />
+      {/* The outer box is inset-0 and clips; the inner one is oversized. That
+          nesting is load-bearing, not tidiness: an absolutely positioned child
+          that hangs below its parent DOES add to scrollable overflow, and this
+          slide is a scroll container, so an oversized field on its own gave
+          every slide in the deck a spurious 32px of internal scroll (267px on
+          the first). Clipping it against a neutral inset-0 parent keeps the
+          overhang without the scrollbar.
+
+          Negative depth: the light travels against the content. One layer
+          lagging another is a speed difference and reads as nothing; two
+          layers moving in opposite directions is parallax you can actually
+          see. Oversized top and bottom so the field never shows an edge while
+          it is being pushed around. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+      >
+        <div
+          data-depth="-1.1"
+          className="absolute inset-x-0 -top-1/3 -bottom-1/3"
+        >
+          <SectionField variant={field} />
+        </div>
+      </div>
       <div
         className={`container relative mx-auto my-auto px-6 py-16 ${centred ? "text-center" : ""}`}
       >
@@ -754,7 +820,10 @@ function Reveal({ text, block = false }: { text: string; block?: boolean }) {
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <span data-rise className="text-l5 block text-xs uppercase tracking-[0.18em]">
+    <span
+      data-rise
+      className="text-l5 block text-xs uppercase tracking-[0.18em]"
+    >
       {children}
     </span>
   );
