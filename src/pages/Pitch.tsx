@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, ChevronDown } from "lucide-react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
 import { Wordmark } from "@/components/site/Wordmark";
 import { SectionField } from "@/components/site/SectionField";
 import { readTotalAnchored } from "@/lib/chainClient";
@@ -8,17 +11,28 @@ import { openConnect } from "@/lib/events";
 import { useWallet } from "@/hooks/useWallet";
 import { ACTIVE_CHAIN, isDeployed } from "@/config/chain";
 
+gsap.registerPlugin(ScrollTrigger);
+
 /**
  * The public explainer deck.
  *
- * A deck rather than a long page because the whole argument is seven beats and
+ * A deck rather than a long page because the whole argument is eight beats and
  * each one deserves a screen. Slides are real scroll-snap sections, not a
  * JavaScript carousel: scrolling, arrow keys, Page Up/Down, Home/End and the
- * browser's own find-in-page all work, and someone who prefers to scroll
- * through it like a page still can.
+ * browser's own find-in-page all work.
  *
- * The one number in here that could go stale is read live from the chain. A
- * deck about verifiability should not be quoting a figure typed into markup.
+ * Motion is one timeline per slide rather than a single page-length one. Each
+ * plays as its slide arrives and reverses as it leaves, so scrolling back up
+ * re-runs it instead of showing a slide that has already spent itself.
+ *
+ * Every hidden-at-rest state is set BY GSAP, never in the markup or the
+ * stylesheet. If this code never runs -- reduced motion, a script error, a
+ * stale trigger -- the deck degrades to a plain readable page rather than to
+ * eight blank screens. `gsap.from` leaving elements stuck at opacity 0 has
+ * already shipped on this site once.
+ *
+ * The one number that could go stale is read live from the chain. A deck about
+ * verifiability should not quote a figure typed into markup.
  */
 
 const SLIDE_COUNT = 8;
@@ -26,6 +40,7 @@ const SLIDE_COUNT = 8;
 export default function Pitch() {
   const { connected } = useWallet();
   const navigate = useNavigate();
+  const root = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [anchored, setAnchored] = useState<bigint | null>(null);
@@ -49,12 +64,7 @@ export default function Pitch() {
    *
    * Assigns scrollTop rather than animating. Slides cut; they do not scroll
    * past one another, and a deck that scrolls its way from slide one to slide
-   * six shows the viewer five slides they did not ask for. Wheel and trackpad
-   * scrolling still glide, because that is the snap container's own job.
-   *
-   * It is also the reliable option: smooth programmatic scrolls on this
-   * container did not land consistently under test, where an instant
-   * assignment always did.
+   * six shows the viewer five slides they did not ask for.
    */
   const goTo = useCallback((i: number) => {
     const el = scroller.current;
@@ -66,11 +76,11 @@ export default function Pitch() {
   /**
    * Move by one slide, relative to where the deck ACTUALLY is.
    *
-   * Not `goTo(index + 1)`. `index` comes from a scroll event, which arrives a
-   * frame or more after the scroll itself -- so two quick presses both read the
-   * same stale value and the second one asks for a slide the deck is already
-   * on. Pressing down twice advanced one slide. Reading scrollTop at the moment
-   * of the keypress cannot go stale.
+   * Not `goTo(index + 1)`. `index` comes from a scroll event, which lands a
+   * frame late, so two quick presses both read the same stale value and the
+   * second asks for a slide the deck is already on -- pressing down twice
+   * advanced one slide. scrollTop at the moment of the keypress cannot go
+   * stale.
    */
   const step = useCallback(
     (delta: number) => {
@@ -101,15 +111,10 @@ export default function Pitch() {
     return () => window.removeEventListener("keydown", onKey);
   }, [step, goTo]);
 
-  // Which slide is showing comes from the scroll position, not from whatever
-  // the last click asked for -- otherwise the rail lies the moment someone
-  // scrolls with a trackpad.
-  //
-  // Arithmetic rather than an IntersectionObserver. Every slide is exactly one
-  // container tall, so the index IS scrollTop / clientHeight; an observer adds
-  // thresholds, a root, and eight subscriptions to compute a division. It also
-  // gets throttled when the page is not visible, which made this read as broken
-  // whenever the tab was in the background.
+  // Which slide is showing comes from the scroll position. Arithmetic rather
+  // than an IntersectionObserver: every slide is exactly one container tall, so
+  // the index IS scrollTop / clientHeight, and an observer would add thresholds
+  // and eight subscriptions to compute a division.
   useEffect(() => {
     const el = scroller.current;
     if (!el) return;
@@ -126,8 +131,151 @@ export default function Pitch() {
     };
   }, []);
 
+  useGSAP(
+    () => {
+      const scrollerEl = scroller.current;
+      if (!scrollerEl) return;
+
+      const mm = gsap.matchMedia();
+
+      // Everything lives inside the no-preference branch, and that is what
+      // makes reduced motion safe rather than merely quieter: under `reduce`
+      // no gsap.set runs at all, so nothing is ever hidden to begin with.
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        const slides = gsap.utils.toArray<HTMLElement>("[data-slide]");
+
+        slides.forEach((slide, i) => {
+          const q = gsap.utils.selector(slide);
+          const words = q(".rv-inner");
+          const rises = q("[data-rise]");
+          const cards = q("[data-card]");
+          const counts = q<HTMLElement>("[data-count]");
+          const draws = q<SVGPathElement>("[data-draw]");
+          const nodes = q("[data-node]");
+
+          if (words.length) gsap.set(words, { yPercent: 115 });
+          if (rises.length) gsap.set(rises, { y: 24, autoAlpha: 0 });
+          if (cards.length) gsap.set(cards, { y: 32, autoAlpha: 0 });
+          if (nodes.length) gsap.set(nodes, { scale: 0.82, autoAlpha: 0 });
+          draws.forEach((p) => {
+            const len = p.getTotalLength();
+            gsap.set(p, { strokeDasharray: len, strokeDashoffset: len });
+          });
+
+          const tl = gsap.timeline({
+            scrollTrigger: {
+              trigger: slide,
+              scroller: scrollerEl,
+              // The deck snaps, so a slide is either arriving or gone. A start
+              // deeper in the viewport would fire only once it had already
+              // settled, which reads as a late page rather than an entrance.
+              start: "top 75%",
+              end: "bottom 25%",
+              toggleActions: "play none none reverse",
+            },
+          });
+
+          if (words.length) {
+            tl.to(words, {
+              yPercent: 0,
+              duration: 0.9,
+              ease: "power4.out",
+              stagger: 0.045,
+            });
+          }
+          if (rises.length) {
+            tl.to(
+              rises,
+              {
+                y: 0,
+                autoAlpha: 1,
+                duration: 0.7,
+                ease: "power3.out",
+                stagger: 0.09,
+              },
+              words.length ? "-=0.55" : 0,
+            );
+          }
+          if (draws.length) {
+            tl.to(
+              draws,
+              { strokeDashoffset: 0, duration: 1.1, ease: "power2.inOut" },
+              "-=0.4",
+            );
+          }
+          if (nodes.length) {
+            tl.to(
+              nodes,
+              {
+                scale: 1,
+                autoAlpha: 1,
+                duration: 0.5,
+                ease: "back.out(1.7)",
+                stagger: 0.14,
+              },
+              "-=0.95",
+            );
+          }
+          if (cards.length) {
+            tl.to(
+              cards,
+              {
+                y: 0,
+                autoAlpha: 1,
+                duration: 0.65,
+                ease: "power3.out",
+                stagger: 0.1,
+              },
+              "-=0.45",
+            );
+          }
+
+          // Numbers count rather than appear. The target is read inside
+          // onUpdate, not captured when the timeline is built, because the
+          // anchored figure arrives from the chain afterwards.
+          counts.forEach((node) => {
+            const proxy = { v: 0 };
+            tl.to(
+              proxy,
+              {
+                v: 1,
+                duration: 1.1,
+                ease: "power2.out",
+                onUpdate: () => {
+                  // Read the target now, not when the tween was built: the
+                  // chain figure may only have landed since. If it still has
+                  // not, leave whatever React rendered alone rather than
+                  // counting to a zero nobody meant.
+                  const raw = node.dataset.count;
+                  if (raw === undefined || raw === "") return;
+                  const to = Number(raw);
+                  node.textContent = Math.round(proxy.v * to).toLocaleString();
+                },
+              },
+              "-=0.85",
+            );
+          });
+
+          // Slide one has nothing above it to scroll in from, so its trigger
+          // never fires an enter. It plays on arrival instead.
+          if (i === 0) tl.play(0);
+        });
+
+        // Triggers measure against a nested scroller, which has no size until
+        // layout has settled.
+        requestAnimationFrame(() => ScrollTrigger.refresh());
+      });
+
+      return () => mm.revert();
+    },
+    { scope: root },
+  );
+
   return (
-    <div className="relative h-[100dvh] overflow-hidden bg-background">
+    <div
+      ref={root}
+      className="relative h-[100dvh] overflow-hidden bg-background"
+    >
       {/* Chrome sits above the scroller so it does not scroll with the slides. */}
       <header className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between px-6 py-6">
         <Link to="/" className="pointer-events-auto">
@@ -162,7 +310,8 @@ export default function Pitch() {
       </nav>
 
       <p className="text-l5 absolute bottom-6 left-6 z-20 font-mono text-xs">
-        {String(index + 1).padStart(2, "0")} / {String(SLIDE_COUNT).padStart(2, "0")}
+        {String(index + 1).padStart(2, "0")} /{" "}
+        {String(SLIDE_COUNT).padStart(2, "0")}
       </p>
 
       {index < SLIDE_COUNT - 1 && (
@@ -178,21 +327,25 @@ export default function Pitch() {
 
       <div
         ref={scroller}
-        // Deliberately no `scroll-smooth`. index.css already sets
-        // scroll-behavior: smooth globally, and inheriting it here fights the
-        // instant jumps in goTo -- the deck is meant to cut between slides.
+        // Deliberately no `scroll-smooth`: index.css sets scroll-behavior
+        // globally, and inheriting it fights the instant jumps in goTo.
         className="h-full snap-y snap-mandatory overflow-y-auto [scroll-behavior:auto]"
       >
         <Slide n={0} field="center">
-          <span className="panel pill text-l4 inline-flex items-center gap-2 px-3 py-1 text-xs">
+          <span
+            data-rise
+            className="panel pill text-l4 inline-flex items-center gap-2 px-3 py-1 text-xs"
+          >
             {isDeployed ? `Live on ${ACTIVE_CHAIN.shortName}` : "In development"}
           </span>
-          <h1 className="mt-7 text-balance text-5xl leading-[1.05] sm:text-7xl">
-            Email, addressed
-            <br />
-            to a wallet
+          <h1 className="mt-7 text-5xl leading-[1.05] sm:text-7xl">
+            <Reveal text="Email, addressed" block />
+            <Reveal text="to a wallet" block />
           </h1>
-          <p className="text-l3 mx-auto mt-6 max-w-xl text-pretty text-lg leading-relaxed">
+          <p
+            data-rise
+            className="text-l3 mx-auto mt-6 max-w-xl text-pretty text-lg leading-relaxed"
+          >
             Encrypted in your browser. Proven on a public chain. No account, no
             password, nothing for us to read.
           </p>
@@ -201,25 +354,34 @@ export default function Pitch() {
         <Slide n={1} field="left">
           <Eyebrow>The problem</Eyebrow>
           <H>Email was never private</H>
-          <p className="text-l3 mt-6 max-w-2xl text-pretty text-lg leading-relaxed">
+          <p
+            data-rise
+            className="text-l3 mt-6 max-w-2xl text-pretty text-lg leading-relaxed"
+          >
             Every mainstream mail provider can read your mail. Not because they
             are careless, but because the architecture requires it &mdash; the
             message sits on their servers in a form they can open. Encryption
             gets bolted on afterwards, and you are asked to trust a promise not
             to look.
           </p>
-          <p className="text-l3 mt-4 max-w-2xl text-pretty text-lg leading-relaxed">
+          <p
+            data-rise
+            className="text-l3 mt-4 max-w-2xl text-pretty text-lg leading-relaxed"
+          >
             The encrypted alternatives ask for the same trust in a smaller
             company. You still cannot check whether the key you were handed is
-            really your recipient's, or whether the message you are reading is
-            the one that was sent.
+            really your recipient&rsquo;s, or whether the message you are
+            reading is the one that was sent.
           </p>
         </Slide>
 
         <Slide n={2} field="right">
           <Eyebrow>What we built</Eyebrow>
           <H>Your wallet is the address</H>
-          <p className="text-l3 mt-6 max-w-2xl text-pretty text-lg leading-relaxed">
+          <p
+            data-rise
+            className="text-l3 mt-6 max-w-2xl text-pretty text-lg leading-relaxed"
+          >
             No signup, no password, no email address anywhere in the system.
             Connect a wallet and it is your identity.
           </p>
@@ -242,22 +404,26 @@ export default function Pitch() {
         <Slide n={3} field="top">
           <Eyebrow>How the proof works</Eyebrow>
           <H>A fingerprint, never the message</H>
-          <p className="text-l3 mt-6 max-w-2xl text-pretty text-lg leading-relaxed">
+          <p
+            data-rise
+            className="text-l3 mt-6 max-w-2xl text-pretty text-lg leading-relaxed"
+          >
             When you send, your browser computes a keccak256 commitment over the
             ciphertext and both addresses, and you sign it onto the chain{" "}
             <em className="not-italic text-foreground">before</em> the message
             is stored. Decline the signature and nothing is sent.
           </p>
-          <div className="panel mt-8 max-w-2xl overflow-x-auto p-5">
-            <code className="whitespace-pre font-mono text-xs leading-relaxed text-foreground">
-              {`keccak256(ciphertext + sender + recipient)`}
-            </code>
-          </div>
-          <p className="text-l4 mt-6 max-w-2xl text-pretty leading-relaxed">
-            That single line is the whole guarantee. Change one character of the
-            message and the fingerprint stops matching. It reveals nothing about
-            what was written &mdash; only that this exact message existed,
-            between these two addresses, at that block.
+
+          <ProofDiagram />
+
+          <p
+            data-rise
+            className="text-l4 mt-8 max-w-2xl text-pretty leading-relaxed"
+          >
+            Change one character of the message and the fingerprint stops
+            matching. It reveals nothing about what was written &mdash; only
+            that this exact message existed, between these two addresses, at
+            that block.
           </p>
         </Slide>
 
@@ -266,16 +432,16 @@ export default function Pitch() {
           <H>Running, today</H>
           <div className="mt-10 grid max-w-3xl gap-6 sm:grid-cols-3">
             <Stat
-              v={anchored === null ? "—" : anchored.toString()}
+              value={anchored === null ? null : Number(anchored)}
               l="Messages anchored end-to-end"
             />
-            <Stat v="3" l="Contracts live and verifiable" />
-            {/* A word set at the same size as a two-digit number wraps and
-                breaks the row's baseline, so text-shaped values get their own
-                size rather than the numeral size. */}
-            <Stat v={ACTIVE_CHAIN.shortName} l="Network" small />
+            <Stat value={3} l="Contracts live and verifiable" />
+            <Stat text={ACTIVE_CHAIN.shortName} l="Network" />
           </div>
-          <p className="text-l4 mt-10 max-w-2xl text-pretty leading-relaxed">
+          <p
+            data-rise
+            className="text-l4 mt-10 max-w-2xl text-pretty leading-relaxed"
+          >
             {ACTIVE_CHAIN.testnet ? (
               <>
                 xmail is in open beta on {ACTIVE_CHAIN.name}. Sending,
@@ -296,7 +462,10 @@ export default function Pitch() {
         <Slide n={5} field="left">
           <Eyebrow>What it costs</Eyebrow>
           <H>Pay for what you send</H>
-          <p className="text-l3 mt-6 max-w-2xl text-pretty text-lg leading-relaxed">
+          <p
+            data-rise
+            className="text-l3 mt-6 max-w-2xl text-pretty text-lg leading-relaxed"
+          >
             One credit is one message, up to 10,000 characters, with the
             on-chain proof and its gas included. No seats, no per-user tax, and
             an empty month costs nothing.
@@ -307,7 +476,10 @@ export default function Pitch() {
             <Price tier="Scale" price="$0.02" note="Per credit, pay as you go" />
           </div>
           {ACTIVE_CHAIN.testnet && (
-            <p className="text-l5 mt-6 max-w-2xl text-sm leading-relaxed">
+            <p
+              data-rise
+              className="text-l5 mt-6 max-w-2xl text-sm leading-relaxed"
+            >
               Free during the beta. These are the prices for when xmail moves to
               mainnet; nothing is charged on a test network.
             </p>
@@ -317,10 +489,13 @@ export default function Pitch() {
         <Slide n={6} field="center">
           <Eyebrow>What&rsquo;s next</Eyebrow>
           <H>Where this goes</H>
-          {/* Labelled as planned, in the copy and not only in a footnote. A deck
+          {/* Labelled as planned in the copy, not only in a footnote. A deck
               whose argument is verifiability cannot blur what is shipped and
               what is intended. */}
-          <p className="text-l4 mt-6 max-w-2xl text-pretty leading-relaxed">
+          <p
+            data-rise
+            className="text-l4 mt-6 max-w-2xl text-pretty leading-relaxed"
+          >
             Everything below is planned, not shipped. Dates are intentions
             rather than commitments.
           </p>
@@ -337,20 +512,26 @@ export default function Pitch() {
               t="Scheduled and recurring sends"
               d="Written, held back for the infrastructure to run it reliably."
             />
-            <Next
-              t="Larger attachments"
-              d="Same encryption, more room."
-            />
+            <Next t="Larger attachments" d="Same encryption, more room." />
           </div>
         </Slide>
 
         <Slide n={7} field="bottom">
-          <H>Send something you&rsquo;d rather not send over email</H>
-          <p className="text-l3 mx-auto mt-6 max-w-xl text-pretty text-lg leading-relaxed">
+          <h2 className="text-4xl leading-[1.08] sm:text-6xl">
+            <Reveal text="Send something you&rsquo;d" block />
+            <Reveal text="rather not send over email" block />
+          </h2>
+          <p
+            data-rise
+            className="text-l3 mx-auto mt-6 max-w-xl text-pretty text-lg leading-relaxed"
+          >
             Connect a wallet and write a message. There is nothing to sign up
             for and nothing to uninstall if you decide against it.
           </p>
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div
+            data-rise
+            className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
+          >
             <button
               type="button"
               onClick={openWallet}
@@ -366,7 +547,7 @@ export default function Pitch() {
               Read the documentation
             </Link>
           </div>
-          <p className="text-l5 mt-10 text-sm">
+          <p data-rise className="text-l5 mt-10 text-sm">
             <Link to="/" className="hover:text-foreground">
               xmail.today
             </Link>
@@ -395,26 +576,25 @@ function Slide({
     <section
       data-slide={n}
       /*
-       * overflow-y-auto, not overflow-hidden. The pricing slide's content is
-       * taller than a 812px phone viewport, and on a shorter handset several
-       * slides are -- with hidden overflow the bottom of those slides is simply
-       * unreachable, which on the pricing slide means the sentence saying
-       * nothing is charged yet.
+       * overflow-y-auto, not overflow-hidden: the pricing slide is taller than
+       * an 812px phone viewport, and hidden overflow makes its last line -- the
+       * one saying nothing is charged yet -- unreachable.
        *
-       * The centring is `my-auto` on the child rather than `items-center` on
-       * this flex parent, because a centred flex child that overflows its
-       * container cannot be scrolled back up to: the top gets cut off instead
-       * of the bottom. my-auto centres only when there is room to spare.
+       * And no `overscroll-contain`. It was here to keep a tall slide's inner
+       * scroll from leaking into the deck, but it did that by killing scroll
+       * chaining outright: a wheel over any slide with nothing to scroll was
+       * swallowed rather than passed up, so the deck would not advance at all.
+       *
+       * Centring is `my-auto` on the child rather than `items-center` here,
+       * because a centred flex child that overflows loses its TOP to the clip
+       * and cannot be scrolled back to.
        */
-      className="relative flex h-full w-full shrink-0 snap-start overflow-y-auto overscroll-contain"
+      className="relative flex h-full w-full shrink-0 snap-start overflow-y-auto"
     >
       <SectionField variant={field} />
       <div
         className={`container relative mx-auto my-auto px-6 py-24 ${centred ? "text-center" : ""}`}
       >
-        {/* Centred column either way; only the text alignment differs. Left-
-            aligned text hard against the viewport edge reads as a layout bug
-            on a wide screen, not as a deliberate choice. */}
         <div className={centred ? "mx-auto max-w-3xl" : "mx-auto max-w-4xl"}>
           {children}
         </div>
@@ -423,36 +603,103 @@ function Slide({
   );
 }
 
+/**
+ * Word-by-word reveal.
+ *
+ * Words are wrapped individually rather than the line being masked as one
+ * block, and the difference is the whole effect: a single mask slides one slab
+ * of type into place, where this reads as the sentence assembling itself.
+ *
+ * The padding is not decoration. `overflow-hidden` cuts descenders (g, y, p)
+ * off square, and the matching negative margin buys the clip room back without
+ * changing the line box.
+ *
+ * The separator between words is a REAL space, not a fixed-width span. An
+ * earlier version spaced the words with an empty element, which looked
+ * identical and was wrong everywhere it counted: textContent came out as
+ * "Yourwalletistheaddress", so screen readers said that, copy-paste produced
+ * that, and so did anything reading the page for search.
+ */
+function Reveal({ text, block = false }: { text: string; block?: boolean }) {
+  return (
+    <span className={block ? "block" : "inline"}>
+      {text.split(" ").map((word, i) => (
+        <Fragment key={`${word}-${i}`}>
+          <span className="-mb-[0.16em] inline-block overflow-hidden pb-[0.16em] align-bottom">
+            <span className="rv-inner inline-block">{word}</span>
+          </span>{" "}
+        </Fragment>
+      ))}
+    </span>
+  );
+}
+
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-l5 block text-xs uppercase tracking-[0.18em]">
+    <span data-rise className="text-l5 block text-xs uppercase tracking-[0.18em]">
       {children}
     </span>
   );
 }
 
-function H({ children }: { children: React.ReactNode }) {
+function H({ children }: { children: string }) {
   return (
-    <h2 className="mt-4 text-balance text-4xl leading-[1.08] sm:text-6xl">
-      {children}
+    <h2 className="mt-4 text-4xl leading-[1.08] sm:text-6xl">
+      <Reveal text={children} />
     </h2>
   );
 }
 
 function Card({ t, d }: { t: string; d: string }) {
   return (
-    <div className="panel p-5">
+    <div data-card className="panel p-5">
       <p className="text-base">{t}</p>
       <p className="text-l4 mt-2 text-pretty text-sm leading-relaxed">{d}</p>
     </div>
   );
 }
 
-function Stat({ v, l, small }: { v: string; l: string; small?: boolean }) {
+/**
+ * A stat is either a number that counts up or a word that rises.
+ *
+ * React renders the true value as the element's own text, and GSAP only writes
+ * over it while the count is running. That ordering matters: the anchored
+ * figure arrives from the chain AFTER the timeline is built, and an earlier
+ * version rendered an em-dash until it landed -- so the tween was created
+ * against an element with no target, counted to zero, and the slide sat there
+ * claiming nought messages had ever been anchored. On a deck whose whole
+ * argument is "check it yourself", a confidently wrong number is worse than no
+ * number.
+ *
+ * Now the span is always the same element, so when the value arrives React
+ * patches the text in place whatever GSAP last wrote, and `data-count` is read
+ * inside onUpdate rather than captured when the tween was made. Whichever
+ * arrives first, the number ends up right.
+ */
+function Stat({
+  value,
+  text,
+  l,
+}: {
+  value?: number | null;
+  text?: string;
+  l: string;
+}) {
+  if (text !== undefined) {
+    return (
+      <div data-card>
+        <p className="text-2xl sm:text-3xl">{text}</p>
+        <p className="text-l4 mt-2 text-pretty text-sm leading-relaxed">{l}</p>
+      </div>
+    );
+  }
+  const known = typeof value === "number";
   return (
-    <div>
-      <p className={small ? "text-2xl sm:text-3xl" : "text-3xl sm:text-4xl"}>
-        {v}
+    <div data-card>
+      <p className="text-3xl sm:text-4xl">
+        <span data-count={known ? value : undefined}>
+          {known ? value.toLocaleString() : "—"}
+        </span>
       </p>
       <p className="text-l4 mt-2 text-pretty text-sm leading-relaxed">{l}</p>
     </div>
@@ -469,7 +716,7 @@ function Price({
   note: string;
 }) {
   return (
-    <div className="panel p-5">
+    <div data-card className="panel p-5">
       <p className="text-l4 text-xs uppercase tracking-wider">{tier}</p>
       <p className="mt-2 text-3xl">{price}</p>
       <p className="text-l4 mt-1 text-pretty text-sm leading-relaxed">{note}</p>
@@ -479,12 +726,60 @@ function Price({
 
 function Next({ t, d }: { t: string; d: string }) {
   return (
-    <div className="flex gap-4">
+    <div data-card className="flex gap-4">
       <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-white/30" />
       <div>
         <p className="text-base">{t}</p>
         <p className="text-l4 mt-1 text-pretty text-sm leading-relaxed">{d}</p>
       </div>
+    </div>
+  );
+}
+
+/**
+ * What happens to a message, drawn rather than described.
+ *
+ * A diagram of the mechanism, not a chart. There is no dataset here worth
+ * plotting, and inventing one to decorate a deck whose argument is "check it
+ * yourself" would be precisely the wrong move. The connector draws left to
+ * right as the slide arrives, so the sequence reads in the order it happens.
+ */
+function ProofDiagram() {
+  const STEPS = [
+    { k: "Your message", v: "plaintext, in your browser" },
+    { k: "Ciphertext", v: "AES-256-GCM" },
+    { k: "keccak256", v: "the fingerprint" },
+    { k: "On-chain", v: "signed by you" },
+  ];
+  return (
+    <div className="relative mt-10 max-w-3xl">
+      {/* Hidden below sm, where the steps stack into two columns and a
+          horizontal rule through them would be drawing a line to nowhere. */}
+      <svg
+        className="pointer-events-none absolute inset-x-0 top-[18px] hidden h-1 w-full sm:block"
+        viewBox="0 0 100 1"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <path
+          data-draw
+          d="M 3 0.5 L 97 0.5"
+          stroke="hsl(0 0% 100% / 0.16)"
+          strokeWidth="0.6"
+          fill="none"
+        />
+      </svg>
+      <ol className="relative grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4">
+        {STEPS.map((s, i) => (
+          <li key={s.k} data-node className="flex flex-col items-start">
+            <span className="panel flex h-9 w-9 items-center justify-center rounded-full font-mono text-xs">
+              {i + 1}
+            </span>
+            <span className="mt-3 text-sm">{s.k}</span>
+            <span className="text-l5 mt-0.5 font-mono text-[11px]">{s.v}</span>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }
