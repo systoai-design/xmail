@@ -701,7 +701,7 @@
       id="root"
       data-composition-id="main"
       data-start="0"
-      data-duration="28.6"
+      data-duration="27.96"
       data-width="1920"
       data-height="1080"
     >
@@ -1041,7 +1041,7 @@
                 <span class="app-main" style="display: block">
                   <span class="main-head" style="display: flex">
                     <h3>Inbox</h3>
-                    <span class="count">2 unread &middot; every sender key-checked on Solana</span>
+                    <span class="count">2 unread &middot; every sender key-checked on Robinhood Chain</span>
                   </span>
           <span class="mail unread" style="display:flex">
             <span class="avatar" style="display:flex">D</span>
@@ -1155,7 +1155,7 @@
         id="s6"
         class="clip scene ground-cool"
         data-start="17.7"
-        data-duration="5.7"
+        data-duration="5.1"
         data-track-index="6"
       >
         <span
@@ -1344,7 +1344,7 @@
       <div
         id="s8"
         class="clip scene ground-warm"
-        data-start="23.2"
+        data-start="22.6"
         data-duration="1.8"
         data-track-index="7"
       >
@@ -1379,7 +1379,7 @@
       <div
         id="s9"
         class="clip scene ground-cool"
-        data-start="24.8"
+        data-start="24.2"
         data-duration="2.2"
         data-track-index="8"
       >
@@ -1479,7 +1479,7 @@
             <path d="m22 2-7 20-4-9-9-4Z" />
           </svg>
           <span class="toast-txt" style="display: block"
-            ><b>Delivered</b><span>0.001 SOL paid over x402.</span></span
+            ><b>Delivered</b><span>1 credit &mdash; on-chain anchor included.</span></span
           >
         </span>
 
@@ -1511,8 +1511,8 @@
       <div
         id="s10"
         class="clip scene ground-cool"
-        data-start="26.8"
-        data-duration="1.8"
+        data-start="26.2"
+        data-duration="1.76"
         data-track-index="9"
       >
         <span id="s10-lock" class="lockup" style="top: 400px">
@@ -1551,12 +1551,25 @@
           >Email, addressed to a wallet.</span
         >
       </div>
+      <!-- ============================ AUDIO ============================
+           The reference template's own track, used whole and unmodified.
+           The composition is timed to its 27.96s so the music resolves on
+           the end card rather than being cut off.
+           ============================================================= -->
+      <audio
+        id="track"
+        src="assets/audio/source/template-track.wav"
+        data-start="0"
+        data-duration="27.96"
+        data-volume="1"
+      ></audio>
+
       <!-- The reference resolves to black. The end card holds, then goes. -->
       <div
         id="fade"
         class="clip scene"
-        data-start="28.1"
-        data-duration="0.5"
+        data-start="27.5"
+        data-duration="0.46"
         data-track-index="10"
         style="background: #000000"
       ></div>
@@ -1782,7 +1795,7 @@
 
       /* --- SCENE 6 : the device (17.7 -> 23.4) ------------------------ */
       const S6 = 17.7;
-      crossfade("#s6", S6, 5.7);
+      crossfade("#s6", S6, 5.1);
       tl.fromTo(
         "#s6-b1, #s6-b2",
         { scale: 0.86, opacity: 0 },
@@ -1867,10 +1880,10 @@
         { yPercent: 0, duration: 0.72, stagger: 0.13, ease: "power4.out" },
         S6 + 3.92,
       );
-      tl.to("#s6-cas", { y: -18, duration: 1.2, ease: "sine.out" }, S6 + 4.4);
+      tl.to("#s6-cas", { y: -18, duration: 0.6, ease: "sine.out" }, S6 + 4.3);
 
       /* --- SCENE 8 : the turn (23.2 -> 25.0) -------------------------- */
-      const S8 = 23.2;
+      const S8 = 22.6;
       crossfade("#s8", S8, 1.8, 0.22, 0.2);
       tl.fromTo(
         "#s8-r1",
@@ -1899,7 +1912,7 @@
       );
 
       /* --- SCENE 9 : the payoff (24.8 -> 27.0) ------------------------ */
-      const S9 = 24.8;
+      const S9 = 24.2;
       crossfade("#s9", S9, 2.2, 0.22, 0.2);
       tl.fromTo(
         "#s9 .bg-blur",
@@ -1920,7 +1933,7 @@
       );
 
       /* --- SCENE 10 : the end card (26.8 -> 28.6) --------------------- */
-      const S10 = 26.8;
+      const S10 = 26.2;
       tl.fromTo("#s10", { opacity: 0 }, { opacity: 1, duration: 0.22, ease: "none" }, S10);
       tl.fromTo(
         "#s10-lock",
@@ -1935,10 +1948,10 @@
         S10 + 0.66,
       );
       // The lockup settles rather than freezing dead on the last frame.
-      tl.to("#s10-lock", { y: -10, duration: 0.86, ease: "sine.out" }, S10 + 0.86);
-      tl.to("#s10-tag", { y: -10, duration: 0.86, ease: "sine.out" }, S10 + 1.28);
+      tl.to("#s10-lock", { y: -10, duration: 0.7, ease: "sine.out" }, S10 + 0.86);
+      tl.to("#s10-tag", { y: -10, duration: 0.62, ease: "sine.out" }, S10 + 1.28);
 
-      tl.fromTo("#fade", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.in" }, 28.1);
+      tl.fromTo("#fade", { opacity: 0 }, { opacity: 1, duration: 0.46, ease: "power2.in" }, 27.5);
 
       window.__timelines["main"] = tl;
     </script>

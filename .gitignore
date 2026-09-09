@@ -31,3 +31,11 @@ dist-ssr
 # Claude Code workspace
 .claude/
 supabase/.temp/
+
+# Video render outputs. The HyperFrames project source (index.html, the brief,
+# hyperframes.json and the audio it references) is tracked, because without
+# those the explainer cannot be rebuilt. Renders and QA snapshots are products
+# OF that source -- 18MB and 1.5MB of it -- and regenerate on demand. The cut
+# the site actually serves is committed separately at public/xmail-explainer.mp4.
+video/*/renders/
+video/*/snapshots/
